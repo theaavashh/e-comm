@@ -1,0 +1,431 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatar    String?
+  role      UserRole @default(CUSTOMER)
+  isActive  Boolean  @default(true)
+  emailVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  cartItems CartItem[]
+  wishlist  WishlistItem[]
+
+  @@map("users")
+}
+
+model Address {
+  id          String  @id @default(cuid())
+  userId      String
+  type        AddressType @default(SHIPPING)
+  street      String
+  city        String
+  state       String
+  zipCode     String
+  country     String
+  isDefault   Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders Order[] @relation("OrderShippingAddress")
+  billingOrders Order[] @relation("OrderBillingAddress")
+
+  @@map("addresses")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  shortDescription String?
+  
+  // Pricing
+  price       Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  margin      Decimal? @db.Decimal(5, 2) // Profit margin percentage
+  
+  // Product Identification
+  sku         String?  @unique
+  barcode     String?
+  upc         String?
+  ean         String?
+  isbn        String?
+  
+  // Inventory Management
+  trackQuantity Boolean @default(true)
+  quantity    Int      @default(0)
+  lowStockThreshold Int @default(5)
+  allowBackorder Boolean @default(false)
+  manageStock Boolean @default(true)
+  
+  // Physical Properties
+  weight      Decimal? @db.Decimal(8, 2)
+  weightUnit  String?  @default("kg")
+  dimensions  Json?    // {length, width, height, unit}
+  
+  // Media
+  images      String[] // Array of image URLs
+  videos      String[] // Array of video URLs
+  thumbnail   String?  // Main thumbnail image
+  
+  // SEO Fields
+  seoTitle    String?
+  seoDescription String?
+  seoKeywords String[]
+  metaTags    Json?    // Additional meta tags
+  
+  // Product Status
+  isActive    Boolean  @default(true)
+  isDigital   Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  isNew       Boolean  @default(false)
+  isOnSale    Boolean  @default(false)
+  isBestSeller Boolean @default(false)
+  
+  // Visibility
+  visibility  ProductVisibility @default(VISIBLE)
+  publishedAt DateTime?
+  
+  // Categories and Tags
+  categoryId  String
+  tags        String[]
+  brand       String?
+  
+  // Shipping
+  requiresShipping Boolean @default(true)
+  shippingClass   String?
+  freeShipping    Boolean @default(false)
+  
+  // Tax
+  taxable     Boolean @default(true)
+  taxClass    String?
+  
+  // Additional Fields
+  customFields Json?   // For custom product attributes
+  notes        String? // Internal notes
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  category   Category     @relation(fields: [categoryId], references: [id])
+  variants   ProductVariant[]
+  pricingTiers ProductPricingTier[]
+  attributes ProductAttribute[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  wishlist   WishlistItem[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  value     String
+  price     Decimal? @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  sku       String?  @unique
+  barcode   String?
+  quantity  Int      @default(0)
+  weight    Decimal? @db.Decimal(8, 2)
+  image     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+// Dynamic pricing for different quantities
+model ProductPricingTier {
+  id        String   @id @default(cuid())
+  productId String
+  minQuantity Int
+  maxQuantity Int?
+  price     Decimal  @db.Decimal(10, 2)
+  discount  Decimal? @db.Decimal(5, 2) // Discount percentage
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_pricing_tiers")
+}
+
+// Product attributes (color, size, material, etc.)
+model ProductAttribute {
+  id        String   @id @default(cuid())
+  productId String
+  name      String   // e.g., "Color", "Size", "Material"
+  value     String   // e.g., "Red", "Large", "Cotton"
+  type      AttributeType @default(TEXT)
+  isRequired Boolean @default(false)
+  isFilterable Boolean @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_attributes")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String
+  status          OrderStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  shippingStatus  ShippingStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  taxAmount       Decimal     @db.Decimal(10, 2)
+  shippingAmount  Decimal     @db.Decimal(10, 2)
+  discountAmount  Decimal     @db.Decimal(10, 2)
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  currency        String      @default("NPR")
+  shippingAddressId String?
+  billingAddressId String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  user            User         @relation(fields: [userId], references: [id])
+  shippingAddress Address?     @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address?     @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  items           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int      // 1-5 stars
+  title     String?
+  comment   String?
+  isVerified Boolean @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  VENDOR
+}
+
+enum AddressType {
+  SHIPPING
+  BILLING
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum ShippingStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  RETURNED
+}
+
+// System Configuration Models
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_config")
+}
+
+model CurrencyRate {
+  id        String   @id @default(cuid())
+  country   String
+  currency  String
+  symbol    String
+  rateToNPR Decimal @db.Decimal(10, 4)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([country, currency])
+  @@map("currency_rates")
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  type      UnitType
+  name      String
+  symbol    String?
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, name])
+  @@map("units")
+}
+
+enum UnitType {
+  WEIGHT
+  LENGTH
+  CLOTHING_SIZE
+  VOLUME
+  TEMPERATURE
+}
+
+enum ProductVisibility {
+  VISIBLE
+  HIDDEN
+  CATALOG_ONLY
+  SEARCH_ONLY
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  COLOR
+  IMAGE
+  SELECT
+  MULTI_SELECT
+}
+
+// Top Banner Model for promotional banners
+model TopBanner {
+  id          String   @id @default(cuid())
+  title       String   // Rich text content for the banner
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("top_banners")
+}
