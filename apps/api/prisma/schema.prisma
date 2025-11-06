@@ -62,17 +62,33 @@ model Category {
   slug        String   @unique
   description String?
   image       String?
+  internalLink String?
   isActive    Boolean  @default(true)
   parentId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryHierarchy")
-  products Product[]
+  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children      Category[] @relation("CategoryHierarchy")
+  products      Product[]
+  subProducts   Product[]  @relation("ProductSubCategory")
 
   @@map("categories")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  logo      String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  products Product[]
+
+  @@map("brands")
 }
 
 model Product {
@@ -117,6 +133,9 @@ model Product {
   seoDescription String?
   seoKeywords String[]
   metaTags    Json?    // Additional meta tags
+  ogImage     String?   // Open Graph image URL
+  canonicalUrl String?  // Canonical URL
+  focusKeyword String?  // Primary focus keyword
   
   // Product Status
   isActive    Boolean  @default(true)
@@ -131,9 +150,10 @@ model Product {
   publishedAt DateTime?
   
   // Categories and Tags
-  categoryId  String
-  tags        String[]
-  brand       String?
+  categoryId    String
+  subCategoryId String?
+  tags          String[]
+  brandId       String?
   
   // Shipping
   requiresShipping Boolean @default(true)
@@ -152,7 +172,9 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  category   Category     @relation(fields: [categoryId], references: [id])
+  category      Category     @relation(fields: [categoryId], references: [id])
+  subCategory   Category?    @relation("ProductSubCategory", fields: [subCategoryId], references: [id])
+  brand         Brand?       @relation(fields: [brandId], references: [id])
   variants   ProductVariant[]
   pricingTiers ProductPricingTier[]
   attributes ProductAttribute[]
@@ -160,8 +182,29 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   wishlist   WishlistItem[]
+  currencyPrices ProductCurrencyPrice[]
 
   @@map("products")
+}
+
+// Multi-currency pricing for products
+model ProductCurrencyPrice {
+  id        String   @id @default(cuid())
+  productId String
+  country   String   // e.g., "Australia", "USA", "UK"
+  price     Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  minDeliveryDays Int    // Minimum delivery days for this country
+  maxDeliveryDays Int    // Maximum delivery days for this country
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, country])
+  @@map("product_currency_prices")
 }
 
 model ProductVariant {
@@ -266,6 +309,15 @@ model Order {
   discountAmount  Decimal     @db.Decimal(10, 2)
   totalAmount     Decimal     @db.Decimal(10, 2)
   currency        String      @default("NPR")
+  currencySymbol  String      @default("NPR")
+  // NPR conversion for international orders
+  nprSubtotal     Decimal?    @db.Decimal(10, 2)
+  nprTaxAmount    Decimal?    @db.Decimal(10, 2)
+  nprShippingAmount Decimal?  @db.Decimal(10, 2)
+  nprDiscountAmount Decimal?  @db.Decimal(10, 2)
+  nprTotalAmount  Decimal?    @db.Decimal(10, 2)
+  exchangeRate    Decimal?    @db.Decimal(10, 4) // Exchange rate used for conversion
+  customerCountry String?     // Customer's country for the order
   shippingAddressId String?
   billingAddressId String?
   notes           String?
@@ -288,6 +340,11 @@ model OrderItem {
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
   total     Decimal @db.Decimal(10, 2)
+  // NPR prices for conversion
+  nprPrice  Decimal? @db.Decimal(10, 2)
+  nprTotal  Decimal? @db.Decimal(10, 2)
+  currency  String   @default("NPR")
+  currencySymbol String @default("NPR")
   createdAt DateTime @default(now())
 
   // Relations
@@ -428,4 +485,36 @@ model TopBanner {
   updatedAt   DateTime @updatedAt
 
   @@map("top_banners")
+}
+
+// Media Item Model for images and videos with internal links
+model MediaItem {
+  id          String   @id @default(cuid())
+  linkTo      String   // Destination type (category, today-sales, for-you, etc.)
+  mediaType   MediaType
+  mediaUrl    String   // URL to the uploaded media file
+  internalLink String  // Internal link to redirect when clicked
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("media_items")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// Slider Model for homepage sliders
+model Slider {
+  id           String   @id @default(cuid())
+  imageUrl     String
+  internalLink String   @default("") // Internal link when slider is clicked
+  isActive     Boolean  @default(true)
+  order        Int      @default(1) // For ordering sliders
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sliders")
 }

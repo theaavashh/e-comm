@@ -47,6 +47,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import RichTextEditor from "@/components/RichTextEditor";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
 
 function DashboardContent() {
@@ -185,93 +186,185 @@ function DashboardContent() {
       case "dashboard":
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+            <h2 className="text-2xl font-bold text-gray-900 custom-font">Dashboard Overview</h2>
             
-            {/* Quick Stats */}
+            {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500">Total Sales</h3>
-                <p className="text-3xl font-bold text-gray-900">NPR 4,523,100</p>
-                <p className="text-sm text-green-600">+20.1% from last month</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Visitors (24h)</h3>
+                  <Users className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 custom-font">12,4380</p>
+                <p className="text-sm text-green-600 custom-font mt-1">+8.2% vs yesterday</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500">Orders</h3>
-                <p className="text-3xl font-bold text-gray-900">2,350</p>
-                <p className="text-sm text-green-600">+15.3% from last month</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Website Performance</h3>
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 custom-font">98</p>
+                <p className="text-sm text-green-600 custom-font mt-1">Good (Lighthouse)</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500">Products</h3>
-                <p className="text-3xl font-bold text-gray-900">1,234</p>
-                <p className="text-sm text-blue-600">+5.2% from last month</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Orders (7d)</h3>
+                  <ShoppingCart className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 custom-font">1,024</p>
+                <p className="text-sm text-green-600 custom-font mt-1">+3.4% WoW</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500">Customers</h3>
-                <p className="text-3xl font-bold text-gray-900">8,921</p>
-                <p className="text-sm text-green-600">+12.5% from last month</p>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Revenue (7d)</h3>
+                  <DollarSign className="w-5 h-5 text-orange-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 custom-font">NPR 3.2M</p>
+                <p className="text-sm text-green-600 custom-font mt-1">+5.1% WoW</p>
+              </div>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Visitors by Country Chart */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-gray-900 custom-font">Visitorsss by Country</h3>
+                  </div>
+                  <span className="text-xs text-gray-500 custom-font">Last 7 days</span>
+                </div>
+                <div className="h-64 flex items-end justify-between space-x-2 px-4">
+                  {[
+                    { country: 'Nepal', value: 3200 },
+                    { country: 'India', value: 4500 },
+                    { country: 'USA', value: 2800 },
+                    { country: 'UK', value: 2100 },
+                    { country: 'AU', value: 1800 },
+                  ].map((item, index) => (
+                    <div key={index} className="flex flex-col items-center flex-1 space-y-2">
+                      <div className="w-full flex flex-col items-center">
+                        <div
+                          className="w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-lg transition-all duration-300 hover:from-purple-700 hover:to-purple-500 shadow-md"
+                          style={{ height: `${(item.value / 5000) * 200}px` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-600 custom-font font-medium">{item.value}</span>
+                      <span className="text-xs text-gray-500 custom-font">{item.country}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Orders Chart */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <BarChart className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-gray-900 custom-font">Orders (Last 14 days)</h3>
+                  </div>
+                  <span className="text-xs text-gray-500 custom-font">Updated hourly</span>
+                </div>
+                <div className="h-64 flex items-end justify-between space-x-1 px-4">
+                  {[120, 145, 130, 160, 140, 155, 170, 165, 180, 175, 190, 185, 200, 195].map((value, index) => (
+                    <div key={index} className="flex flex-col items-center flex-1">
+                      <div className="w-full relative">
+                        <div
+                          className="w-full bg-gradient-to-t from-purple-600 via-purple-500 to-purple-400 rounded-t transition-all duration-300 hover:from-purple-700 hover:to-purple-600 shadow-sm"
+                          style={{ height: `${(value / 200) * 200}px` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Dashboard Overview Summary */}
+            <div className="mt-2">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Total Sales</h3>
+                  <p className="text-3xl font-bold text-gray-900 custom-font">NPR 4,523,100</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Orders</h3>
+                  <p className="text-3xl font-bold text-gray-900 custom-font">2,350</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Products</h3>
+                  <p className="text-3xl font-bold text-gray-900 custom-font">1,234</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-500 custom-font">Customers</h3>
+                  <p className="text-3xl font-bold text-gray-900 custom-font">8,921</p>
+                </div>
               </div>
             </div>
 
             {/* Quick Insights */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center custom-font">
                   <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
                   Top Products
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">iPhone 15 Pro</span>
-                    <span className="text-sm font-medium text-gray-900">NPR 129,900</span>
+                    <span className="text-sm text-gray-600 custom-font">iPhone 15 Pro</span>
+                    <span className="text-sm font-medium text-gray-900 custom-font">NPR 129,900</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">MacBook Air</span>
-                    <span className="text-sm font-medium text-gray-900">NPR 99,900</span>
+                    <span className="text-sm text-gray-600 custom-font">MacBook Air</span>
+                    <span className="text-sm font-medium text-gray-900 custom-font">NPR 99,900</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">AirPods Pro</span>
-                    <span className="text-sm font-medium text-gray-900">NPR 24,900</span>
+                    <span className="text-sm text-gray-600 custom-font">AirPods Pro</span>
+                    <span className="text-sm font-medium text-gray-900 custom-font">NPR 24,900</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center custom-font">
                   <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
                   Low Stock
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Samsung Galaxy S24</span>
-                    <span className="text-sm font-medium text-orange-600">3 left</span>
+                    <span className="text-sm text-gray-600 custom-font">Samsung Galaxy S24</span>
+                    <span className="text-sm font-medium text-orange-600 custom-font">3 left</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">iPad Pro</span>
-                    <span className="text-sm font-medium text-orange-600">7 left</span>
+                    <span className="text-sm text-gray-600 custom-font">iPad Pro</span>
+                    <span className="text-sm font-medium text-orange-600 custom-font">7 left</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Apple Watch</span>
-                    <span className="text-sm font-medium text-orange-600">2 left</span>
+                    <span className="text-sm text-gray-600 custom-font">Apple Watch</span>
+                    <span className="text-sm font-medium text-orange-600 custom-font">2 left</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center custom-font">
                   <Clock className="w-5 h-5 mr-2 text-blue-600" />
                   Pending Orders
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Order #1234</span>
-                    <span className="text-sm font-medium text-blue-600">Processing</span>
+                    <span className="text-sm text-gray-600 custom-font">Order #1234</span>
+                    <span className="text-sm font-medium text-blue-600 custom-font">Processing</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Order #1235</span>
-                    <span className="text-sm font-medium text-blue-600">Pending</span>
+                    <span className="text-sm text-gray-600 custom-font">Order #1235</span>
+                    <span className="text-sm font-medium text-blue-600 custom-font">Pending</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Order #1236</span>
-                    <span className="text-sm font-medium text-blue-600">Shipped</span>
+                    <span className="text-sm text-gray-600 custom-font">Order #1236</span>
+                    <span className="text-sm font-medium text-blue-600 custom-font">Shipped</span>
                   </div>
                 </div>
               </div>
@@ -753,15 +846,25 @@ function DashboardContent() {
         )}
       </AnimatePresence>
       </DashboardLayout>
-      <Toaster position="top-right" />
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          duration: 2000,
+          style: { background: '#ffffff', color: '#111111' },
+          success: { iconTheme: { primary: '#16a34a', secondary: '#ffffff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } },
+        }}
+      />
     </>
   );
 }
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <DashboardContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={<div>Loading...</div>}>
+        <DashboardContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

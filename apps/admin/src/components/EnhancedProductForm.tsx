@@ -6,13 +6,32 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Upload, Eye, EyeOff, AlertCircle, Link, Search, Hash, Globe, Image as ImageIcon, Target, ExternalLink, FileText, DollarSign, Package, Camera, Truck, Settings, Percent, Calculator, ShoppingCart, Minus, X, Star, Flame, Gift, Sparkles, Award, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Image from 'next/image';
+import RichTextEditor from '@/components/RichTextEditor';
 import { productSchema, ProductFormData } from '@/schemas/productSchema';
 
 interface Category {
   id: string;
   name: string;
   parentId?: string;
-  children?: Array<{ id: string; name: string }>;
+  children?: Array<{ 
+    id: string; 
+    name: string; 
+    parentId?: string;
+    _count?: { products: number };
+  }>;
+  _count?: { products: number };
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  logo?: string;
+  website?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    products: number;
+  };
 }
 
 interface EnhancedProductFormProps {
@@ -22,6 +41,7 @@ interface EnhancedProductFormProps {
   initialData?: any;
   isLoading?: boolean;
   categories: Category[];
+  brands: Brand[];
 }
 
 const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
@@ -30,10 +50,13 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   onSubmit,
   initialData,
   isLoading = false,
-  categories
+  categories,
+  brands
 }) => {
   const [activeTab, setActiveTab] = useState('basic');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [ogImagePreview, setOgImagePreview] = useState<string>('');
+  const [canonicalUrlPreview, setCanonicalUrlPreview] = useState<string>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleNextTab = () => {
@@ -57,7 +80,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     reset,
     watch,
     setValue,
-    getValues
+    getValues,
+    trigger
   } = useForm<any>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -75,17 +99,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       maxOrderQuantity: undefined,
       sku: '',
       categoryId: '',
-      brand: '',
+      subCategoryId: '',
+      brandId: '',
       tags: [],
       images: [],
-      status: 'draft',
+      isActive: true,
       stock: 0,
       weight: undefined,
-      dimensions: {
-        length: undefined,
-        width: undefined,
-        height: undefined,
-      },
+      dimensions: undefined,
       seo: {
         title: '',
         description: '',
@@ -96,7 +117,6 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
         canonicalUrl: '',
         focusKeyword: '',
       },
-      isActive: true,
       isFeatured: false,
       isDigital: false,
       requiresShipping: true,
@@ -110,8 +130,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       isNewLaunch: false,
       isBestSeller: false,
       variants: [],
+      currencyPrices: [],
+      customFields: [],
       // Shipping fields
-      shippingCountry: '',
+      shippingCountry: undefined,
       deliveryCharge: 0,
       minDeliveryDays: 3,
       maxDeliveryDays: 7,
@@ -121,6 +143,16 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       isHazardous: false,
     }
   });
+
+  // Watch categoryId to clear subCategoryId when category changes
+  const watchedCategoryId = watch('categoryId');
+  
+  useEffect(() => {
+    if (watchedCategoryId) {
+      // Clear sub-category when main category changes
+      setValue('subCategoryId', '');
+    }
+  }, [watchedCategoryId, setValue]);
 
   const { fields: tagFields, append: appendTag, remove: removeTag } = useFieldArray({
     control,
@@ -137,6 +169,16 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     name: 'variants' as const
   });
 
+  const { fields: currencyPriceFields, append: appendCurrencyPrice, remove: removeCurrencyPrice } = useFieldArray({
+    control,
+    name: 'currencyPrices' as const
+  });
+
+  const { fields: customFieldFields, append: appendCustomField, remove: removeCustomField } = useFieldArray({
+    control,
+    name: 'customFields' as const
+  });
+
   const watchedImages = watch('images') || [];
   const watchedTags = watch('tags') || [];
   const watchedKeywords = watch('seo.keywords') || [];
@@ -147,9 +189,13 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       if (initialData) {
         reset(initialData);
         setPreviewImages(initialData.images || []);
+        setOgImagePreview(initialData.seo?.ogImage || '');
+        setCanonicalUrlPreview(initialData.seo?.canonicalUrl || '');
       } else {
         reset();
         setPreviewImages([]);
+        setOgImagePreview('');
+        setCanonicalUrlPreview('');
       }
     }
   }, [isOpen, initialData, reset]);
@@ -167,6 +213,117 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       setValue('slug', slug);
     }
   }, [watchedName, setValue, initialData]);
+
+  // Custom submit handler that only validates essential fields
+  const handleCustomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('Form submission attempted');
+    
+    // Convert string values to numbers for validation and remove unsupported fields
+    const formData = getValues();
+    console.log('Raw form data:', formData);
+    
+    // Create minimal data with only essential fields
+    const processedData = {
+      name: formData.name,
+      price: formData.price ? Number(formData.price) : 0,
+      categoryId: formData.categoryId,
+      // Add only fields that have actual values (not empty strings or undefined)
+      ...(formData.description && formData.description.trim() && { description: formData.description }),
+      ...(formData.shortDescription && formData.shortDescription.trim() && { shortDescription: formData.shortDescription }),
+      ...(formData.sku && formData.sku.trim() && { sku: formData.sku }),
+      ...(formData.subCategoryId && formData.subCategoryId.trim() && { subCategoryId: formData.subCategoryId }),
+      ...(formData.brandId && formData.brandId.trim() && { brandId: formData.brandId }),
+      ...(formData.images && formData.images.length > 0 && { images: formData.images }),
+      ...(formData.tags && formData.tags.length > 0 && { tags: formData.tags }),
+      // Add pricing fields
+      ...(formData.comparePrice && formData.comparePrice > 0 && { comparePrice: Number(formData.comparePrice) }),
+      ...(formData.costPrice && formData.costPrice > 0 && { costPrice: Number(formData.costPrice) }),
+      ...(formData.margin && formData.margin > 0 && { margin: Number(formData.margin) }),
+      // Set defaults for required fields
+      quantity: formData.stock ? Number(formData.stock) : 0,
+      trackQuantity: formData.trackQuantity !== undefined ? formData.trackQuantity : true,
+      manageStock: formData.manageStock !== undefined ? formData.manageStock : true,
+      allowBackorder: formData.allowBackorder !== undefined ? formData.allowBackorder : false,
+      lowStockThreshold: formData.lowStockThreshold ? Number(formData.lowStockThreshold) : 5,
+      isActive: formData.isActive !== undefined ? formData.isActive : true,
+      isDigital: formData.isDigital !== undefined ? formData.isDigital : false,
+      isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
+      isNew: formData.isNew !== undefined ? formData.isNew : false,
+      isOnSale: formData.isOnSale !== undefined ? formData.isOnSale : false,
+      isBestSeller: formData.isBestSeller !== undefined ? formData.isBestSeller : false,
+      visibility: formData.visibility || 'VISIBLE',
+      requiresShipping: formData.requiresShipping !== undefined ? formData.requiresShipping : true,
+      freeShipping: formData.freeShipping !== undefined ? formData.freeShipping : false,
+      taxable: formData.taxable !== undefined ? formData.taxable : true,
+      // Arrays with defaults
+      videos: formData.videos || [],
+      seoKeywords: formData.seoKeywords || [],
+      // Include SEO object if present
+      ...(formData.seo && Object.keys(formData.seo).length > 0 && { 
+        seo: {
+          ...(formData.seo.ogTitle && { ogTitle: formData.seo.ogTitle }),
+          ...(formData.seo.ogDescription && { ogDescription: formData.seo.ogDescription }),
+          ...(formData.seo.ogImage && { ogImage: formData.seo.ogImage }),
+          ...(formData.seo.canonicalUrl && { canonicalUrl: formData.seo.canonicalUrl }),
+          ...(formData.seo.focusKeyword && { focusKeyword: formData.seo.focusKeyword }),
+        }
+      }),
+      // Include currencyPrices if present
+      ...(formData.currencyPrices && formData.currencyPrices.length > 0 && { 
+        currencyPrices: formData.currencyPrices.map((cp: any) => ({
+          country: cp.country,
+          price: Number(cp.price) || 0,
+          ...(cp.comparePrice && Number(cp.comparePrice) > 0 && { comparePrice: Number(cp.comparePrice) }),
+          minDeliveryDays: Number(cp.minDeliveryDays) || 1,
+          maxDeliveryDays: Number(cp.maxDeliveryDays) || 1,
+          isActive: cp.isActive !== undefined ? cp.isActive : true,
+        }))
+      }),
+      ...(formData.customFields && formData.customFields.length > 0 && {
+        customFields: formData.customFields.map((f: any) => ({
+          key: (f.key || '').trim(),
+          label: (f.label || '').trim(),
+          content: f.content || '',
+          isVisible: f.isVisible !== false,
+        })).filter((f: any) => f.key && f.label),
+      }),
+    };
+    
+    // Filter out empty strings and convert them to undefined
+    const cleanedData = Object.fromEntries(
+      Object.entries(processedData)
+        .filter(([key, value]) => value !== '') // Remove empty strings entirely
+        .map(([key, value]) => [key, value])
+    );
+    
+    console.log('Processed data being sent to API:', cleanedData);
+    
+    // Update form values with converted numbers
+    Object.keys(processedData).forEach(key => {
+      if (processedData[key] !== formData[key]) {
+        setValue(key, processedData[key]);
+      }
+    });
+    
+    // Only validate essential fields
+    const essentialFields = ['name', 'price', 'categoryId'];
+    const isValid = await trigger(essentialFields);
+    
+    console.log('Validation result:', isValid);
+    console.log('Form errors:', errors);
+    console.log('Processed form data:', cleanedData);
+    
+    if (isValid) {
+      console.log('Submitting cleaned form data:', cleanedData);
+      await onSubmit(cleanedData as any);
+    } else {
+      console.log('Validation failed, switching to Basic Info tab');
+      // Switch to Basic Info tab if validation fails
+      setActiveTab('basic');
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -194,6 +351,42 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     setPreviewImages(newImages);
   };
 
+  const handleOgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setOgImagePreview(result);
+        setValue('seo.ogImage', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeOgImage = () => {
+    setOgImagePreview('');
+    setValue('seo.ogImage', '');
+  };
+
+  const handleCanonicalUrlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setCanonicalUrlPreview(result);
+        setValue('seo.canonicalUrl', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeCanonicalUrl = () => {
+    setCanonicalUrlPreview('');
+    setValue('seo.canonicalUrl', '');
+  };
+
   const addTag = () => {
     appendTag('');
   };
@@ -208,7 +401,6 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'media', label: 'Media', icon: Camera },
     { id: 'seo', label: 'SEO', icon: Search },
-    { id: 'shipping', label: 'Shipping', icon: Truck },
     { id: 'advanced', label: 'Advanced', icon: Settings },
   ];
 
@@ -237,10 +429,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-black custom-font">
                 {initialData ? 'Edit Product' : 'Add New Product'}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-black mt-1 custom-font">
                 {initialData ? 'Update product information' : 'Create a new product for your store'}
               </p>
             </div>
@@ -255,13 +447,13 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                    className={`flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors custom-font ${
                       activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600 bg-blue-50'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-blue-500 text-black bg-blue-50'
+                        : 'border-transparent text-black hover:text-black hover:border-gray-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    <Icon className="w-5 h-5 mr-2" />
                     {tab.label}
                   </button>
                 );
@@ -270,7 +462,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
           </div>
 
           {/* Form Content */}
-          <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto">
+          <form onSubmit={handleCustomSubmit} className="flex-1 overflow-y-auto">
             <div className="p-6 max-h-[60vh] overflow-y-auto">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -285,7 +477,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             Product Name *
                           </label>
                           <Controller
@@ -295,18 +487,18 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               <input
                                 {...field}
                                 type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                 placeholder="Enter product name"
                               />
                             )}
                           />
                           {errors.name && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.name.message)}</p>
+                            <p className="text-red-500 text-sm mt-1 custom-font">{String(errors.name.message)}</p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             SKU *
                           </label>
                           <Controller
@@ -316,7 +508,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               <input
                                 {...field}
                                 type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                 placeholder="Enter SKU"
                               />
                             )}
@@ -328,7 +520,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2 custom-font">
                           Short Description *
                         </label>
                         <Controller
@@ -338,7 +530,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             <textarea
                               {...field}
                               rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                               placeholder="Brief product description"
                             />
                           )}
@@ -349,18 +541,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2 custom-font">
                           Full Description *
                         </label>
                         <Controller
                           name="description"
                           control={control}
                           render={({ field }) => (
-                            <textarea
-                              {...field}
-                              rows={6}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                            <RichTextEditor
+                              value={field.value || ''}
+                              onChange={field.onChange}
                               placeholder="Detailed product description"
+                              height={400}
+                              className="rounded-lg border border-gray-300"
                             />
                           )}
                         />
@@ -371,7 +564,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             Category *
                           </label>
                           <Controller
@@ -380,13 +573,20 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             render={({ field }) => (
                               <select
                                 {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                               >
                                 <option value="">Select Category</option>
                                 {mainCategories.map(category => (
-                                  <option key={category.id} value={category.id}>
-                                    {category.name}
-                                  </option>
+                                  <optgroup key={category.id} label={category.name}>
+                                    <option value={category.id}>
+                                      {category.name} {category._count && `(${category._count.products} products)`}
+                                    </option>
+                                    {category.children?.map((subcategory) => (
+                                      <option key={subcategory.id} value={subcategory.id}>
+                                        └─ {subcategory.name} {subcategory._count && `(${subcategory._count.products} products)`}
+                                      </option>
+                                    ))}
+                                  </optgroup>
                                 ))}
                               </select>
                             )}
@@ -397,29 +597,74 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2">
+                            Sub-Category
+                          </label>
+                          <Controller
+                            name="subCategoryId"
+                            control={control}
+                            render={({ field }) => {
+                              const selectedCategoryId = watch('categoryId');
+                              const subCategories = selectedCategoryId 
+                                ? categories.find(cat => cat.id === selectedCategoryId)?.children || []
+                                : [];
+                              
+                              return (
+                                <select
+                                  {...field}
+                                  disabled={!selectedCategoryId}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                  <option value="">
+                                    {selectedCategoryId ? 'Select Sub-Category' : 'Select a category first'}
+                                  </option>
+                                  {subCategories.map((subCategory) => (
+                                    <option key={subCategory.id} value={subCategory.id}>
+                                      {subCategory.name} {subCategory._count && `(${subCategory._count.products} products)`}
+                                    </option>
+                                  ))}
+                                </select>
+                              );
+                            }}
+                          />
+                          {errors.subCategoryId && (
+                            <p className="text-red-500 text-sm mt-1">{String(errors.subCategoryId.message)}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             Brand
                           </label>
                           <Controller
-                            name="brand"
+                            name="brandId"
                             control={control}
                             render={({ field }) => (
-                              <input
+                              <select
                                 {...field}
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                placeholder="Enter brand name"
-                              />
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
+                              >
+                                <option value="">Select Brand</option>
+                                {brands
+                                  .sort((a, b) => a.name.localeCompare(b.name))
+                                  .map((brand) => (
+                                    <option key={brand.id} value={brand.id}>
+                                      {brand.name} {brand.website && `(${brand.website})`}
+                                    </option>
+                                  ))}
+                              </select>
                             )}
                           />
-                          {errors.brand && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.brand.message)}</p>
+                          {errors.brandId && (
+                            <p className="text-red-500 text-sm mt-1">{String(errors.brandId.message)}</p>
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2">
                           Tags
                         </label>
                         <div className="space-y-2">
@@ -432,7 +677,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   <input
                                     {...field}
                                     type="text"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black"
                                     placeholder="Enter tag"
                                   />
                                 )}
@@ -442,7 +687,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 onClick={() => removeTag(index)}
                                 className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-5 h-5" />
                               </button>
                             </div>
                           ))}
@@ -451,10 +696,110 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             onClick={addTag}
                             className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            <Plus className="w-5 h-5 mr-1" />
                             Add Tag
                           </button>
                         </div>
+                      </div>
+
+                      {/* Custom Sections (moved to Step 1 - Basic Info) */}
+                      <div className="border-t pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-medium text-black custom-font">Custom Sections</h3>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: '', label: '', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              Add Section
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'ingredients', label: 'Ingredients', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              + Ingredients
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'disclaimer', label: 'Disclaimer', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              + Disclaimer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'materialsCare', label: 'Materials & Care', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              + Materials & Care
+                            </button>
+                    </div>
+                        </div>
+
+                        {customFieldFields.length === 0 ? (
+                          <p className="text-sm text-black custom-font">No custom sections added yet.</p>
+                        ) : (
+                          <div className="space-y-4">
+                            {customFieldFields.map((field, index) => (
+                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="text-sm font-medium text-black custom-font">Section {index + 1}</h4>
+                                  <button type="button" onClick={() => removeCustomField(index)} className="text-red-600 hover:text-red-700 p-1">
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Key</label>
+                                    <Controller
+                                      name={`customFields.${index}.key`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="e.g., ingredients, disclaimer, materialsCare" />
+                                      )}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Label</label>
+                                    <Controller
+                                      name={`customFields.${index}.label`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="Display title" />
+                                      )}
+                                    />
+                                  </div>
+                                  <div className="flex items-center mt-6">
+                                    <Controller
+                                      name={`customFields.${index}.isVisible`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <label className="flex items-center">
+                                          <input {...field} type="checkbox" checked={field.value ?? true} className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+                                          <span className="ml-2 text-sm text-black custom-font">Visible</span>
+                                        </label>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="mt-3">
+                                  <label className="block text-sm font-medium text-black mb-1 custom-font">Content</label>
+                                  <Controller
+                                    name={`customFields.${index}.content`}
+                                    control={control}
+                                    render={({ field }) => (
+                                      <RichTextEditor value={field.value || ''} onChange={field.onChange} placeholder="Enter section content" height={200} className="rounded-lg border border-gray-300" />
+                                    )}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -462,199 +807,358 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   {/* Pricing Tab */}
                   {activeTab === 'pricing' && (
                     <div className="space-y-6">
-                      {/* Basic Pricing */}
+                      {/* Multi-Currency Pricing */}
                       <div>
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
-                          Basic Pricing
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex items-center justify-between mb-4">
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <DollarSign className="w-4 h-4 mr-2 text-blue-600" />
-                              Selling Price (NPR) *
+                            <h3 className="flex items-center text-lg font-medium text-black custom-font">
+                              <Globe className="w-6 h-6 mr-2 text-blue-600" />
+                              International Pricing
+                        </h3>
+                            <p className="text-sm text-black mt-1 custom-font">
+                              Set different prices and delivery days for different countries
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => appendCurrencyPrice({ 
+                              country: '', 
+                              price: 0, 
+                              comparePrice: 0, 
+                              minDeliveryDays: 1,
+                              maxDeliveryDays: 1,
+                              isActive: true 
+                            })}
+                            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                          >
+                            <Plus className="w-5 h-5 mr-1" />
+                            Add Country Price
+                          </button>
+                        </div>
+                        
+                        {currencyPriceFields.length > 0 ? (
+                          <div className="space-y-4">
+                            {currencyPriceFields.map((field, index) => (
+                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h4 className="text-sm font-medium text-black custom-font">Country Pricing {index + 1}</h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCurrencyPrice(index)}
+                                    className="text-red-600 hover:text-red-700 p-1"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                          <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
+                                      Country *
                             </label>
                             <Controller
-                              name="price"
+                                      name={`currencyPrices.${index}.country`}
                               control={control}
                               render={({ field }) => (
-                                <input
+                                        <select
                                   {...field}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
+                                        >
+                                          <option value="">Select Country</option>
+                                          <option value="Australia">Australia</option>
+                                          <option value="USA">United States</option>
+                                          <option value="UK">United Kingdom</option>
+                                          <option value="Canada">Canada</option>
+                                          <option value="India">India</option>
+                                          <option value="China">China</option>
+                                          <option value="Japan">Japan</option>
+                                          <option value="Singapore">Singapore</option>
+                                          <option value="UAE">UAE</option>
+                                          <option value="Europe">Europe</option>
+                                          <option value="Nepal">Nepal</option>
+                                          <option value="Bangladesh">Bangladesh</option>
+                                          <option value="Pakistan">Pakistan</option>
+                                          <option value="Sri Lanka">Sri Lanka</option>
+                                        </select>
+                                      )}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
+                                      Price *
+                                    </label>
+                                    <Controller
+                                      name={`currencyPrices.${index}.price`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <input
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          value={field.value ?? ''}
+                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                   placeholder="0.00"
                                 />
                               )}
                             />
-                            {errors.price && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.price.message)}</p>
-                            )}
                           </div>
 
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <DollarSign className="w-4 h-4 mr-2 text-blue-600" />
-                              Compare Price (NPR)
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
+                                      Compare Price
                             </label>
                             <Controller
-                              name="comparePrice"
+                                      name={`currencyPrices.${index}.comparePrice`}
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          value={field.value ?? ''}
+                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                   placeholder="0.00"
                                 />
                               )}
                             />
-                            {errors.comparePrice && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.comparePrice.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Original price before discount (for showing strikethrough)
-                            </p>
+                      </div>
+
+                          <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
+                                      Min Delivery Days *
+                            </label>
+                            <Controller
+                                      name={`currencyPrices.${index}.minDeliveryDays`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  type="number"
+                                          min="1"
+                                          value={field.value ?? ''}
+                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
+                                          placeholder="e.g., 3"
+                                />
+                              )}
+                            />
                           </div>
+
+                          <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
+                                      Max Delivery Days *
+                            </label>
+                            <Controller
+                                      name={`currencyPrices.${index}.maxDeliveryDays`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  type="number"
+                                          min="1"
+                                          value={field.value ?? ''}
+                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
+                                          placeholder="e.g., 7"
+                                />
+                              )}
+                            />
                         </div>
                       </div>
 
-                      {/* Cost & Margin */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Calculator className="w-5 h-5 mr-2 text-blue-600" />
-                          Cost & Margin
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Calculator className="w-4 h-4 mr-2 text-blue-600" />
-                              Cost Price (NPR)
-                            </label>
+                                <div className="mt-3 flex items-center">
                             <Controller
-                              name="costPrice"
+                                    name={`currencyPrices.${index}.isActive`}
                               control={control}
                               render={({ field }) => (
+                                      <label className="flex items-center">
                                 <input
                                   {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                            {errors.costPrice && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.costPrice.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Your cost to acquire/manufacture this product
-                            </p>
+                                          type="checkbox"
+                                          checked={field.value}
+                                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <span className="ml-2 text-sm text-black custom-font">Active country pricing</span>
+                                      </label>
+                                    )}
+                                  />
+                                </div>
+                              </div>
+                            ))}
                           </div>
-
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Percent className="w-4 h-4 mr-2 text-blue-600" />
-                              Margin (NPR)
-                            </label>
-                            <Controller
-                              name="margin"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                            {errors.margin && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.margin.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Profit margin (selling price - cost price)
-                            </p>
+                        ) : (
+                          <div className="text-center py-8 text-black bg-gray-50 rounded-lg">
+                            <Globe className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p className="text-sm custom-font">No international pricing added yet</p>
+                            <p className="text-xs text-black custom-font">Add prices and delivery days for different countries</p>
                           </div>
-                        </div>
+                        )}
                       </div>
 
-                      {/* Discount Pricing */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Percent className="w-5 h-5 mr-2 text-blue-600" />
-                          Discount Pricing
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <DollarSign className="w-4 h-4 mr-2 text-blue-600" />
-                              Discount Price (NPR)
-                            </label>
-                            <Controller
-                              name="discountPrice"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                            {errors.discountPrice && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.discountPrice.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Special discounted price for promotions
-                            </p>
-                          </div>
-
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Percent className="w-4 h-4 mr-2 text-blue-600" />
-                              Discount Percentage (%)
-                            </label>
-                            <Controller
-                              name="discountPercentage"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="100"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                            {errors.discountPercentage && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.discountPercentage.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Discount percentage (0-100%)
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Variant Pricing */}
+                      {/* Color & Size Variants (for Clothing) */}
                       <div className="border-t pt-6">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="flex items-center text-lg font-medium text-gray-900">
-                            <Package className="w-5 h-5 mr-2 text-blue-600" />
-                            Variant Pricing
+                          <div>
+                            <h3 className="flex items-center text-lg font-medium text-black custom-font">
+                              <Package className="w-6 h-6 mr-2 text-blue-600" />
+                              Color & Size Variants
+                            </h3>
+                            <p className="text-sm text-black mt-1 custom-font">
+                              Add color and size options for clothing products
+                            </p>
+                          </div>
+                          </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          {/* Color Variants */}
+                          <div>
+                            <label className="block text-sm font-medium text-black mb-2 custom-font">
+                              Colors *
+                            </label>
+                            <div className="space-y-2">
+                              {variantFields
+                                .filter((_, idx) => watch(`variants.${idx}.name`) === 'Color')
+                                .map((field, idx) => {
+                                  const actualIndex = variantFields.findIndex((f, i) => watch(`variants.${i}.name`) === 'Color' && idx === variantFields.slice(0, i + 1).filter((_, j) => watch(`variants.${j}.name`) === 'Color').length - 1);
+                                  if (actualIndex === -1) return null;
+                                  return (
+                                    <div key={field.id} className="flex items-center gap-2">
+                            <Controller
+                                        name={`variants.${actualIndex}.value`}
+                              control={control}
+                                        render={({ field: colorField }) => (
+                                <input
+                                            {...colorField}
+                                            type="text"
+                                            placeholder="Color name (e.g., Red, Blue)"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font"
+                                />
+                              )}
+                            />
+                                      <input
+                                        type="color"
+                                        className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                                        onChange={(e) => {
+                                          const colorName = watch(`variants.${actualIndex}.value`) || e.target.value;
+                                          setValue(`variants.${actualIndex}.value`, colorName);
+                                        }}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeVariant(actualIndex)}
+                                        className="text-red-600 hover:text-red-700 p-1"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              <button
+                                type="button"
+                                onClick={() => appendVariant({ 
+                                  name: 'Color', 
+                                  value: '', 
+                                  price: 0, 
+                                  comparePrice: 0, 
+                                  costPrice: 0, 
+                                  sku: '',
+                                  weight: 0,
+                                  isActive: true 
+                                })}
+                                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors custom-font"
+                              >
+                                <Plus className="w-4 h-4 inline mr-1" />
+                                Add Color
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Size Variants */}
+                          <div>
+                            <label className="block text-sm font-medium text-black mb-2 custom-font">
+                              Sizes *
+                            </label>
+                            <div className="space-y-2">
+                              {variantFields
+                                .filter((_, idx) => watch(`variants.${idx}.name`) === 'Size')
+                                .map((field, idx) => {
+                                  const actualIndex = variantFields.findIndex((f, i) => watch(`variants.${i}.name`) === 'Size' && idx === variantFields.slice(0, i + 1).filter((_, j) => watch(`variants.${j}.name`) === 'Size').length - 1);
+                                  if (actualIndex === -1) return null;
+                                  return (
+                                    <div key={field.id} className="flex items-center gap-2">
+                                      <Controller
+                                        name={`variants.${actualIndex}.value`}
+                                        control={control}
+                                        render={({ field: sizeField }) => (
+                                          <select
+                                            {...sizeField}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font"
+                                          >
+                                            <option value="">Select Size</option>
+                                            <option value="XS">XS - Extra Small</option>
+                                            <option value="S">S - Small</option>
+                                            <option value="M">M - Medium</option>
+                                            <option value="L">L - Large</option>
+                                            <option value="XL">XL - Extra Large</option>
+                                            <option value="XXL">XXL - Extra Extra Large</option>
+                                            <option value="XXXL">XXXL - Extra Extra Extra Large</option>
+                                          </select>
+                                        )}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeVariant(actualIndex)}
+                                        className="text-red-600 hover:text-red-700 p-1"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              <button
+                                type="button"
+                                onClick={() => appendVariant({ 
+                                  name: 'Size', 
+                                  value: '', 
+                                  price: 0, 
+                                  comparePrice: 0, 
+                                  costPrice: 0, 
+                                  sku: '',
+                                  weight: 0,
+                                  isActive: true 
+                                })}
+                                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors custom-font"
+                              >
+                                <Plus className="w-4 h-4 inline mr-1" />
+                                Add Size
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Color & Size Combinations with Pricing */}
+                        {(variantFields.some((_, idx) => watch(`variants.${idx}.name`) === 'Color') && 
+                          variantFields.some((_, idx) => watch(`variants.${idx}.name`) === 'Size')) && (
+                          <div className="mt-6">
+                            <h4 className="text-sm font-medium text-black mb-3 custom-font">
+                              Color & Size Combinations
+                            </h4>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <p className="text-sm text-blue-800 custom-font">
+                                Price combinations will be created automatically. Each color-size combination can have its own price, SKU, and stock.
+                            </p>
+                          </div>
+                        </div>
+                        )}
+                      </div>
+
+                      {/* Generic Variant Pricing */}
+                      <div className="border-t pt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="flex items-center text-lg font-medium text-black custom-font">
+                            <Package className="w-6 h-6 mr-2 text-blue-600" />
+                            Generic Variant Pricing
                           </h3>
                           <button
                             type="button"
@@ -667,9 +1171,9 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               weight: 0,
                               isActive: true 
                             })}
-                            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            <Plus className="w-5 h-5 mr-1" />
                             Add Variant
                           </button>
                         </div>
@@ -679,19 +1183,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             {variantFields.map((field, index) => (
                               <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                 <div className="flex items-center justify-between mb-4">
-                                  <h4 className="text-sm font-medium text-gray-700">Variant {index + 1}</h4>
+                                  <h4 className="text-sm font-medium text-black custom-font">Variant {index + 1}</h4>
                                   <button
                                     type="button"
                                     onClick={() => removeVariant(index)}
                                     className="text-red-600 hover:text-red-700 p-1"
                                   >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-5 h-5" />
                                   </button>
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       Variant Name *
                                     </label>
                                     <Controller
@@ -701,7 +1205,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                         <input
                                           {...field}
                                           type="text"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="e.g., 500gm, 1kg, 2kg"
                                         />
                                       )}
@@ -709,7 +1213,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       Price (NPR) *
                                     </label>
                                     <Controller
@@ -721,7 +1225,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                           type="number"
                                           step="0.01"
                                           min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="0.00"
                                         />
                                       )}
@@ -729,7 +1233,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       Compare Price (NPR)
                                     </label>
                                     <Controller
@@ -741,7 +1245,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                           type="number"
                                           step="0.01"
                                           min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="0.00"
                                         />
                                       )}
@@ -749,7 +1253,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       Cost Price (NPR)
                                     </label>
                                     <Controller
@@ -761,7 +1265,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                           type="number"
                                           step="0.01"
                                           min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="0.00"
                                         />
                                       )}
@@ -769,7 +1273,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       SKU
                                     </label>
                                     <Controller
@@ -779,7 +1283,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                         <input
                                           {...field}
                                           type="text"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="Variant SKU"
                                         />
                                       )}
@@ -787,7 +1291,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
                                       Weight (kg)
                                     </label>
                                     <Controller
@@ -799,7 +1303,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                           type="number"
                                           step="0.01"
                                           min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                           placeholder="0.00"
                                         />
                                       )}
@@ -818,7 +1322,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                           type="checkbox"
                                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                         />
-                                        <span className="ml-2 text-sm text-gray-700">Active variant</span>
+                                        <span className="ml-2 text-sm text-black custom-font">Active variant</span>
                                       </label>
                                     )}
                                   />
@@ -827,24 +1331,24 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-8 text-gray-500">
+                          <div className="text-center py-8 text-black">
                             <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p className="text-sm">No variants added yet</p>
-                            <p className="text-xs text-gray-400">Add variants to offer different sizes or quantities</p>
+                            <p className="text-sm custom-font">No variants added yet</p>
+                            <p className="text-xs text-black custom-font">Add variants to offer different sizes or quantities</p>
                           </div>
                         )}
                       </div>
 
                       {/* Order Quantity Limits */}
                       <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <ShoppingCart className="w-5 h-5 mr-2 text-blue-600" />
+                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
+                          <ShoppingCart className="w-6 h-6 mr-2 text-blue-600" />
                           Order Quantity Limits
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Minus className="w-4 h-4 mr-2 text-blue-600" />
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <Minus className="w-5 h-5 mr-2 text-blue-600" />
                               Minimum Order Quantity
                             </label>
                             <Controller
@@ -852,10 +1356,11 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   min="1"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                   placeholder="1"
                                 />
                               )}
@@ -863,14 +1368,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             {errors.minOrderQuantity && (
                               <p className="text-red-500 text-sm mt-1">{String(errors.minOrderQuantity.message)}</p>
                             )}
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-black mt-1 custom-font">
                               Minimum quantity customers must order
                             </p>
                           </div>
 
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Plus className="w-4 h-4 mr-2 text-blue-600" />
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <Plus className="w-5 h-5 mr-2 text-blue-600" />
                               Maximum Order Quantity
                             </label>
                             <Controller
@@ -878,10 +1383,11 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   min="1"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
                                   placeholder="999"
                                 />
                               )}
@@ -889,14 +1395,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             {errors.maxOrderQuantity && (
                               <p className="text-red-500 text-sm mt-1">{String(errors.maxOrderQuantity.message)}</p>
                             )}
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-black mt-1 custom-font">
                               Maximum quantity customers can order
                             </p>
                           </div>
                         </div>
                       </div>
 
-                    </div>
+                          </div>
                   )}
 
                   {/* Inventory Tab */}
@@ -904,7 +1410,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             Stock Quantity *
                           </label>
                           <Controller
@@ -912,21 +1418,22 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             control={control}
                             render={({ field }) => (
                               <input
-                                {...field}
                                 type="number"
                                 min="0"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="0"
                               />
                             )}
                           />
                           {errors.stock && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.stock.message)}</p>
+                            <p className="text-red-500 text-sm mt-1 custom-font">{String(errors.stock.message)}</p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-black mb-2 custom-font">
                             Weight (kg)
                           </label>
                           <Controller
@@ -934,11 +1441,12 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             control={control}
                             render={({ field }) => (
                               <input
-                                {...field}
                                 type="number"
                                 step="0.01"
                                 min="0"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="0.00"
                               />
                             )}
@@ -950,10 +1458,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       </div>
 
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Dimensions (cm)</h3>
+                        <h3 className="text-lg font-medium text-black mb-4 custom-font">Dimensions (cm)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-black mb-2 custom-font">
                               Length
                             </label>
                             <Controller
@@ -961,18 +1469,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                   placeholder="0.00"
                                 />
                               )}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-black mb-2 custom-font">
                               Width
                             </label>
                             <Controller
@@ -980,18 +1489,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                   placeholder="0.00"
                                 />
                               )}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-black mb-2 custom-font">
                               Height
                             </label>
                             <Controller
@@ -999,11 +1509,12 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               control={control}
                               render={({ field }) => (
                                 <input
-                                  {...field}
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  value={field.value ?? ''}
+                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                   placeholder="0.00"
                                 />
                               )}
@@ -1018,7 +1529,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   {activeTab === 'media' && (
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2 custom-font">
                           Product Images *
                         </label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -1038,7 +1549,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onClick={() => removeImage(index)}
                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-5 h-5" />
                                   </button>
                                 </div>
                               ))}
@@ -1046,7 +1557,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                           ) : (
                             <div className="space-y-4">
                               <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-                              <p className="text-gray-500">Upload product images</p>
+                              <p className="text-black custom-font">Upload product images</p>
                             </div>
                           )}
                           <input
@@ -1059,7 +1570,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                           />
                           <label
                             htmlFor="image-upload"
-                            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
+                            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font"
                           >
                             Choose Images
                           </label>
@@ -1076,8 +1587,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     <div className="space-y-6">
                       {/* Slug Field */}
                       <div>
-                        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                          <Link className="w-4 h-4 mr-2 text-blue-600" />
+                        <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                          <Link className="w-5 h-5 mr-2 text-blue-600" />
                           URL Slug *
                         </label>
                         <Controller
@@ -1088,10 +1599,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               <input
                                 {...field}
                                 type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="product-url-slug"
                               />
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-black mt-1 custom-font">
                                 URL-friendly version of the product name. Only lowercase letters, numbers, and hyphens allowed.
                               </p>
                             </div>
@@ -1104,8 +1615,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* SEO Title */}
                       <div>
-                        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                          <Search className="w-4 h-4 mr-2 text-blue-600" />
+                        <label className="flex items-center text-sm font-medium text-black mb-2">
+                          <Search className="w-5 h-5 mr-2 text-blue-600" />
                           SEO Title
                         </label>
                         <Controller
@@ -1117,10 +1628,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 {...field}
                                 type="text"
                                 maxLength={60}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="SEO optimized title"
                               />
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-black mt-1 custom-font">
                                 {field.value?.length || 0}/60 characters. Recommended: 50-60 characters for optimal search results display.
                               </p>
                             </div>
@@ -1133,8 +1644,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* SEO Description */}
                       <div>
-                        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                          <Hash className="w-4 h-4 mr-2 text-blue-600" />
+                        <label className="flex items-center text-sm font-medium text-black mb-2">
+                          <Hash className="w-5 h-5 mr-2 text-blue-600" />
                           Meta Description
                         </label>
                         <Controller
@@ -1146,10 +1657,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 {...field}
                                 rows={3}
                                 maxLength={160}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="SEO optimized description that appears in search results"
                               />
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-black mt-1 custom-font">
                                 {field.value?.length || 0}/160 characters. Recommended: 150-160 characters for optimal search results display.
                               </p>
                             </div>
@@ -1162,8 +1673,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* SEO Keywords */}
                       <div>
-                        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                          <Hash className="w-4 h-4 mr-2 text-blue-600" />
+                        <label className="flex items-center text-sm font-medium text-black mb-2">
+                          <Hash className="w-5 h-5 mr-2 text-blue-600" />
                           Meta Keywords
                         </label>
                         <div className="space-y-2">
@@ -1176,7 +1687,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   <input
                                     {...field}
                                     type="text"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                     placeholder="Enter keyword"
                                   />
                                 )}
@@ -1186,19 +1697,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 onClick={() => removeKeyword(index)}
                                 className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-5 h-5" />
                               </button>
                             </div>
                           ))}
                           <button
                             type="button"
                             onClick={addKeyword}
-                            className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors custom-font"
                           >
-                            <Plus className="w-4 h-4 mr-1" />
+                            <Plus className="w-5 h-5 mr-1" />
                             Add Keyword
                           </button>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-black custom-font">
                             Add relevant keywords that describe your product. Maximum 10 keywords recommended.
                           </p>
                         </div>
@@ -1206,15 +1717,15 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* Open Graph Fields */}
                       <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
+                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
                           <Globe className="w-5 h-5 mr-2 text-blue-600" />
                           Open Graph (Social Media)
                         </h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Search className="w-4 h-4 mr-2 text-blue-600" />
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <Search className="w-5 h-5 mr-2 text-blue-600" />
                               OG Title
                             </label>
                             <Controller
@@ -1225,7 +1736,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   {...field}
                                   type="text"
                                   maxLength={60}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                   placeholder="Title for social media sharing"
                                 />
                               )}
@@ -1233,28 +1744,55 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                           </div>
 
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <ImageIcon className="w-4 h-4 mr-2 text-blue-600" />
-                              OG Image URL
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <ImageIcon className="w-5 h-5 mr-2 text-blue-600" />
+                              OG Image
                             </label>
-                            <Controller
-                              name="seo.ogImage"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="url"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="https://example.com/image.jpg"
-                                />
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              {ogImagePreview ? (
+                                <div className="relative group">
+                                  <Image
+                                    src={ogImagePreview}
+                                    alt="OG Image Preview"
+                                    width={300}
+                                    height={300}
+                                    className="w-full h-48 object-cover rounded-lg"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={removeOgImage}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="text-center py-6">
+                                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-black custom-font text-sm mb-2">Upload OG Image</p>
+                                  <p className="text-xs text-black custom-font">Recommended: 1200x630px</p>
+                                </div>
                               )}
-                            />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleOgImageUpload}
+                                className="hidden"
+                                id="og-image-upload"
+                              />
+                              <label
+                                htmlFor="og-image-upload"
+                                className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font text-sm"
+                              >
+                                {ogImagePreview ? 'Change Image' : 'Choose Image'}
+                              </label>
+                            </div>
                           </div>
                         </div>
 
                         <div className="mt-4">
-                          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                            <Hash className="w-4 h-4 mr-2 text-blue-600" />
+                          <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                            <Hash className="w-5 h-5 mr-2 text-blue-600" />
                             OG Description
                           </label>
                           <Controller
@@ -1265,7 +1803,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 {...field}
                                 rows={2}
                                 maxLength={160}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                 placeholder="Description for social media sharing"
                               />
                             )}
@@ -1275,34 +1813,61 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* Additional SEO Fields */}
                       <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Target className="w-5 h-5 mr-2 text-blue-600" />
+                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
+                          <Target className="w-6 h-6 mr-2 text-blue-600" />
                           Additional SEO
                         </h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <ExternalLink className="w-4 h-4 mr-2 text-blue-600" />
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <ExternalLink className="w-5 h-5 mr-2 text-blue-600" />
                               Canonical URL
                             </label>
-                            <Controller
-                              name="seo.canonicalUrl"
-                              control={control}
-                              render={({ field }) => (
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                              {canonicalUrlPreview ? (
+                                <div className="relative group">
+                                  <Image
+                                    src={canonicalUrlPreview}
+                                    alt="Canonical URL Preview"
+                                    width={300}
+                                    height={300}
+                                    className="w-full h-48 object-cover rounded-lg"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={removeCanonicalUrl}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                          </div>
+                              ) : (
+                                <div className="text-center py-6">
+                                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-black custom-font text-sm mb-2">Upload Canonical URL Image</p>
+                                  <p className="text-xs text-black custom-font">Recommended: 1200x630px</p>
+                    </div>
+                  )}
                                 <input
-                                  {...field}
-                                  type="url"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="https://example.com/product-page"
-                                />
-                              )}
-                            />
+                                type="file"
+                                accept="image/*"
+                                onChange={handleCanonicalUrlUpload}
+                                className="hidden"
+                                id="canonical-url-upload"
+                              />
+                              <label
+                                htmlFor="canonical-url-upload"
+                                className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font text-sm"
+                              >
+                                {canonicalUrlPreview ? 'Change Image' : 'Choose Image'}
+                            </label>
+                        </div>
                           </div>
 
                           <div>
-                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                              <Target className="w-4 h-4 mr-2 text-blue-600" />
+                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
+                              <Target className="w-5 h-5 mr-2 text-blue-600" />
                               Focus Keyword
                             </label>
                             <Controller
@@ -1312,7 +1877,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                 <input
                                   {...field}
                                   type="text"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                                   placeholder="Primary keyword for this product"
                                 />
                               )}
@@ -1323,275 +1888,104 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     </div>
                   )}
 
-                  {/* Shipping Tab */}
-                  {activeTab === 'shipping' && (
-                    <div className="space-y-6">
-                      {/* Shipping Information */}
-                      <div>
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Truck className="w-5 h-5 mr-2 text-blue-600" />
-                          Shipping Information
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Country *
-                            </label>
-                            <Controller
-                              name="shippingCountry"
-                              control={control}
-                              render={({ field }) => (
-                                <select
-                                  {...field}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                >
-                                  <option value="">Select Country</option>
-                                  <option value="Nepal">Nepal</option>
-                                  <option value="India">India</option>
-                                  <option value="Bangladesh">Bangladesh</option>
-                                  <option value="Pakistan">Pakistan</option>
-                                  <option value="Sri Lanka">Sri Lanka</option>
-                                  <option value="Bhutan">Bhutan</option>
-                                  <option value="Maldives">Maldives</option>
-                                  <option value="Afghanistan">Afghanistan</option>
-                                  <option value="China">China</option>
-                                  <option value="USA">USA</option>
-                                  <option value="UK">UK</option>
-                                  <option value="Canada">Canada</option>
-                                  <option value="Australia">Australia</option>
-                                  <option value="Germany">Germany</option>
-                                  <option value="France">France</option>
-                                  <option value="Japan">Japan</option>
-                                  <option value="South Korea">South Korea</option>
-                                  <option value="Singapore">Singapore</option>
-                                  <option value="Thailand">Thailand</option>
-                                  <option value="Malaysia">Malaysia</option>
-                                  <option value="Indonesia">Indonesia</option>
-                                  <option value="Philippines">Philippines</option>
-                                  <option value="Vietnam">Vietnam</option>
-                                  <option value="Other">Other</option>
-                                </select>
-                              )}
-                            />
-                            {errors.shippingCountry && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.shippingCountry.message)}</p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Delivery Charge (NPR) *
-                            </label>
-                            <Controller
-                              name="deliveryCharge"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                            {errors.deliveryCharge && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.deliveryCharge.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Shipping cost for this product
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Delivery Time */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Clock className="w-5 h-5 mr-2 text-blue-600" />
-                          Delivery Time
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Minimum Delivery Days *
-                            </label>
-                            <Controller
-                              name="minDeliveryDays"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  min="1"
-                                  max="30"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="3"
-                                />
-                              )}
-                            />
-                            {errors.minDeliveryDays && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.minDeliveryDays.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Minimum days for delivery
-                            </p>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Maximum Delivery Days *
-                            </label>
-                            <Controller
-                              name="maxDeliveryDays"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="number"
-                                  min="1"
-                                  max="30"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                  placeholder="7"
-                                />
-                              )}
-                            />
-                            {errors.maxDeliveryDays && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.maxDeliveryDays.message)}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Maximum days for delivery
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div className="flex items-center">
-                              <Clock className="w-5 h-5 text-blue-600 mr-2" />
-                              <span className="text-sm font-medium text-blue-800">
-                                Delivery Time Display: 
-                                <span className="ml-2 text-blue-600">
-                                  {watch('minDeliveryDays') || 3} - {watch('maxDeliveryDays') || 7} days
-                                </span>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Shipping Options */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
-                          <Package className="w-5 h-5 mr-2 text-blue-600" />
-                          Shipping Options
-                        </h3>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Free Shipping Threshold (NPR)
-                              </label>
-                              <Controller
-                                name="freeShippingThreshold"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                    placeholder="0.00"
-                                  />
-                                )}
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Minimum order amount for free shipping
-                              </p>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Weight (kg)
-                              </label>
-                              <Controller
-                                name="shippingWeight"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                                    placeholder="0.00"
-                                  />
-                                )}
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Product weight for shipping calculation
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <Controller
-                              name="requiresShipping"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Requires Shipping</span>
-                                </label>
-                              )}
-                            />
-                            <Controller
-                              name="isFragile"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Fragile Item (Handle with Care)</span>
-                                </label>
-                              )}
-                            />
-                            <Controller
-                              name="isHazardous"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Hazardous Material</span>
-                                </label>
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Status and Advanced Options */}
                   {activeTab === 'advanced' && (
                     <div className="space-y-6">
+                      {/* Custom Sections */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-medium text-black custom-font">Custom Sections</h3>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'ingredients', label: 'Ingredients', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              Add Ingredients
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'disclaimer', label: 'Disclaimer', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              Add Disclaimer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => appendCustomField({ key: 'materialsCare', label: 'Materials & Care', content: '', isVisible: true })}
+                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
+                            >
+                              Add Materials & Care
+                            </button>
+                        </div>
+                      </div>
+
+                        {customFieldFields.length === 0 ? (
+                          <p className="text-sm text-black custom-font">No custom sections added yet.</p>
+                        ) : (
+                          <div className="space-y-4">
+                            {customFieldFields.map((field, index) => (
+                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="text-sm font-medium text-black custom-font">Section {index + 1}</h4>
+                                  <button type="button" onClick={() => removeCustomField(index)} className="text-red-600 hover:text-red-700 p-1">
+                                    <X className="w-5 h-5" />
+                                  </button>
+                          </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Key</label>
+                            <Controller
+                                      name={`customFields.${index}.key`}
+                              control={control}
+                              render={({ field }) => (
+                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="ingredients | disclaimer | materialsCare" />
+                                      )}
+                                    />
+                          </div>
+                            <div>
+                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Label</label>
+                              <Controller
+                                      name={`customFields.${index}.label`}
+                                control={control}
+                                render={({ field }) => (
+                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="Display title" />
+                                      )}
+                                    />
+                            </div>
+                                  <div className="flex items-center mt-6">
+                              <Controller
+                                      name={`customFields.${index}.isVisible`}
+                                control={control}
+                                render={({ field }) => (
+                                        <label className="flex items-center">
+                                          <input {...field} type="checkbox" checked={field.value ?? true} className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+                                          <span className="ml-2 text-sm text-black custom-font">Visible</span>
+                                        </label>
+                                      )}
+                                    />
+                            </div>
+                          </div>
+
+                                <div className="mt-3">
+                                  <label className="block text-sm font-medium text-black mb-1 custom-font">Content</label>
+                            <Controller
+                                    name={`customFields.${index}.content`}
+                              control={control}
+                              render={({ field }) => (
+                                      <RichTextEditor value={field.value || ''} onChange={field.onChange} placeholder="Enter section content" height={200} className="rounded-lg border border-gray-300" />
+                              )}
+                            />
+                          </div>
+                        </div>
+                            ))}
+                    </div>
+                  )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2 custom-font">
                           Status *
                         </label>
                         <Controller
@@ -1600,7 +1994,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                           render={({ field }) => (
                             <select
                               {...field}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
                             >
                               <option value="draft">Draft</option>
                               <option value="active">Active</option>
@@ -1615,7 +2009,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-gray-900">Product Options</h3>
+                          <h3 className="text-lg font-medium text-black custom-font">Product Options</h3>
                           <div className="space-y-3">
                             <Controller
                               name="isActive"
@@ -1628,7 +2022,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onChange={field.onChange}
                                     className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-sm text-gray-700">Active</span>
+                                  <span className="text-sm text-black custom-font">Active</span>
                                 </label>
                               )}
                             />
@@ -1643,7 +2037,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onChange={field.onChange}
                                     className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-sm text-gray-700">Featured</span>
+                                  <span className="text-sm text-black custom-font">Featured</span>
                                 </label>
                               )}
                             />
@@ -1658,7 +2052,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onChange={field.onChange}
                                     className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-sm text-gray-700">Digital Product</span>
+                                  <span className="text-sm text-black custom-font">Digital Product</span>
                                 </label>
                               )}
                             />
@@ -1666,23 +2060,8 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         </div>
 
                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-gray-900">Shipping Options</h3>
+                          <h3 className="text-lg font-medium text-black custom-font">Inventory Options</h3>
                           <div className="space-y-3">
-                            <Controller
-                              name="requiresShipping"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Requires Shipping</span>
-                                </label>
-                              )}
-                            />
                             <Controller
                               name="trackQuantity"
                               control={control}
@@ -1694,7 +2073,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onChange={field.onChange}
                                     className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-sm text-gray-700">Track Quantity</span>
+                                  <span className="text-sm text-black custom-font">Track Quantity</span>
                                 </label>
                               )}
                             />
@@ -1709,7 +2088,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                     onChange={field.onChange}
                                     className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-sm text-gray-700">Allow Backorder</span>
+                                  <span className="text-sm text-black custom-font">Allow Backorder</span>
                                 </label>
                               )}
                             />
@@ -1719,7 +2098,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                       {/* Promotional Flags */}
                       <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
+                        <h3 className="flex items-center text-lg font-medium text-black mb-4">
                           <Star className="w-5 h-5 mr-2 text-blue-600" />
                           Promotional Flags
                         </h3>
@@ -1737,7 +2116,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Flame className="w-4 h-4 mr-2 text-orange-500" />
                                 Today's Best Deal
                               </label>
@@ -1755,7 +2134,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Percent className="w-4 h-4 mr-2 text-red-500" />
                                 On Sale
                               </label>
@@ -1773,7 +2152,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Gift className="w-4 h-4 mr-2 text-purple-500" />
                                 Festival Offer
                               </label>
@@ -1793,7 +2172,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Sparkles className="w-4 h-4 mr-2 text-green-500" />
                                 New Launch
                               </label>
@@ -1811,7 +2190,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Award className="w-4 h-4 mr-2 text-yellow-500" />
                                 Best Seller
                               </label>
@@ -1829,14 +2208,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                                   />
                                 )}
                               />
-                              <label className="flex items-center ml-3 text-sm font-medium text-gray-700">
+                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
                                 <Star className="w-4 h-4 mr-2 text-blue-500" />
                                 Featured Product
                               </label>
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-3">
+                        <p className="text-xs text-black mt-3 custom-font">
                           Select appropriate promotional flags to highlight your product in different sections of the store.
                         </p>
                       </div>
@@ -1852,7 +2231,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center text-sm text-gray-600 hover:text-gray-800"
+                  className="flex items-center text-sm text-black hover:text-black"
                 >
                   {showAdvanced ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
                   {showAdvanced ? 'Hide' : 'Show'} Advanced
@@ -1860,7 +2239,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex items-center text-sm text-gray-600 hover:text-gray-800"
+                  className="flex items-center text-sm text-black hover:text-black"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Close
@@ -1871,38 +2250,37 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   <button
                     type="button"
                     onClick={handlePreviousTab}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors flex items-center custom-font"
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </button>
                 )}
-                {activeTab !== 'advanced' && activeTab !== 'shipping' && (
+                {activeTab !== 'advanced' && (
                   <button
                     type="button"
                     onClick={handleNextTab}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center custom-font"
                   >
                     Next
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </button>
                 )}
-                {activeTab === 'shipping' && (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || isLoading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center"
-                  >
-                    {isSubmitting || isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        {initialData ? 'Updating...' : 'Creating...'}
-                      </>
-                    ) : (
-                      initialData ? 'Update Product' : 'Create Product'
-                    )}
-                  </button>
-                )}
+                {/* Create/Update Product button - available on all tabs */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center custom-font"
+                >
+                  {isSubmitting || isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {initialData ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    initialData ? 'Update Product' : 'Create Product'
+                  )}
+                </button>
               </div>
             </div>
           </form>

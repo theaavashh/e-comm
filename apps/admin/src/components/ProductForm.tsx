@@ -51,6 +51,16 @@ interface PricingTier {
   discount?: number;
 }
 
+interface CurrencyPrice {
+  id?: string;
+  country: string;
+  currency: string;
+  symbol: string;
+  price: number;
+  comparePrice?: number;
+  isActive?: boolean;
+}
+
 interface ProductAttribute {
   id?: string;
   name: string;
@@ -93,11 +103,7 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
     brand: initialData?.brand || '',
     tags: initialData?.tags || [],
     
-    // Pricing
-    price: initialData?.price || 0,
-    comparePrice: initialData?.comparePrice || 0,
-    costPrice: initialData?.costPrice || 0,
-    margin: initialData?.margin || 0,
+    // Pricing removed - using international pricing instead
     
     // Product Identification
     sku: initialData?.sku || '',
@@ -154,6 +160,7 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
   });
 
   const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(initialData?.pricingTiers || []);
+  const [currencyPrices, setCurrencyPrices] = useState<CurrencyPrice[]>(initialData?.currencyPrices || []);
   const [attributes, setAttributes] = useState<ProductAttribute[]>(initialData?.attributes || []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -162,6 +169,14 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
   const [newPricingTier, setNewPricingTier] = useState<PricingTier>({
     minQuantity: 1,
     price: 0,
+  });
+  const [newCurrencyPrice, setNewCurrencyPrice] = useState<CurrencyPrice>({
+    country: '',
+    currency: 'USD',
+    symbol: '$',
+    price: 0,
+    comparePrice: 0,
+    isActive: true,
   });
   const [newAttribute, setNewAttribute] = useState<ProductAttribute>({
     name: '',
@@ -173,13 +188,13 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
   });
 
   // API Base URL
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
   // Fetch categories from API
   const fetchCategories = async () => {
     try {
       setIsLoadingCategories(true);
-      const response = await fetch(`${API_BASE_URL}/v1/categories`, {
+      const response = await fetch(`${API_BASE_URL}/categories`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -242,6 +257,39 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
     }
   };
 
+  const addCurrencyPrice = () => {
+    if (newCurrencyPrice.country && newCurrencyPrice.currency && newCurrencyPrice.price) {
+      setCurrencyPrices(prev => [...prev, { ...newCurrencyPrice, id: Date.now().toString() }]);
+      setNewCurrencyPrice({
+        country: '',
+        currency: 'USD',
+        symbol: '$',
+        price: 0,
+        comparePrice: 0,
+        isActive: true,
+      });
+    }
+  };
+
+  const removeCurrencyPrice = (id: string) => {
+    setCurrencyPrices(prev => prev.filter(cp => cp.id !== id));
+  };
+
+  const currencyOptions = [
+    { country: 'United States', currency: 'USD', symbol: '$' },
+    { country: 'United Kingdom', currency: 'GBP', symbol: '£' },
+    { country: 'European Union', currency: 'EUR', symbol: '€' },
+    { country: 'Canada', currency: 'CAD', symbol: 'C$' },
+    { country: 'Australia', currency: 'AUD', symbol: 'A$' },
+    { country: 'Japan', currency: 'JPY', symbol: '¥' },
+    { country: 'India', currency: 'INR', symbol: '₹' },
+    { country: 'China', currency: 'CNY', symbol: '¥' },
+    { country: 'Nepal', currency: 'NPR', symbol: 'Rs.' },
+    { country: 'Bangladesh', currency: 'BDT', symbol: '৳' },
+    { country: 'Pakistan', currency: 'PKR', symbol: 'Rs.' },
+    { country: 'Sri Lanka', currency: 'LKR', symbol: 'Rs.' },
+  ];
+
   const removePricingTier = (id: string) => {
     setPricingTiers(prev => prev.filter(tier => tier.id !== id));
   };
@@ -259,10 +307,22 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Set default price from first currency price if exists (for backward compatibility)
+    const defaultPrice = currencyPrices.length > 0 ? currencyPrices[0].price : 0;
     onSubmit({
       ...formData,
+      price: defaultPrice,
+      comparePrice: currencyPrices.length > 0 ? currencyPrices[0].comparePrice : 0,
       pricingTiers,
       attributes,
+      currencyPrices: currencyPrices.map(cp => ({
+        country: cp.country,
+        currency: cp.currency,
+        symbol: cp.symbol,
+        price: cp.price,
+        comparePrice: cp.comparePrice,
+        isActive: cp.isActive ?? true,
+      })),
     });
   };
 
@@ -478,55 +538,153 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
             {/* Pricing Tab */}
             {activeTab === 'pricing' && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price (NPR) *
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="number"
-                        step="0.01"
-                        required
-                        value={formData.price}
-                        onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                        placeholder="0.00"
-                      />
+                {/* International Pricing Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">International Pricing</h3>
+                      <p className="text-sm text-gray-500">Set different prices for different countries</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={addCurrencyPrice}
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Country Price
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Compare Price (NPR)
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.comparePrice}
-                        onChange={(e) => handleInputChange('comparePrice', parseFloat(e.target.value) || 0)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                        placeholder="0.00"
-                      />
+
+                  {/* Add New Currency Price Form */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Country *
+                        </label>
+                        <select
+                          value={newCurrencyPrice.country}
+                          onChange={(e) => {
+                            const selectedCountry = currencyOptions.find(opt => opt.country === e.target.value);
+                            setNewCurrencyPrice(prev => ({
+                              ...prev,
+                              country: e.target.value,
+                              currency: selectedCountry?.currency || prev.currency,
+                              symbol: selectedCountry?.symbol || prev.symbol,
+                            }));
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                        >
+                          <option value="">Select Country</option>
+                          {currencyOptions.map(opt => (
+                            <option key={opt.country} value={opt.country}>
+                              {opt.country}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Currency
+                        </label>
+                        <input
+                          type="text"
+                          value={newCurrencyPrice.currency}
+                          onChange={(e) => setNewCurrencyPrice(prev => ({ ...prev, currency: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="USD"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Symbol
+                        </label>
+                        <input
+                          type="text"
+                          value={newCurrencyPrice.symbol}
+                          onChange={(e) => setNewCurrencyPrice(prev => ({ ...prev, symbol: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="$"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Price *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newCurrencyPrice.price}
+                          onChange={(e) => setNewCurrencyPrice(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Compare Price
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newCurrencyPrice.comparePrice}
+                          onChange={(e) => setNewCurrencyPrice(prev => ({ ...prev, comparePrice: parseFloat(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                          placeholder="0.00"
+                        />
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={addCurrencyPrice}
+                      className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Add Price
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cost Price (NPR)
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={formData.costPrice}
-                        onChange={(e) => handleInputChange('costPrice', parseFloat(e.target.value) || 0)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                        placeholder="0.00"
-                      />
-                    </div>
+
+                  {/* Existing Currency Prices */}
+                  <div className="space-y-3">
+                    {currencyPrices.map((currencyPrice, index) => (
+                      <div key={currencyPrice.id || index} className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 border border-gray-200 rounded-lg bg-white">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Country</label>
+                          <p className="text-sm font-medium text-gray-900">{currencyPrice.country}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Currency</label>
+                          <p className="text-sm text-gray-900">{currencyPrice.currency}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Symbol</label>
+                          <p className="text-sm text-gray-900">{currencyPrice.symbol}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Price</label>
+                          <p className="text-sm font-semibold text-gray-900">{currencyPrice.symbol}{currencyPrice.price.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Compare Price</label>
+                          <p className="text-sm text-gray-600 line-through">{currencyPrice.comparePrice ? `${currencyPrice.symbol}${currencyPrice.comparePrice.toFixed(2)}` : '-'}</p>
+                        </div>
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            onClick={() => removeCurrencyPrice(currencyPrice.id || index.toString())}
+                            className="w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mx-auto" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {currencyPrices.length === 0 && (
+                      <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
+                        <Globe className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <p>No country prices added yet</p>
+                        <p className="text-sm">Add prices for different countries above</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -582,7 +740,7 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialData, is
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Price (NPR)
+                            Price
                           </label>
                           <input
                             type="number"

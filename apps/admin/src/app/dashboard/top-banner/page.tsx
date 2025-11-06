@@ -60,7 +60,7 @@ interface Banner {
   updatedAt: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 export default function TopBannerPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -87,10 +87,8 @@ export default function TopBannerPage() {
   // Fetch banners
   const fetchBanners = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/banners/admin`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetch(`${API_BASE_URL}/banners/admin`, {
+        credentials: 'include', // Send httpOnly cookie automatically
       });
 
       if (response.ok) {
@@ -116,8 +114,8 @@ export default function TopBannerPage() {
     setIsSubmitting(true);
     try {
       const url = editingBanner 
-        ? `${API_BASE_URL}/api/v1/banners/${editingBanner.id}`
-        : `${API_BASE_URL}/api/v1/banners`;
+        ? `${API_BASE_URL}/banners/${editingBanner.id}`
+        : `${API_BASE_URL}/banners`;
       
       const method = editingBanner ? 'PUT' : 'POST';
 
@@ -125,8 +123,8 @@ export default function TopBannerPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
+        credentials: 'include', // Send httpOnly cookie automatically
         body: JSON.stringify(data),
       });
 
@@ -169,11 +167,9 @@ export default function TopBannerPage() {
     if (!confirm('Are you sure you want to delete this banner?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/banners/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/banners/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include', // Send httpOnly cookie automatically
       });
 
       if (response.ok) {
@@ -191,11 +187,9 @@ export default function TopBannerPage() {
   // Handle toggle status
   const handleToggleStatus = async (id: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/banners/${id}/toggle`, {
+      const response = await fetch(`${API_BASE_URL}/banners/${id}/toggle`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+        credentials: 'include', // Send httpOnly cookie automatically
       });
 
       if (response.ok) {

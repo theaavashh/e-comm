@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { getApiBaseUrl } from '@/utils/api';
 
 interface Banner {
   id: string;
@@ -12,7 +13,7 @@ interface Banner {
   updatedAt: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = getApiBaseUrl();
 
 export default function TopBanner() {
   const [activeBanner, setActiveBanner] = useState<Banner | null>(null);
@@ -27,11 +28,15 @@ export default function TopBanner() {
         if (response.ok) {
           const data = await response.json();
           const banners = data.data || [];
-          // Find the active banner (only one should be active)
-          const active = banners.find((banner: Banner) => banner.isActive);
-          setActiveBanner(active || null);
+          // API already returns only active banners, take the first one (most recent)
+          setActiveBanner(banners.length > 0 ? banners[0] : null);
         } else {
-          console.error('Failed to fetch banners');
+          const errorData = await response.json().catch(() => ({ message: response.statusText }));
+          console.error('Failed to fetch banners:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+          });
         }
       } catch (error) {
         console.error('Error fetching banners:', error);
@@ -49,18 +54,18 @@ export default function TopBanner() {
   }
 
   return (
-    <div className="border-b border-gray-300 bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center text-sm">
+    <div className="border-b border-gray-300 bg-[#F0F2F5]">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-2 md:py-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-sm">
         {/* Left side - Banner content */}
         <div className="flex items-center space-x-4">
           <div 
-            className="text-black font-medium"
+            className="text-black font-medium text-center sm:text-left"
             dangerouslySetInnerHTML={{ __html: activeBanner.title }}
           />
         </div>
         
-        {/* Right side - Service links (keep existing) */}
-        <div className="flex items-center space-x-6">
+        {/* Right side - Service links (hidden on mobile) */}
+        <div className="hidden lg:flex items-center space-x-6">
           <a href="#" className="flex items-center space-x-2 text-black hover:opacity-80">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />

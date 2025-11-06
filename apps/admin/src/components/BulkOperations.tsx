@@ -18,7 +18,7 @@ import {
 interface BulkOperationsProps {
   selectedProducts: string[];
   onBulkDelete: (ids: string[]) => void;
-  onBulkStatusChange: (ids: string[], status: 'active' | 'draft' | 'archived') => void;
+  onBulkStatusChange: (ids: string[], isActive: boolean) => void;
   onBulkFeaturedToggle: (ids: string[]) => void;
   onClearSelection: () => void;
   totalProducts: number;
@@ -40,10 +40,10 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
         setShowConfirmDialog('delete');
         break;
       case 'archive':
-        onBulkStatusChange(selectedProducts, 'archived');
+        onBulkStatusChange(selectedProducts, false);
         break;
       case 'unarchive':
-        onBulkStatusChange(selectedProducts, 'active');
+        onBulkStatusChange(selectedProducts, true);
         break;
       case 'featured':
         onBulkFeaturedToggle(selectedProducts);

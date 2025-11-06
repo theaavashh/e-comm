@@ -14,14 +14,21 @@ interface AuthModalProps {
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { data: session, status } = useSession();
   const [isSignUp, setIsSignUp] = useState(false);
+  
+  console.log('AuthModal isOpen:', isOpen);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationStep, setShowVerificationStep] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetPasswordEmail, setResetPasswordEmail] = useState('');
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -76,24 +83,95 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/register', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      
+      // First, send verification email
+      const emailResponse = await fetch(`${API_BASE_URL}/api/v1/auth/send-verification-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
           email: formData.email,
-          password: formData.password,
         }),
       });
       
-      if (response.ok) {
-        toast.success('Account created successfully! Please sign in.');
-        setIsSignUp(false);
-        setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      if (!emailResponse.ok) {
+        const error = await emailResponse.json();
+        toast.error(error.message || 'Failed to send verification email');
+        return;
+      }
+      
+      toast.success('Verification code sent to your email!');
+      setShowVerificationStep(true);
+      setIsLoading(false);
+    } catch (error) {
+      toast.error('Failed to send verification email');
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!verificationCode || verificationCode.length !== 6) {
+      toast.error('Please enter a valid 6-digit verification code');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      
+      // Verify email with code
+      const verifyResponse = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: verificationCode,
+        }),
+      });
+      
+      if (!verifyResponse.ok) {
+        const error = await verifyResponse.json();
+        toast.error(error.message || 'Invalid verification code');
+        return;
+      }
+      
+      // Email verified, now register
+      const registerResponse = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          username: formData.name.toLowerCase().replace(/\s+/g, '_'),
+          password: formData.password,
+          firstName: formData.name.split(' ')[0] || formData.name,
+          lastName: formData.name.split(' ').slice(1).join(' ') || '',
+          phone: formData.phone,
+        }),
+      });
+      
+      if (registerResponse.ok) {
+        const data = await registerResponse.json();
+        if (data.success && data.data.accessToken) {
+          // Store tokens
+          localStorage.setItem('accessToken', data.data.accessToken);
+          if (data.data.refreshToken) {
+            localStorage.setItem('refreshToken', data.data.refreshToken);
+          }
+          toast.success('Account created successfully! You are now logged in.');
+          onClose();
+          window.location.reload();
+        }
       } else {
-        const error = await response.json();
+        const error = await registerResponse.json();
         toast.error(error.message || 'Failed to create account');
       }
     } catch (error) {
@@ -124,14 +202,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-end z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-end z-[9999]"
           >
             <motion.div
               initial={{ x: '100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-white rounded-xl p-8 text-center max-w-md w-full mx-4 ml-auto"
+              className="bg-[#F0F2F5] rounded-xl p-8 text-center max-w-md w-full mx-4 ml-auto"
             >
               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
               <p className="text-gray-600">Loading...</p>
@@ -150,7 +228,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-end z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-end z-[9999]"
             onClick={onClose}
           >
             <motion.div
@@ -158,7 +236,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-white rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
+              className="bg-[#F0F2F5] rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -172,14 +250,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <User className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back!</h2>
-                <p className="text-gray-600 mb-6">
+                <h2 className="text-2xl font-bold custom-font text-gray-900 mb-2">Welcome back!</h2>
+                <p className="text-gray-600 custom-font mb-6">
                   You are signed in as <span className="font-medium">{session.user?.email}</span>
                 </p>
                 
                 <button
                   onClick={handleSignOut}
-                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-medium custom-font hover:bg-red-700 transition-colors"
                 >
                   Sign Out
                 </button>
@@ -198,7 +276,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-end z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-end z-[9999]"
           onClick={onClose}
         >
             <motion.div
@@ -206,7 +284,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-white rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
+              className="bg-[#F0F2F5] rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
               onClick={(e) => e.stopPropagation()}
             >
             <button
@@ -217,10 +295,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </button>
             
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold custom-font text-gray-900 mb-2">
                 {isSignUp ? 'Create Account' : 'Sign In'}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 custom-font text-base">
                 {isSignUp ? 'Join us today!' : 'Welcome back!'}
               </p>
             </div>
@@ -229,7 +307,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full bg-white border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mb-6"
+              className="w-full bg-[#F0F2F5] border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mb-6"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -261,36 +339,112 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+                <span className="px-2 bg-[#F0F2F5] text-gray-500">Or continue with email</span>
               </div>
             </div>
 
             {/* Email Form */}
-            <form onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}>
-              {isSignUp && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
+            {showVerificationStep && isSignUp ? (
+              <form onSubmit={handleVerificationSubmit}>
+                <div className="mb-6 text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2 custom-font">Check Your Email</h3>
+                  <p className="text-gray-600 custom-font text-sm">
+                    We sent a verification code to <br />
+                    <span className="font-medium text-gray-900">{formData.email}</span>
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                    Verification Code
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required={isSignUp}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                      placeholder="Enter your full name"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      required
+                      maxLength={6}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black text-center text-2xl tracking-widest"
+                      placeholder="000000"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Didn't receive the code? Check your spam folder or{' '}
+                    <button
+                      type="button"
+                      onClick={handleEmailSignUp}
+                      className="text-blue-600 hover:underline"
+                    >
+                      resend
+                    </button>
+                  </p>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || verificationCode.length !== 6}
+                  className="w-full text-white py-3.5 px-6 rounded-xl font-medium custom-font hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: '#0077b6' }}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  ) : (
+                    'Verify Email'
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}>
+              {isSignUp && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required={isSignUp}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Contact Number
+                    </label>
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required={isSignUp}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
+                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                    Email Address
+                  </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
@@ -306,9 +460,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
+                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                    Password
+                  </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
@@ -332,7 +486,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
               {isSignUp && (
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -350,10 +504,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </div>
               )}
 
+              {!isSignUp && (
+                <div className="mb-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                    }}
+                    className="text-sm text-blue-600 hover:underline custom-font"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full text-white py-3.5 px-6 rounded-xl font-medium custom-font hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: '#0077b6' }}
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -362,21 +531,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 )}
               </button>
             </form>
+            )}
 
-            <div className="text-center mt-6">
-              <p className="text-gray-600">
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-                <button
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-                  }}
-                  className="ml-2 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {isSignUp ? 'Sign In' : 'Sign Up'}
-                </button>
-              </p>
-            </div>
+            {!showVerificationStep && (
+              <div className="text-center mt-6">
+                <p className="text-gray-600 custom-font">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                  <button
+                    onClick={() => {
+                      setIsSignUp(!isSignUp);
+                      setFormData({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+                      setShowVerificationStep(false);
+                      setVerificationCode('');
+                    }}
+                    className="ml-2 font-medium custom-font"
+                    style={{ color: '#0077b6' }}
+                  >
+                    {isSignUp ? 'Sign In' : 'Sign Up'}
+                  </button>
+                </p>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

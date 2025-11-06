@@ -39,7 +39,6 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
     defaultValues: {
       search: '',
       categoryId: '',
-      status: 'all',
       priceMin: undefined,
       priceMax: undefined,
       stockMin: undefined,
@@ -65,7 +64,6 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
     onFilterChange({
       search: '',
       categoryId: '',
-      status: 'all',
       priceMin: undefined,
       priceMax: undefined,
       stockMin: undefined,
@@ -93,15 +91,15 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Filter className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Product Filters</h3>
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+            <h3 className="text-lg font-semibold text-gray-900 custom-font">Product Filters</h3>
+            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full custom-font">
               Advanced
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleReset}
-              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors custom-font"
             >
               Reset
             </button>
@@ -138,7 +136,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                         {...field}
                         type="text"
                         placeholder="Search products..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                       />
                     )}
                   />
@@ -152,7 +150,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                     render={({ field }) => (
                       <select
                         {...field}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                         disabled={isLoading}
                       >
                         <option value="">All Categories</option>
@@ -168,30 +166,15 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
 
                 {/* Status Filter */}
                 <div>
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                      >
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="draft">Draft</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    )}
-                  />
                 </div>
               </div>
 
               {/* Advanced Filters Toggle */}
               <div className="flex items-center justify-between">
-                <h4 className="text-md font-medium text-gray-900">Advanced Filters</h4>
+                <h4 className="text-md font-medium text-gray-900 custom-font">Advanced Filters</h4>
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center text-sm text-blue-600 hover:text-blue-700 custom-font"
                 >
                   {showAdvanced ? 'Hide' : 'Show'} Advanced
                   {showAdvanced ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
@@ -209,13 +192,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                   >
                     {/* Price Range */}
                     <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center custom-font">
                         <DollarSign className="w-4 h-4 mr-2" />
                         Price Range
                       </h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Min Price</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Min Price</label>
                           <Controller
                             name="priceMin"
                             control={control}
@@ -226,13 +209,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                 step="0.01"
                                 min="0"
                                 placeholder="0.00"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Max Price</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Max Price</label>
                           <Controller
                             name="priceMax"
                             control={control}
@@ -243,7 +226,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                 step="0.01"
                                 min="0"
                                 placeholder="999.99"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
@@ -253,13 +236,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
 
                     {/* Stock Range */}
                     <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center custom-font">
                         <Package className="w-4 h-4 mr-2" />
                         Stock Range
                       </h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Min Stock</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Min Stock</label>
                           <Controller
                             name="stockMin"
                             control={control}
@@ -269,13 +252,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                 type="number"
                                 min="0"
                                 placeholder="0"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Max Stock</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Max Stock</label>
                           <Controller
                             name="stockMax"
                             control={control}
@@ -285,7 +268,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                 type="number"
                                 min="0"
                                 placeholder="999"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
@@ -295,7 +278,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
 
                     {/* Product Options */}
                     <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center custom-font">
                         <Star className="w-4 h-4 mr-2" />
                         Product Options
                       </h5>
@@ -312,7 +295,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                   onChange={(e) => field.onChange(e.target.checked ? true : undefined)}
                                   className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
-                                <span className="text-sm text-gray-700">Featured Only</span>
+                                <span className="text-sm text-gray-700 custom-font">Featured Only</span>
                               </label>
                             )}
                           />
@@ -329,7 +312,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                                   onChange={(e) => field.onChange(e.target.checked ? true : undefined)}
                                   className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
-                                <span className="text-sm text-gray-700">Digital Only</span>
+                                <span className="text-sm text-gray-700 custom-font">Digital Only</span>
                               </label>
                             )}
                           />
@@ -339,13 +322,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
 
                     {/* Date Range */}
                     <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3 flex items-center custom-font">
                         <Calendar className="w-4 h-4 mr-2" />
                         Date Range
                       </h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">From Date</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">From Date</label>
                           <Controller
                             name="dateFrom"
                             control={control}
@@ -353,13 +336,13 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                               <input
                                 {...field}
                                 type="date"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">To Date</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">To Date</label>
                           <Controller
                             name="dateTo"
                             control={control}
@@ -367,7 +350,7 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                               <input
                                 {...field}
                                 type="date"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               />
                             )}
                           />
@@ -377,17 +360,17 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
 
                     {/* Sort Options */}
                     <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-3">Sort Options</h5>
+                      <h5 className="text-sm font-medium text-gray-700 mb-3 custom-font">Sort Options</h5>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Sort By</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Sort By</label>
                           <Controller
                             name="sortBy"
                             control={control}
                             render={({ field }) => (
                               <select
                                 {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               >
                                 <option value="createdAt">Created Date</option>
                                 <option value="updatedAt">Updated Date</option>
@@ -399,14 +382,14 @@ const AdvancedProductFilter: React.FC<AdvancedProductFilterProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-600 mb-1">Sort Order</label>
+                          <label className="block text-xs text-gray-600 mb-1 custom-font">Sort Order</label>
                           <Controller
                             name="sortOrder"
                             control={control}
                             render={({ field }) => (
                               <select
                                 {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
                               >
                                 <option value="desc">Descending</option>
                                 <option value="asc">Ascending</option>

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '@/config/env';
-import { prisma } from '@/config/database';
+import prisma from '@/config/database';
 import { UserRole } from '@prisma/client';
 
 // Extend Express Request interface to include user
@@ -32,7 +32,9 @@ interface JwtPayload {
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const headerToken = authHeader && authHeader.split(' ')[1];
+    const cookieToken = (req as any).cookies?.admin_access_token as string | undefined;
+    const token = headerToken || cookieToken; // Prefer header if present
 
     if (!token) {
       return res.status(401).json({
@@ -42,18 +44,24 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     }
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
-    
-    // Check if user still exists and is active
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        isActive: true,
-      },
-    });
+
+    // Check if user still exists and is active (support multiple delegate names / raw fallback)
+    const user = (prisma as any).user?.findUnique
+      ? await (prisma as any).user.findUnique({
+          where: { id: decoded.id },
+          select: { id: true, email: true, username: true, role: true, isActive: true },
+        })
+      : ((prisma as any).users?.findUnique
+          ? await (prisma as any).users.findUnique({
+              where: { id: decoded.id },
+              select: { id: true, email: true, username: true, role: true, isActive: true },
+            })
+          : (await prisma.$queryRaw<any[]>`
+              SELECT id, email, username, role, "isActive"
+              FROM "users"
+              WHERE id = ${decoded.id}
+              LIMIT 1
+            `)?.[0]);
 
     if (!user || !user.isActive) {
       return res.status(401).json({

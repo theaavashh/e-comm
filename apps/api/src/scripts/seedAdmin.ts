@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
@@ -12,9 +13,11 @@ async function seedAdmin() {
     console.log('🌱 Starting admin seed...');
 
     // Check if admin already exists
-    const existingAdmin = await prisma.user.findUnique({
+    const existingAdmin = await prisma.user.findFirst({
       where: {
         email: 'admin@gharsamma.com',
+        role: 'ADMIN',
+        isActive: true,
       },
     });
 
@@ -38,6 +41,12 @@ async function seedAdmin() {
         isActive: true,
         emailVerified: true,
       },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+      },
     });
 
     console.log('✅ Admin user created successfully:');
@@ -56,7 +65,9 @@ async function seedAdmin() {
 }
 
 // Run the seed function
-if (require.main === module) {
+const isMainModule = require.main === module || process.argv[1]?.endsWith('seedAdmin.ts');
+
+if (isMainModule) {
   seedAdmin()
     .then(() => {
       console.log('🎉 Admin seed completed successfully');

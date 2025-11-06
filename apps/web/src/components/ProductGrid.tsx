@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from './ProductCard';
 
 interface Product {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   subcategory: string;
   price: number;
-  originalPrice: number;
+  comparePrice?: number;
   discount: number;
   rating: number;
   reviewCount: number;
@@ -44,7 +44,7 @@ export default function ProductGrid({
     return (
       <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'} ${className}`}>
         {[...Array(6)].map((_, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-lg animate-pulse">
+          <div key={index} className="bg-[#F0F2F5] rounded-xl shadow-lg animate-pulse">
             <div className="h-48 bg-gray-200 rounded-t-xl"></div>
             <div className="p-4 space-y-3">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>

@@ -8,7 +8,18 @@ import { env } from '@/config/env';
 // CORS configuration
 export const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    const allowedOrigins = env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    const allowedOrigins = [
+      'http://localhost:3000',  // Website 1
+      'http://localhost:3001',  // Website 2 (admin)
+      'http://localhost:3002',  // Website 3
+      'http://localhost:3003',  // Website 4
+      'http://localhost:3004',  // Website 5
+      'http://localhost:3005',  // Website 6
+      'http://localhost:3006',  // Website 7
+      'http://localhost:3007',  // Website 8
+      'http://localhost:3008',  // Website 9
+      'http://localhost:3009',  // Website 10
+    ];
     
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
@@ -16,6 +27,7 @@ export const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin, 'Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'), false);
     }
   },
@@ -28,13 +40,18 @@ export const corsOptions = {
 // Rate limiting
 export const rateLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes
-  max: env.RATE_LIMIT_MAX_REQUESTS, // limit each IP to 100 requests per windowMs
+  max: env.NODE_ENV === 'development' ? 1000 : env.RATE_LIMIT_MAX_REQUESTS, // More lenient in development
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: Math.ceil(env.RATE_LIMIT_WINDOW_MS / 1000),
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req: Request) => {
+    // Skip rate limiting for GET requests on public endpoints
+    const publicEndpoints = ['/api/v1/categories', '/api/v1/products', '/api/v1/brands'];
+    return req.method === 'GET' && publicEndpoints.some(endpoint => req.path.startsWith(endpoint));
+  },
   handler: (req: Request, res: Response) => {
     res.status(429).json({
       success: false,
@@ -47,9 +64,14 @@ export const rateLimiter = rateLimit({
 // Slow down repeated requests
 export const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 50, // allow 50 requests per 15 minutes, then...
-  delayMs: () => 500, // begin adding 500ms of delay per request above 50
+  delayAfter: env.NODE_ENV === 'development' ? 500 : 50, // More lenient in development
+  delayMs: () => 500, // begin adding 500ms of delay per request above delayAfter
   maxDelayMs: 20000, // max delay of 20 seconds
+  skip: (req: Request) => {
+    // Skip slowdown for GET requests on public endpoints
+    const publicEndpoints = ['/api/v1/categories', '/api/v1/products', '/api/v1/brands'];
+    return req.method === 'GET' && publicEndpoints.some(endpoint => req.path.startsWith(endpoint));
+  },
 });
 
 // Helmet security headers
@@ -60,7 +82,12 @@ export const helmetConfig = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        'http://localhost:4000',
+        'http://localhost:4001',
+        'http://localhost:4444',
+      ],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],

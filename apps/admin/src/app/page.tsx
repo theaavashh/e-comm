@@ -65,9 +65,10 @@ export default function AdminLogin() {
       console.log('Login result:', success);
       
       if (success) {
-        toast.success("Login successful! Redirecting to dashboard...");
+        const id = toast.success("Login successfully");
         // Redirect to dashboard after a short delay
         setTimeout(() => {
+          toast.dismiss(id);
           router.push("/dashboard");
         }, 1500);
       }
@@ -85,7 +86,7 @@ export default function AdminLogin() {
     
     try {
       // Call the API to reset password
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/forgot-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/admin/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ export default function AdminLogin() {
 
   return (
     <motion.div 
-      className="min-h-screen bg-[#f0efeb] flex items-center justify-center p-4 font-custom-font"
+      className="min-h-screen bg-[#f0efeb] flex items-center justify-center p-4 custom-font"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -154,7 +155,7 @@ export default function AdminLogin() {
               />
             </motion.div>
             <motion.h1 
-              className="text-2xl font-bold text-gray-900 mb-2"
+              className="text-2xl font-bold text-gray-900 mb-2 custom-font"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
@@ -162,7 +163,7 @@ export default function AdminLogin() {
               Welcome back
             </motion.h1>
             <motion.p 
-              className="text-gray-600 text-sm"
+              className="text-gray-600 text-sm custom-font"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.7 }}
@@ -184,7 +185,7 @@ export default function AdminLogin() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.9 }}
             >
-              <label htmlFor="email" className="block text-lg font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                 Email
               </label>
               <motion.input
@@ -197,7 +198,7 @@ export default function AdminLogin() {
                     message: "Please enter a valid email address",
                   },
                 })}
-                className={`w-full px-3 py-2.5 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                className={`w-full px-3 py-2.5 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors custom-font ${
                   errors.email
                     ? "border-red-300"
                     : "border-gray-300"
@@ -210,7 +211,7 @@ export default function AdminLogin() {
               <AnimatePresence>
                 {errors.email && (
                   <motion.p 
-                    className="mt-1 text-sm text-red-600"
+                    className="mt-1 text-sm text-red-600 custom-font"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -229,13 +230,13 @@ export default function AdminLogin() {
               transition={{ duration: 0.5, delay: 1.0 }}
             >
               <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-lg font-medium text-gray-700">
+                <label htmlFor="password" className="block text-lg font-medium text-gray-700 custom-font">
                   Password
                 </label>
                 <motion.button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-lg text-blue-600 hover:text-blue-500 font-medium"
+                  className="text-lg text-blue-600 hover:text-blue-500 font-medium custom-font"
                   disabled={isLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -255,7 +256,7 @@ export default function AdminLogin() {
                       message: "Password must be at least 6 characters",
                     },
                   })}
-                  className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors custom-font ${
                     errors.password
                       ? "border-red-300"
                       : "border-gray-300"
@@ -287,7 +288,7 @@ export default function AdminLogin() {
               <AnimatePresence>
                 {errors.password && (
                   <motion.p 
-                    className="mt-1 text-sm text-red-600"
+                    className="mt-1 text-sm text-red-600 custom-font"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -315,7 +316,7 @@ export default function AdminLogin() {
                 whileHover={{ scale: 1.1 }}
                 transition={{ duration: 0.2 }}
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 custom-font">
                 Remember me
               </label>
             </motion.div>
@@ -324,7 +325,7 @@ export default function AdminLogin() {
             <motion.button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-black text-white disabled:bg-gray-100 text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:cursor-not-allowed text-sm border border-gray-300"
+              className="w-full bg-black text-white disabled:bg-gray-100 text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:cursor-not-allowed text-sm border border-gray-300 custom-font"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 1.2 }}
@@ -332,7 +333,7 @@ export default function AdminLogin() {
               whileTap={{ scale: 0.98 }}
             >
               {isLoading ? (
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center custom-font">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -365,7 +366,7 @@ export default function AdminLogin() {
               transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
             >
               <motion.h2 
-                className="text-xl font-bold text-gray-900 mb-2"
+                className="text-xl font-bold text-gray-900 mb-2 custom-font"
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
@@ -373,7 +374,7 @@ export default function AdminLogin() {
                 Reset Password
               </motion.h2>
               <motion.p 
-                className="text-gray-600 text-sm mb-6"
+                className="text-gray-600 text-sm mb-6 custom-font"
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
@@ -383,7 +384,7 @@ export default function AdminLogin() {
             
             <form onSubmit={handleForgotPasswordSubmit(onForgotPasswordSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="forgotPasswordEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="forgotPasswordEmail" className="block text-sm font-medium text-gray-700 mb-2 custom-font">
                   Email
                 </label>
                 <input
@@ -396,7 +397,7 @@ export default function AdminLogin() {
                       message: "Please enter a valid email address",
                     },
                   })}
-                  className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors custom-font ${
                     forgotPasswordErrors.email
                       ? "border-red-300"
                       : "border-gray-300"
@@ -405,7 +406,7 @@ export default function AdminLogin() {
                   disabled={isLoading}
                 />
                 {forgotPasswordErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">{forgotPasswordErrors.email.message}</p>
+                  <p className="mt-1 text-sm text-red-600 custom-font">{forgotPasswordErrors.email.message}</p>
                 )}
               </div>
               
@@ -416,7 +417,7 @@ export default function AdminLogin() {
                     setShowForgotPassword(false);
                     resetForgotPassword();
                   }}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium custom-font"
                   disabled={isLoading}
                 >
                   Cancel
@@ -424,7 +425,7 @@ export default function AdminLogin() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-colors disabled:cursor-not-allowed text-sm border border-gray-300"
+                  className="flex-1 bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-colors disabled:cursor-not-allowed text-sm border border-gray-300 custom-font"
                 >
                   {isLoading ? "Sending..." : "Send Reset Link"}
                 </button>
@@ -437,25 +438,25 @@ export default function AdminLogin() {
 
       {/* Toast Container */}
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
-          duration: 4000,
+          duration: 2000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: '#ffffff',
+            color: '#111111',
           },
           success: {
-            duration: 3000,
+            duration: 1500,
             iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
+              primary: '#16a34a',
+              secondary: '#ffffff',
             },
           },
           error: {
-            duration: 4000,
+            duration: 2000,
             iconTheme: {
               primary: '#ef4444',
-              secondary: '#fff',
+              secondary: '#ffffff',
             },
           },
         }}

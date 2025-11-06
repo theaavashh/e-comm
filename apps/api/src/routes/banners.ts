@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/config/database.js';
 import { authenticateToken } from '../middleware/auth';
 import { adminAuth } from '../middleware/adminAuth';
 import { validateBody } from '../middleware/validation';
 import { z } from 'zod';
 
 const router = Router();
-const prisma = new PrismaClient();
+
 
 // Validation schemas
 const createBannerSchema = z.object({
@@ -229,3 +229,4 @@ router.patch('/:id/toggle', async (req, res) => {
 });
 
 export default router;
+

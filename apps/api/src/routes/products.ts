@@ -14,7 +14,8 @@ import {
   updateProductAttribute,
   deleteProductAttribute,
 } from '@/controllers/productController';
-import { authenticateToken, authorize } from '@/middleware/auth';
+import { createReview, getProductReviews } from '@/controllers/reviewController';
+import { authenticateToken, authorize, optionalAuth } from '@/middleware/auth';
 import { validateBody, validateQuery, validatePagination } from '@/middleware/validation';
 import { 
   createProductSchema, 
@@ -35,6 +36,10 @@ router.get('/featured', asyncHandler(getFeaturedProducts));
 router.get('/:id', asyncHandler(getProduct));
 router.get('/:id/pricing', asyncHandler(getProductPricing));
 
+// Review routes - allow both authenticated and unauthenticated users
+router.post('/:id/reviews', optionalAuth, asyncHandler(createReview));
+router.get('/:id/reviews', asyncHandler(getProductReviews));
+
 // Protected routes (Admin only)
 router.use(authenticateToken);
 router.use(authorize('ADMIN'));
@@ -54,6 +59,16 @@ router.put('/attributes/:attributeId', validateBody(updateProductAttributeSchema
 router.delete('/attributes/:attributeId', asyncHandler(deleteProductAttribute));
 
 export default router;
+
+
+
+
+
+
+
+
+
+
 
 
 

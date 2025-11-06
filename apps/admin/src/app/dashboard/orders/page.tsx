@@ -39,6 +39,9 @@ interface Order {
     name: string;
     quantity: number;
     price: number;
+    nprPrice?: number;
+    currency?: string;
+    currencySymbol?: string;
     image: string;
   }[];
   shippingAddress: {
@@ -66,6 +69,16 @@ interface Order {
   shipping: number;
   tax: number;
   discount: number;
+  currency: string;
+  currencySymbol: string;
+  // NPR conversion
+  nprTotal?: number;
+  nprSubtotal?: number;
+  nprShipping?: number;
+  nprTax?: number;
+  nprDiscount?: number;
+  exchangeRate?: number;
+  customerCountry?: string;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -169,6 +182,8 @@ export default function OrdersPage() {
           shipping: 0,
           tax: 0,
           discount: 0,
+          currency: 'NPR',
+          currencySymbol: 'NPR',
           createdAt: '2024-01-15T10:30:00Z',
           updatedAt: '2024-01-15T10:30:00Z',
           notes: 'Handle with care - fragile items'
@@ -215,6 +230,8 @@ export default function OrdersPage() {
           shipping: 0,
           tax: 0,
           discount: 0,
+          currency: 'NPR',
+          currencySymbol: 'NPR',
           createdAt: '2024-01-14T14:20:00Z',
           updatedAt: '2024-01-14T14:20:00Z'
         },
@@ -260,6 +277,8 @@ export default function OrdersPage() {
           shipping: 0,
           tax: 0,
           discount: 0,
+          currency: 'NPR',
+          currencySymbol: 'NPR',
           createdAt: '2024-01-13T09:15:00Z',
           updatedAt: '2024-01-16T11:30:00Z'
         },
@@ -305,6 +324,8 @@ export default function OrdersPage() {
           shipping: 0,
           tax: 0,
           discount: 0,
+          currency: 'NPR',
+          currencySymbol: 'NPR',
           createdAt: '2024-01-10T16:45:00Z',
           updatedAt: '2024-01-12T14:20:00Z'
         },
@@ -350,6 +371,8 @@ export default function OrdersPage() {
           shipping: 0,
           tax: 0,
           discount: 0,
+          currency: 'NPR',
+          currencySymbol: 'NPR',
           createdAt: '2024-01-08T12:30:00Z',
           updatedAt: '2024-01-09T10:15:00Z',
           notes: 'Customer requested cancellation'
@@ -465,8 +488,15 @@ export default function OrdersPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return `NPR ${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number, currency?: string, symbol?: string) => {
+    const curr = currency || 'NPR';
+    const sym = symbol || 'NPR';
+    
+    if (curr === 'NPR') {
+      return `${sym} ${amount.toLocaleString()}`;
+    }
+    
+    return `${sym}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -817,9 +847,21 @@ export default function OrdersPage() {
                             <div className="flex-1">
                               <div className="font-medium text-gray-900">{item.name}</div>
                               <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
+                              {item.nprPrice && item.currency !== 'NPR' && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Unit: {formatCurrency(item.price, item.currency, item.currencySymbol)} | NPR {item.nprPrice.toLocaleString()}
+                                </div>
+                              )}
                             </div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {formatCurrency(item.price * item.quantity)}
+                            <div className="text-right">
+                              <div className="text-sm font-medium text-gray-900">
+                                {formatCurrency(item.price * item.quantity, item.currency, item.currencySymbol)}
+                              </div>
+                              {item.nprPrice && item.currency !== 'NPR' && (
+                                <div className="text-xs text-gray-500">
+                                  NPR {(item.nprPrice * item.quantity).toLocaleString()}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -843,30 +885,67 @@ export default function OrdersPage() {
 
                     {/* Order Summary */}
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h3 className="font-medium text-gray-900 mb-3">Order Summary</h3>
+                      <h3 className="font-medium text-gray-900 mb-3">
+                        Order Summary
+                        {selectedOrder.currency !== 'NPR' && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            ({selectedOrder.customerCountry})
+                          </span>
+                        )}
+                      </h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Subtotal:</span>
-                          <span className="font-medium">{formatCurrency(selectedOrder.subtotal)}</span>
+                          <div className="text-right">
+                            <div className="font-medium">{formatCurrency(selectedOrder.subtotal, selectedOrder.currency, selectedOrder.currencySymbol)}</div>
+                            {selectedOrder.nprSubtotal && selectedOrder.currency !== 'NPR' && (
+                              <div className="text-xs text-gray-500">NPR {selectedOrder.nprSubtotal.toLocaleString()}</div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Shipping:</span>
-                          <span className="font-medium">{formatCurrency(selectedOrder.shipping)}</span>
+                          <div className="text-right">
+                            <div className="font-medium">{formatCurrency(selectedOrder.shipping, selectedOrder.currency, selectedOrder.currencySymbol)}</div>
+                            {selectedOrder.nprShipping && selectedOrder.currency !== 'NPR' && (
+                              <div className="text-xs text-gray-500">NPR {selectedOrder.nprShipping.toLocaleString()}</div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Tax:</span>
-                          <span className="font-medium">{formatCurrency(selectedOrder.tax)}</span>
+                          <div className="text-right">
+                            <div className="font-medium">{formatCurrency(selectedOrder.tax, selectedOrder.currency, selectedOrder.currencySymbol)}</div>
+                            {selectedOrder.nprTax && selectedOrder.currency !== 'NPR' && (
+                              <div className="text-xs text-gray-500">NPR {selectedOrder.nprTax.toLocaleString()}</div>
+                            )}
+                          </div>
                         </div>
                         {selectedOrder.discount > 0 && (
                           <div className="flex justify-between text-green-600">
                             <span>Discount:</span>
-                            <span className="font-medium">-{formatCurrency(selectedOrder.discount)}</span>
+                            <div className="text-right">
+                              <div className="font-medium">-{formatCurrency(selectedOrder.discount, selectedOrder.currency, selectedOrder.currencySymbol)}</div>
+                              {selectedOrder.nprDiscount && selectedOrder.currency !== 'NPR' && (
+                                <div className="text-xs">-NPR {selectedOrder.nprDiscount.toLocaleString()}</div>
+                              )}
+                            </div>
                           </div>
                         )}
                         <div className="flex justify-between text-lg font-semibold border-t pt-2">
                           <span>Total:</span>
-                          <span>{formatCurrency(selectedOrder.total)}</span>
+                          <div className="text-right">
+                            <div>{formatCurrency(selectedOrder.total, selectedOrder.currency, selectedOrder.currencySymbol)}</div>
+                            {selectedOrder.nprTotal && selectedOrder.currency !== 'NPR' && (
+                              <div className="text-sm font-normal text-gray-600">NPR {selectedOrder.nprTotal.toLocaleString()}</div>
+                            )}
+                          </div>
                         </div>
+                        {selectedOrder.exchangeRate && selectedOrder.currency !== 'NPR' && (
+                          <div className="pt-2 border-t border-gray-200 text-xs text-gray-500">
+                            Exchange Rate: 1 {selectedOrder.currency} = NPR {selectedOrder.exchangeRate.toFixed(4)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

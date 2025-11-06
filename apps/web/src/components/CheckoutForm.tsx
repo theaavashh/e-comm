@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import AuthModal from './AuthModal';
+import { useLocation } from '@/contexts/LocationContext';
 import { 
   ArrowLeft, 
   User, 
@@ -23,15 +24,28 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  originalPrice: number;
+  comparePrice?: number;
   discount: number;
   image: string;
   brand: string;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  variants?: Array<{
+    id: string;
+    name: string;
+    value: string;
+    price: number;
+    quantity: number;
+  }>;
 }
 
 interface CheckoutFormProps {
   productId: string | null;
   quantity: number;
+  variant?: number;
 }
 
 interface PersonalDetails {
@@ -56,7 +70,16 @@ interface FormData {
   sameAsDelivery: boolean;
 }
 
-export default function CheckoutForm({ productId, quantity }: CheckoutFormProps) {
+interface Coupon {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minimumAmount?: number;
+  description?: string;
+}
+
+export default function CheckoutForm({ productId, quantity, variant = 0 }: CheckoutFormProps) {
+  const { selectedCountry } = useLocation();
   const router = useRouter();
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
@@ -64,6 +87,10 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   const { control, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm<FormData>({
     defaultValues: {
@@ -98,20 +125,66 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
   const billingAddress = watch('billingAddress');
 
   useEffect(() => {
-    // Simulate product loading
-    const mockProduct: Product = {
-      id: productId || '1',
-      name: 'Premium Wireless Headphones',
-      price: 2500,
-      originalPrice: 3500,
-      discount: 28,
-      image: '/api/placeholder/400/400',
-      brand: 'TechSound'
+    const fetchProduct = async () => {
+      if (!productId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        // Get user country from context for pricing
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+        const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}?country=${encodeURIComponent(selectedCountry)}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch product');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data.product) {
+          const productData = data.data.product;
+          
+          // Transform API data to match our interface
+          const transformedProduct: Product = {
+            id: productData.id,
+            name: productData.name,
+            price: Number(productData.price),
+            comparePrice: productData.comparePrice ? Number(productData.comparePrice) : undefined,
+            discount: productData.comparePrice && productData.price 
+              ? Math.round(((productData.comparePrice - productData.price) / productData.comparePrice) * 100)
+              : 0,
+            image: productData.image || '/image.png',
+            brand: productData.brand?.name || 'Unknown Brand',
+            category: productData.category,
+            variants: productData.variants || []
+          };
+          
+          setProduct(transformedProduct);
+        } else {
+          throw new Error('Product not found');
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        // Fallback to mock data for development
+        const mockProduct: Product = {
+          id: productId,
+          name: 'Premium Wireless Headphones',
+          price: 2500,
+          comparePrice: 3500,
+          discount: 28,
+          image: '/image.png',
+          brand: 'TechSound'
+        };
+        setProduct(mockProduct);
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    setProduct(mockProduct);
-    setLoading(false);
-  }, [productId]);
+
+    fetchProduct();
+  }, [productId, selectedCountry]);
 
   // Update billing address when same as delivery is checked
   useEffect(() => {
@@ -151,6 +224,76 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError('');
+
+    try {
+      // Simulate API call to validate coupon
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock coupon validation - in real app, this would be an API call
+      const mockCoupons: Coupon[] = [
+        { code: 'WELCOME10', discountType: 'percentage', discountValue: 10, minimumAmount: 1000, description: '10% off on orders above $1,000' },
+        { code: 'SAVE500', discountType: 'fixed', discountValue: 500, minimumAmount: 2000, description: '$500 off on orders above $2,000' },
+        { code: 'NEWUSER', discountType: 'percentage', discountValue: 15, minimumAmount: 500, description: '15% off for new users' }
+      ];
+
+      const coupon = mockCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
+      
+      if (!coupon) {
+        setCouponError('Invalid coupon code');
+        return;
+      }
+
+      const subtotal = getCurrentPrice() * quantity;
+      if (coupon.minimumAmount && subtotal < coupon.minimumAmount) {
+        setCouponError(`Minimum order amount of $${coupon.minimumAmount.toLocaleString()} required`);
+        return;
+      }
+
+      setAppliedCoupon(coupon);
+      setCouponCode('');
+      toast.success(`Coupon "${coupon.code}" applied successfully!`);
+    } catch (error) {
+      setCouponError('Failed to apply coupon. Please try again.');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    toast.success('Coupon removed');
+  };
+
+  const getCurrentPrice = () => {
+    if (!product) return 0;
+    
+    if (product.variants && product.variants[variant]) {
+      return product.variants[variant].price;
+    }
+    
+    return product.price;
+  };
+
+  const calculateDiscount = () => {
+    if (!appliedCoupon || !product) return 0;
+    
+    const subtotal = getCurrentPrice() * quantity;
+    
+    if (appliedCoupon.discountType === 'percentage') {
+      return (subtotal * appliedCoupon.discountValue) / 100;
+    } else {
+      return appliedCoupon.discountValue;
     }
   };
 
@@ -207,12 +350,13 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
     );
   }
 
-  const subtotal = product.price * quantity;
+  const subtotal = getCurrentPrice() * quantity;
+  const couponDiscount = calculateDiscount();
   const shipping = subtotal > 2000 ? 0 : 200;
-  const total = subtotal + shipping;
+  const total = subtotal + shipping - couponDiscount;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 custom-font">
       
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -224,7 +368,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
             <ArrowLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+          <h1 className="text-3xl font-bold text-gray-900 custom-font">Checkout</h1>
         </div>
         
         {/* Sign In Button */}
@@ -266,9 +410,9 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                 return (
                   <motion.div 
                     key={step.id} 
-                    className={`bg-white rounded-xl shadow-lg transition-all duration-200 ${
+                    className={`bg-[#F0F2F5] rounded-lg shadow-2xl transition-all duration-200 ${
                       isActive 
-                        ? 'ring-2 ring-blue-500' 
+                        ? '' 
                         : isCompleted 
                         ? 'opacity-75'
                         : !isAccessible
@@ -297,7 +441,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                           )}
                         </div>
                         <div>
-                          <h3 className={`text-lg font-semibold transition-colors ${
+                          <h3 className={`text-lg font-semibold transition-colors custom-font ${
                             isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
                           }`}>
                             {step.name}
@@ -318,109 +462,109 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                         >
                           {step.id === 1 && (
                             <div>
-                              <div className="text-sm text-gray-600 mb-6">
+                              <div className="text-lg text-gray-600 mb-6">
                                 <p>Enter your personal information to continue with the checkout process.</p>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    First Name *
-                                  </label>
-                                  <Controller
-                                    name="personalDetails.firstName"
-                                    control={control}
-                                    rules={{ required: 'First name is required' }}
-                                    render={({ field }) => (
-                                      <input
-                                        {...field}
-                                        type="text"
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                          errors.personalDetails?.firstName ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        placeholder="Enter your first name"
-                                      />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div>
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
+                                      First Name *
+                                    </label>
+                                    <Controller
+                                      name="personalDetails.firstName"
+                                      control={control}
+                                      rules={{ required: 'First name is required' }}
+                                      render={({ field }) => (
+                                        <input
+                                          {...field}
+                                          type="text"
+                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
+                                            errors.personalDetails?.firstName ? 'border-red-500' : 'border-gray-300'
+                                          }`}
+                                          placeholder="Enter your first name"
+                                        />
+                                      )}
+                                    />
+                                    {errors.personalDetails?.firstName && (
+                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.firstName.message}</p>
                                     )}
-                                  />
-                                  {errors.personalDetails?.firstName && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.personalDetails.firstName.message}</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Last Name *
-                                  </label>
-                                  <Controller
-                                    name="personalDetails.lastName"
-                                    control={control}
-                                    rules={{ required: 'Last name is required' }}
-                                    render={({ field }) => (
-                                      <input
-                                        {...field}
-                                        type="text"
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                          errors.personalDetails?.lastName ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        placeholder="Enter your last name"
-                                      />
+                                  </div>
+                                  <div>
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
+                                      Last Name *
+                                    </label>
+                                    <Controller
+                                      name="personalDetails.lastName"
+                                      control={control}
+                                      rules={{ required: 'Last name is required' }}
+                                      render={({ field }) => (
+                                        <input
+                                          {...field}
+                                          type="text"
+                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
+                                            errors.personalDetails?.lastName ? 'border-red-500' : 'border-gray-300'
+                                          }`}
+                                          placeholder="Enter your last name"
+                                        />
+                                      )}
+                                    />
+                                    {errors.personalDetails?.lastName && (
+                                      <p className="text-red-500 text-lg mt-1">{errors.personalDetails.lastName.message}</p>
                                     )}
-                                  />
-                                  {errors.personalDetails?.lastName && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.personalDetails.lastName.message}</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email Address *
-                                  </label>
-                                  <Controller
-                                    name="personalDetails.email"
-                                    control={control}
-                                    rules={{ 
-                                      required: 'Email is required',
-                                      pattern: {
-                                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                        message: 'Please enter a valid email address'
-                                      }
-                                    }}
-                                    render={({ field }) => (
-                                      <input
-                                        {...field}
-                                        type="email"
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                          errors.personalDetails?.email ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        placeholder="Enter your email"
-                                      />
+                                  </div>
+                                  <div>
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
+                                      Email Address *
+                                    </label>
+                                    <Controller
+                                      name="personalDetails.email"
+                                      control={control}
+                                      rules={{ 
+                                        required: 'Email is required',
+                                        pattern: {
+                                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                          message: 'Please enter a valid email address'
+                                        }
+                                      }}
+                                      render={({ field }) => (
+                                        <input
+                                          {...field}
+                                          type="email"
+                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
+                                            errors.personalDetails?.email ? 'border-red-500' : 'border-gray-300'
+                                          }`}
+                                          placeholder="Enter your email"
+                                        />
+                                      )}
+                                    />
+                                    {errors.personalDetails?.email && (
+                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.email.message}</p>
                                     )}
-                                  />
-                                  {errors.personalDetails?.email && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.personalDetails.email.message}</p>
-                                  )}
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Phone Number *
-                                  </label>
-                                  <Controller
-                                    name="personalDetails.phone"
-                                    control={control}
-                                    rules={{ required: 'Phone number is required' }}
-                                    render={({ field }) => (
-                                      <input
-                                        {...field}
-                                        type="tel"
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                          errors.personalDetails?.phone ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        placeholder="Enter your phone number"
-                                      />
+                                  </div>
+                                  <div>
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
+                                      Phone Number *
+                                    </label>
+                                    <Controller
+                                      name="personalDetails.phone"
+                                      control={control}
+                                      rules={{ required: 'Phone number is required' }}
+                                      render={({ field }) => (
+                                        <input
+                                          {...field}
+                                          type="tel"
+                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
+                                            errors.personalDetails?.phone ? 'border-red-500' : 'border-gray-300'
+                                          }`}
+                                          placeholder="Enter your phone number"
+                                        />
+                                      )}
+                                    />
+                                    {errors.personalDetails?.phone && (
+                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.phone.message}</p>
                                     )}
-                                  />
-                                  {errors.personalDetails?.phone && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.personalDetails.phone.message}</p>
-                                  )}
+                                  </div>
                                 </div>
-                              </div>
                               <div className="flex justify-end mt-6">
                                 <button
                                   type="button"
@@ -434,12 +578,12 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                           )}
                           {step.id === 2 && (
                             <div>
-                              <div className="text-sm text-gray-600 mb-6">
+                              <div className="text-lg text-black mb-6">
                                 <p>Provide your delivery address for shipping.</p>
                               </div>
                               <div className="space-y-6">
                                 <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                     Street Address *
                                   </label>
                                   <Controller
@@ -463,7 +607,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                       City *
                                     </label>
                                     <Controller
@@ -486,7 +630,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                     )}
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                       State/Province *
                                     </label>
                                     <Controller
@@ -511,7 +655,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                       Postal Code *
                                     </label>
                                     <Controller
@@ -534,7 +678,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                     )}
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                       Country *
                                     </label>
                                     <Controller
@@ -581,7 +725,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                           )}
                           {step.id === 3 && (
                             <div>
-                              <div className="text-sm text-gray-600 mb-6">
+                              <div className="text-lg text-gray-600 mb-6">
                                 <p>Enter billing information or use same as delivery address.</p>
                               </div>
                               {/* Same as Delivery Checkbox */}
@@ -592,12 +736,15 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                   render={({ field }) => (
                                     <label className="flex items-center">
                                       <input
-                                        {...field}
                                         type="checkbox"
                                         checked={field.value}
+                                        onChange={field.onChange}
+                                        onBlur={field.onBlur}
+                                        name={field.name}
+                                        ref={field.ref}
                                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                       />
-                                      <span className="ml-2 text-sm text-gray-700">
+                                      <span className="ml-2 text-lg text-gray-700">
                                         Same as delivery address
                                       </span>
                                     </label>
@@ -608,7 +755,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                               {!sameAsDelivery && (
                                 <div className="space-y-6">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                       Street Address *
                                     </label>
                                     <Controller
@@ -627,12 +774,12 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                       )}
                                     />
                                     {errors.billingAddress?.street && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.billingAddress.street.message}</p>
+                                      <p className="text-red-500 text-lg mt-1">{errors.billingAddress.street.message}</p>
                                     )}
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                         City *
                                       </label>
                                       <Controller
@@ -655,7 +802,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                       )}
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                         State/Province *
                                       </label>
                                       <Controller
@@ -674,13 +821,13 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                         )}
                                       />
                                       {errors.billingAddress?.state && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.billingAddress.state.message}</p>
+                                        <p className="text-red-500 text-lg mt-1">{errors.billingAddress.state.message}</p>
                                       )}
                                     </div>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                         Postal Code *
                                       </label>
                                       <Controller
@@ -703,7 +850,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                       )}
                                     </div>
                                     <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
                                         Country *
                                       </label>
                                       <Controller
@@ -751,7 +898,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                           )}
                           {step.id === 4 && (
                             <div>
-                              <div className="text-sm text-gray-600 mb-6">
+                              <div className="text-lg text-gray-600 mb-6">
                                 <p>Complete your payment securely with Paddle.</p>
                               </div>
                               <div className="text-center">
@@ -759,7 +906,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <CreditCard className="w-8 h-8 text-blue-600" />
                                   </div>
-                                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                  <h3 className="text-lg font-semibold text-gray-900 mb-2 custom-font">
                                     Secure Payment with Paddle
                                   </h3>
                                   <p className="text-gray-600">
@@ -818,8 +965,8 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
 
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+            <div className="bg-[#F0F2F5] rounded-xl shadow-lg p-6 sticky top-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 custom-font">Order Summary</h3>
               
               {/* Product */}
               <div className="flex items-center space-x-4 mb-4">
@@ -827,13 +974,22 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                   src={product.image}
                   alt={product.name}
                   className="w-16 h-16 object-cover rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/image.png';
+                  }}
                 />
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900">{product.name}</h4>
                   <p className="text-sm text-gray-500">{product.brand}</p>
+                  {product.variants && product.variants[variant] && (
+                    <p className="text-xs text-gray-500">{product.variants[variant].name}: {product.variants[variant].value}</p>
+                  )}
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-lg font-semibold text-gray-900">NPR {product.price.toLocaleString()}</span>
-                    <span className="text-sm text-gray-500 line-through">NPR {product.originalPrice.toLocaleString()}</span>
+                    <span className="text-lg font-semibold text-gray-900">${getCurrentPrice().toLocaleString()}</span>
+                    {product.comparePrice && (
+                      <span className="text-sm text-gray-500 line-through">${product.comparePrice.toLocaleString()}</span>
+                    )}
                     <span className="text-sm text-green-600 font-medium">{product.discount}% off</span>
                   </div>
                 </div>
@@ -845,21 +1001,69 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
                 <span className="text-sm font-medium text-gray-900">{quantity}</span>
               </div>
 
+              {/* Coupon Section */}
+              <div className="py-4 border-t border-gray-200">
+                {appliedCoupon ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-800">{appliedCoupon.code}</p>
+                        <p className="text-xs text-green-600">{appliedCoupon.description}</p>
+                      </div>
+                      <button
+                        onClick={removeCoupon}
+                        className="text-green-600 hover:text-green-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex space-x-2 mb-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={applyCoupon}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                      >
+                        {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-red-500 text-xs">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Pricing */}
               <div className="space-y-2 py-4 border-t border-gray-200">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Subtotal</span>
-                  <span className="text-sm font-medium text-gray-900">NPR {subtotal.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-gray-900">${subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Shipping</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {shipping === 0 ? 'Free' : `NPR ${shipping.toLocaleString()}`}
+                    {shipping === 0 ? 'Free' : `$${shipping.toLocaleString()}`}
                   </span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-green-600">Coupon Discount</span>
+                    <span className="text-sm font-medium text-green-600">-${couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200">
                   <span>Total</span>
-                  <span>NPR {total.toLocaleString()}</span>
+                  <span>${total.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -867,7 +1071,7 @@ export default function CheckoutForm({ productId, quantity }: CheckoutFormProps)
               <div className="space-y-3 mt-6">
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Truck className="w-4 h-4 text-blue-600" />
-                  <span>Free shipping on orders over NPR 2,000</span>
+                  <span>Free shipping on orders over $2,000</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Shield className="w-4 h-4 text-blue-600" />

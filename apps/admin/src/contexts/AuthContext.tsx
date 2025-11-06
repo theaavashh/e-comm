@@ -1,21 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
-
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  firstName?: string;
-  lastName?: string;
-  role: string;
-  isActive: boolean;
-  emailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchProfile, loginUser, logoutUser, User } from '@/store/slices/authSlice';
 
 interface AuthContextType {
   user: User | null;
@@ -41,82 +29,42 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useAppDispatch();
   const router = useRouter();
+  const { user, isLoading, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  const isAuthenticated = !!user && !!token;
-
+  // Fetch profile on mount using httpOnly cookie
   useEffect(() => {
-    // Check for existing authentication on mount
-    const storedToken = localStorage.getItem('adminToken');
-    const storedUser = localStorage.getItem('adminUser');
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
-      }
-    }
-    
-    setIsLoading(false);
-  }, []);
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('AuthContext: Starting login process...', { email });
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      console.log('AuthContext: Response received', { 
-        status: response.status, 
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('AuthContext: Login failed', errorData);
-        throw new Error(errorData.message || 'Login failed');
-      }
-
-      const result = await response.json();
+      const result = await dispatch(loginUser({ email, password })).unwrap();
+      
       console.log('AuthContext: Login successful', result);
-      
-      // Store authentication data
-      localStorage.setItem('adminToken', result.token);
-      localStorage.setItem('adminUser', JSON.stringify(result.user));
-      
-      setToken(result.token);
-      setUser(result.user);
-      
       return true;
     } catch (error) {
       console.error('AuthContext: Login error:', error);
-      toast.error(error instanceof Error ? error.message : 'Login failed');
       return false;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
-    setToken(null);
-    setUser(null);
-    toast.success('Logged out successfully');
-    router.push('/');
+  const logout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+      router.push('/');
+    } catch (error) {
+      console.error('AuthContext: Logout error:', error);
+      // Even if logout fails on server, clear local state
+      router.push('/');
+    }
   };
+
+  // Token is stored in httpOnly cookie, not in Redux state
+  const token = null;
 
   const value: AuthContextType = {
     user,

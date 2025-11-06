@@ -16,49 +16,82 @@ export const productSchema = z.object({
   
   description: z
     .string()
-    .min(1, 'Description is required')
-    .min(10, 'Description must be at least 10 characters')
-    .max(5000, 'Description must be less than 5000 characters'),
+    .max(5000, 'Description must be less than 5000 characters')
+    .optional(),
   
   shortDescription: z
     .string()
-    .min(1, 'Short description is required')
-    .min(10, 'Short description must be at least 10 characters')
-    .max(500, 'Short description must be less than 500 characters'),
+    .max(500, 'Short description must be less than 500 characters')
+    .optional(),
   
   price: z
-    .number()
-    .min(0, 'Price must be a positive number')
-    .max(999999.99, 'Price must be less than 999,999.99'),
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Price must be a valid number');
+      return num;
+    })
+    .refine((val) => val >= 0, 'Price must be a positive number')
+    .refine((val) => val <= 999999.99, 'Price must be less than 999,999.99'),
   
   comparePrice: z
-    .number()
-    .min(0, 'Compare price must be a positive number')
-    .max(999999.99, 'Compare price must be less than 999,999.99')
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Compare price must be a valid number');
+      return num;
+    })
+    .refine((val) => val === undefined || val >= 0, 'Compare price must be a positive number')
+    .refine((val) => val === undefined || val <= 999999.99, 'Compare price must be less than 999,999.99')
     .optional(),
   
   costPrice: z
-    .number()
-    .min(0, 'Cost price must be a positive number')
-    .max(999999.99, 'Cost price must be less than 999,999.99')
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Cost price must be a valid number');
+      return num;
+    })
+    .refine((val) => val === undefined || val >= 0, 'Cost price must be a positive number')
+    .refine((val) => val === undefined || val <= 999999.99, 'Cost price must be less than 999,999.99')
     .optional(),
   
   discountPrice: z
-    .number()
-    .min(0, 'Discount price must be a positive number')
-    .max(999999.99, 'Discount price must be less than 999,999.99')
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Discount price must be a valid number');
+      return num;
+    })
+    .refine((val) => val === undefined || val >= 0, 'Discount price must be a positive number')
+    .refine((val) => val === undefined || val <= 999999.99, 'Discount price must be less than 999,999.99')
     .optional(),
   
   discountPercentage: z
-    .number()
-    .min(0, 'Discount percentage must be a positive number')
-    .max(100, 'Discount percentage cannot exceed 100%')
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Discount percentage must be a valid number');
+      return num;
+    })
+    .refine((val) => val === undefined || val >= 0, 'Discount percentage must be a positive number')
+    .refine((val) => val === undefined || val <= 100, 'Discount percentage cannot exceed 100%')
     .optional(),
   
   margin: z
-    .number()
-    .min(0, 'Margin must be a positive number')
-    .max(999999.99, 'Margin must be less than 999,999.99')
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) throw new Error('Margin must be a valid number');
+      return num;
+    })
+    .refine((val) => val === undefined || val >= 0, 'Margin must be a positive number')
+    .refine((val) => val === undefined || val <= 999999.99, 'Margin must be less than 999,999.99')
     .optional(),
   
   minOrderQuantity: z
@@ -77,18 +110,21 @@ export const productSchema = z.object({
   
   sku: z
     .string()
-    .min(1, 'SKU is required')
     .min(3, 'SKU must be at least 3 characters')
     .max(100, 'SKU must be less than 100 characters')
-    .regex(/^[A-Z0-9-_]+$/, 'SKU must contain only uppercase letters, numbers, hyphens, and underscores'),
+    .regex(/^[A-Z0-9-_]+$/, 'SKU must contain only uppercase letters, numbers, hyphens, and underscores')
+    .optional(),
   
   categoryId: z
     .string()
     .min(1, 'Category is required'),
   
-  brand: z
+  subCategoryId: z
     .string()
-    .max(100, 'Brand name must be less than 100 characters')
+    .optional(),
+  
+  brandId: z
+    .string()
     .optional(),
   
   tags: z
@@ -98,19 +134,21 @@ export const productSchema = z.object({
   
   images: z
     .array(z.string())
-    .min(1, 'At least one image is required')
-    .max(10, 'Maximum 10 images allowed'),
-  
-  status: z
-    .enum(['active', 'draft', 'archived'], {
-      required_error: 'Status is required',
-    }),
+    .max(10, 'Maximum 10 images allowed')
+    .default([]),
   
   stock: z
-    .number()
-    .int('Stock must be a whole number')
-    .min(0, 'Stock cannot be negative')
-    .max(999999, 'Stock must be less than 999,999'),
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === '' || val === null || val === undefined) return 0;
+      const num = typeof val === 'string' ? parseInt(val) : val;
+      if (isNaN(num)) throw new Error('Stock must be a valid number');
+      return num;
+    })
+    .refine((val) => Number.isInteger(val), 'Stock must be a whole number')
+    .refine((val) => val >= 0, 'Stock cannot be negative')
+    .refine((val) => val <= 999999, 'Stock must be less than 999,999')
+    .default(0),
   
   weight: z
     .number()
@@ -197,6 +235,38 @@ export const productSchema = z.object({
     .min(1, 'Maximum quantity must be at least 1')
     .max(999, 'Maximum quantity must be less than 999')
     .optional(),
+  
+  // Multi-currency pricing
+  currencyPrices: z
+    .array(
+      z.object({
+        country: z.string().min(1, 'Country is required'),
+        currency: z.string().min(1, 'Currency is required'),
+        symbol: z.string().min(1, 'Symbol is required'),
+        price: z
+          .union([z.string(), z.number()])
+          .transform((val) => {
+            const num = typeof val === 'string' ? parseFloat(val) : val;
+            if (isNaN(num)) throw new Error('Price must be a valid number');
+            return num;
+          })
+          .refine((val) => val >= 0, 'Price must be a positive number')
+          .refine((val) => val <= 999999.99, 'Price must be less than 999,999.99'),
+        comparePrice: z
+          .union([z.string(), z.number()])
+          .transform((val) => {
+            if (val === '' || val === null || val === undefined) return undefined;
+            const num = typeof val === 'string' ? parseFloat(val) : val;
+            if (isNaN(num)) throw new Error('Compare price must be a valid number');
+            return num;
+          })
+          .refine((val) => val === undefined || val >= 0, 'Compare price must be a positive number')
+          .refine((val) => val === undefined || val <= 999999.99, 'Compare price must be less than 999,999.99')
+          .optional(),
+        isActive: z.boolean().default(true),
+      })
+    )
+    .default([]),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -205,7 +275,7 @@ export type ProductFormData = z.infer<typeof productSchema>;
 export const productFilterSchema = z.object({
   search: z.string().optional(),
   categoryId: z.string().optional(),
-  status: z.enum(['all', 'active', 'draft', 'archived']),
+  isActive: z.boolean().optional(),
   priceMin: z.number().min(0).optional(),
   priceMax: z.number().min(0).optional(),
   stockMin: z.number().min(0).optional(),

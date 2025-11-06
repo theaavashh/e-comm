@@ -51,7 +51,7 @@ export default function FilterSidebar({
       {/* Mobile Filter Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-40"
+        className="lg:hidden fixed bottom-20 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
@@ -65,7 +65,7 @@ export default function FilterSidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50"
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[60]"
             onClick={() => setIsOpen(false)}
           >
             <motion.div
@@ -73,7 +73,7 @@ export default function FilterSidebar({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl"
+              className="absolute right-0 top-0 h-full w-80 bg-[#F0F2F5]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 h-full overflow-y-auto">
@@ -95,7 +95,7 @@ export default function FilterSidebar({
 
       {/* Desktop Sidebar */}
       <div className={`hidden lg:block lg:w-64 flex-shrink-0 ${className}`}>
-        <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
+        <div className="bg-[#F0F2F5] rounded-xl p-6 sticky top-6">
           <FilterContent />
         </div>
       </div>
@@ -105,15 +105,7 @@ export default function FilterSidebar({
   function FilterContent() {
     return (
       <>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-          <button
-            onClick={onClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Clear All
-          </button>
-        </div>
+        {/* Header removed as requested (no Filters title or Clear All) */}
 
         {/* Category Filter */}
         <FilterSection title="Category">
@@ -127,7 +119,7 @@ export default function FilterSidebar({
                 onChange={(e) => onCategoryChange(e.target.value)}
                 className="mr-2"
               />
-              <span className="text-sm text-gray-700">All Categories</span>
+              <span className="text-sm text-black">All Categories</span>
             </label>
             {Object.entries(categories).map(([key, label]) => (
               <label key={key} className="flex items-center">
@@ -139,7 +131,7 @@ export default function FilterSidebar({
                   onChange={(e) => onCategoryChange(e.target.value)}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">{label}</span>
+                <span className="text-sm text-black">{label}</span>
               </label>
             ))}
           </div>
@@ -156,9 +148,9 @@ export default function FilterSidebar({
               onChange={(e) => handlePriceRangeChange(parseInt(e.target.value))}
               className="w-full"
             />
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>NPR {priceRange[0].toLocaleString()}</span>
-              <span>NPR {priceRange[1].toLocaleString()}</span>
+            <div className="flex justify-between text-sm text-black">
+              <span className="text-black">NPR {priceRange[0].toLocaleString()}</span>
+              <span className="text-black">NPR {priceRange[1].toLocaleString()}</span>
             </div>
             <div className="flex space-x-2">
               <input
@@ -167,7 +159,7 @@ export default function FilterSidebar({
                 max="10000"
                 value={priceRange[0]}
                 onChange={(e) => onPriceRangeChange([parseInt(e.target.value) || 0, priceRange[1]])}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black"
                 placeholder="Min"
               />
               <input
@@ -176,7 +168,7 @@ export default function FilterSidebar({
                 max="10000"
                 value={priceRange[1]}
                 onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value) || 10000])}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black"
                 placeholder="Max"
               />
             </div>
@@ -194,7 +186,7 @@ export default function FilterSidebar({
                   onChange={() => onBrandToggle(brand)}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">{brand}</span>
+                <span className="text-sm text-black">{brand}</span>
               </label>
             ))}
           </div>

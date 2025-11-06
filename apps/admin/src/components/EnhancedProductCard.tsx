@@ -30,11 +30,11 @@ interface Product {
   price: number;
   comparePrice?: number;
   sku: string;
-  category: string;
+  category: string | { id: string; name: string; slug: string };
   categoryId: string;
   tags: string[];
   images: string[];
-  status: 'active' | 'draft' | 'archived';
+  isActive: boolean;
   stock: number;
   weight: number;
   dimensions: {
@@ -49,8 +49,8 @@ interface Product {
   };
   createdAt: string;
   updatedAt: string;
-  rating: number;
-  reviews: number;
+  rating?: number;
+  reviews?: number;
   isFeatured?: boolean;
   isDigital?: boolean;
 }
@@ -60,7 +60,7 @@ interface EnhancedProductCardProps {
   index: number;
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: Product['status']) => void;
+  onStatusChange: (id: string, status: boolean) => void;
   onDuplicate?: (product: Product) => void;
   onToggleFeatured?: (id: string) => void;
   onView?: (product: Product) => void;
@@ -79,22 +79,12 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
   const [showActions, setShowActions] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const getStatusColor = (status: Product['status']) => {
-    switch (status) {
-      case 'active': return 'text-green-600 bg-green-50 border-green-200';
-      case 'draft': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'archived': return 'text-gray-600 bg-gray-50 border-gray-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? 'text-green-600 bg-green-50 border-green-200' : 'text-gray-600 bg-gray-50 border-gray-200';
   };
 
-  const getStatusIcon = (status: Product['status']) => {
-    switch (status) {
-      case 'active': return <CheckCircle className="w-4 h-4" />;
-      case 'draft': return <Clock className="w-4 h-4" />;
-      case 'archived': return <Archive className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
+  const getStatusIcon = (isActive: boolean) => {
+    return isActive ? <CheckCircle className="w-4 h-4" /> : <Archive className="w-4 h-4" />;
   };
 
   const getStockColor = (stock: number) => {
@@ -126,13 +116,30 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
       {/* Image Section */}
       <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
         {product.images.length > 0 && !imageError ? (
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={() => setImageError(true)}
-          />
+          (() => {
+            const imageUrl = product.images[0];
+            // Check if the URL is valid and from an allowed domain
+            const isValidImageUrl = imageUrl && 
+              (imageUrl.startsWith('data:') || 
+               imageUrl.startsWith('https://res.cloudinary.com') ||
+               imageUrl.startsWith('https://images.unsplash.com') ||
+               imageUrl.startsWith('https://via.placeholder.com') ||
+               imageUrl.startsWith('https://example.com'));
+            
+            return isValidImageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <Package className="w-16 h-16 text-gray-300" />
+              </div>
+            );
+          })()
         ) : (
           <div className="flex items-center justify-center h-full">
             <Package className="w-16 h-16 text-gray-300" />
@@ -141,9 +148,9 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
 
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 border ${getStatusColor(product.status)}`}>
-            {getStatusIcon(product.status)}
-            <span className="capitalize">{product.status}</span>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 border ${getStatusColor(product.isActive)}`}>
+            {getStatusIcon(product.isActive)}
+            <span className="capitalize">{product.isActive ? 'active' : 'inactive'}</span>
           </span>
         </div>
 
@@ -218,11 +225,11 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
                   </button>
                 )}
                 <button
-                  onClick={() => onStatusChange(product.id, product.status === 'archived' ? 'active' : 'archived')}
+                  onClick={() => onStatusChange(product.id, !product.isActive)}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
                 >
-                  {product.status === 'archived' ? <ArchiveRestore className="w-4 h-4 mr-2" /> : <Archive className="w-4 h-4 mr-2" />}
-                  {product.status === 'archived' ? 'Unarchive' : 'Archive'}
+                  {product.isActive ? <Archive className="w-4 h-4 mr-2" /> : <ArchiveRestore className="w-4 h-4 mr-2" />}
+                  {product.isActive ? 'Deactivate' : 'Activate'}
                 </button>
                 <button
                   onClick={() => onDelete(product.id)}
@@ -288,7 +295,7 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <Star className="w-4 h-4 mr-2 text-yellow-400" />
-            <span>{product.rating.toFixed(1)} ({product.reviews})</span>
+            <span>{(product.rating || 0).toFixed(1)} ({product.reviews || 0})</span>
           </div>
         </div>
 
@@ -297,7 +304,7 @@ const EnhancedProductCard: React.FC<EnhancedProductCardProps> = memo(({
           <div className="flex items-center text-sm text-gray-600">
             <span className="font-medium mr-2">Category:</span>
             <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-              {product.category}
+              {typeof product.category === 'string' ? product.category : product.category.name}
             </span>
           </div>
           <div className="flex items-center text-sm text-gray-600">

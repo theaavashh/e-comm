@@ -4,10 +4,7 @@ import { z } from 'zod';
 export const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username must be less than 30 characters'),
-  password: z.string().min(8, 'Password must be at least 8 characters').regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-  ),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(2, 'First name must be at least 2 characters').optional(),
   lastName: z.string().min(2, 'Last name must be at least 2 characters').optional(),
   phone: z.string().regex(/^\+?[\d\s-()]+$/, 'Invalid phone number').optional(),
@@ -47,101 +44,162 @@ export const createAddressSchema = z.object({
 export const updateAddressSchema = createAddressSchema.partial();
 
 // Product validation schemas
-export const createProductSchema = z.object({
+// Define a base schema so we can derive create/update variants cleanly
+const productBaseSchema = z.object({
   name: z.string().min(3, 'Product name must be at least 3 characters'),
-  description: z.string().optional(),
-  shortDescription: z.string().max(500, 'Short description must be less than 500 characters').optional(),
+  // Full description is now required per UI
+  description: z.string().min(1, 'Full description is required'),
+  // Short description is required per UI (limit remains 500)
+  shortDescription: z.string().min(1, 'Short description is required').max(500, 'Short description must be less than 500 characters'),
   
-  // Pricing
-  price: z.number().positive('Price must be positive'),
-  comparePrice: z.number().positive('Compare price must be positive').optional(),
-  costPrice: z.number().positive('Cost price must be positive').optional(),
-  margin: z.number().min(0).max(100, 'Margin must be between 0 and 100').optional(),
+  // Pricing - base price is deprecated, use currencyPrices instead
+  // price field is kept for backward compatibility but not used
+  comparePrice: z.coerce.number().positive('Compare price must be positive').optional(),
+  costPrice: z.coerce.number().positive('Cost price must be positive').optional(),
+  margin: z.coerce.number().min(0).max(100, 'Margin must be between 0 and 100').optional(),
   
-  // Product Identification
-  sku: z.string().optional(),
+  // Product Identification (SKU required per UI)
+  sku: z.string().min(1, 'SKU is required'),
   barcode: z.string().optional(),
   upc: z.string().optional(),
   ean: z.string().optional(),
   isbn: z.string().optional(),
   
   // Inventory Management
-  trackQuantity: z.boolean().default(true),
-  quantity: z.number().int().min(0, 'Quantity must be non-negative').default(0),
-  lowStockThreshold: z.number().int().min(0, 'Low stock threshold must be non-negative').default(5),
-  allowBackorder: z.boolean().default(false),
-  manageStock: z.boolean().default(true),
+  trackQuantity: z.coerce.boolean().default(true),
+  quantity: z.coerce.number().int().min(0, 'Quantity must be non-negative').default(0),
+  lowStockThreshold: z.coerce.number().int().min(0, 'Low stock threshold must be non-negative').default(5),
+  allowBackorder: z.coerce.boolean().default(false),
+  manageStock: z.coerce.boolean().default(true),
   
   // Physical Properties
-  weight: z.number().positive('Weight must be positive').optional(),
+  weight: z.coerce.number().positive('Weight must be positive').optional(),
   weightUnit: z.string().default('kg'),
   dimensions: z.object({
-    length: z.number().positive(),
-    width: z.number().positive(),
-    height: z.number().positive(),
+    length: z.coerce.number().positive(),
+    width: z.coerce.number().positive(),
+    height: z.coerce.number().positive(),
     unit: z.string().default('cm'),
   }).optional(),
   
-  // Media
-  images: z.array(z.string().url('Invalid image URL')).default([]),
+  // Media - allow URLs or base64 data URLs
+  images: z.array(z.string()).default([]), // Can be URL or base64 data URL
   videos: z.array(z.string().url('Invalid video URL')).default([]),
-  thumbnail: z.string().url('Invalid thumbnail URL').optional(),
+  thumbnail: z.string().optional(), // Can be URL or base64 data URL
   
   // SEO Fields
   seoTitle: z.string().max(60, 'SEO title must be less than 60 characters').optional(),
   seoDescription: z.string().max(160, 'SEO description must be less than 160 characters').optional(),
   seoKeywords: z.array(z.string()).default([]),
   metaTags: z.record(z.string()).optional(),
+  seo: z.object({
+    ogTitle: z.string().max(60, 'OG title must be less than 60 characters').optional(),
+    ogDescription: z.string().max(160, 'OG description must be less than 160 characters').optional(),
+    ogImage: z.string().optional(), // Can be URL or base64 data URL
+    canonicalUrl: z.string().optional(), // Can be URL or base64 data URL
+    focusKeyword: z.string().optional(),
+  }).optional(),
   
   // Product Status
-  isActive: z.boolean().default(true),
-  isDigital: z.boolean().default(false),
-  isFeatured: z.boolean().default(false),
-  isNew: z.boolean().default(false),
-  isOnSale: z.boolean().default(false),
-  isBestSeller: z.boolean().default(false),
+  isActive: z.coerce.boolean().default(true),
+  isDigital: z.coerce.boolean().default(false),
+  isFeatured: z.coerce.boolean().default(false),
+  isNew: z.coerce.boolean().default(false),
+  isOnSale: z.coerce.boolean().default(false),
+  isBestSeller: z.coerce.boolean().default(false),
   
   // Visibility
   visibility: z.enum(['VISIBLE', 'HIDDEN', 'CATALOG_ONLY', 'SEARCH_ONLY']).default('VISIBLE'),
-  publishedAt: z.string().datetime().optional(),
+  publishedAt: z.union([z.string(), z.coerce.date()]).optional(),
   
   // Categories and Tags
   categoryId: z.string().min(1, 'Category ID is required'),
+  subCategoryId: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  brand: z.string().optional(),
+  brandId: z.string().optional(),
   
   // Shipping
-  requiresShipping: z.boolean().default(true),
+  requiresShipping: z.coerce.boolean().default(true),
   shippingClass: z.string().optional(),
-  freeShipping: z.boolean().default(false),
+  freeShipping: z.coerce.boolean().default(false),
   
   // Tax
-  taxable: z.boolean().default(true),
+  taxable: z.coerce.boolean().default(true),
   taxClass: z.string().optional(),
   
   // Additional Fields
-  customFields: z.record(z.any()).optional(),
+  // Support both record-style or array of sections for custom fields
+  customFields: z.union([
+    z.record(z.any()),
+    z.array(z.object({
+      key: z.string().min(1, 'Section key is required'),
+      label: z.string().min(1, 'Section label is required'),
+      content: z.any(),
+      isVisible: z.coerce.boolean().optional(),
+    }))
+  ]).optional(),
+  // Alias accepted from UI for custom sections
+  customSections: z.array(z.object({
+    key: z.string().optional(),
+    label: z.string().optional(),
+    title: z.string().optional(),
+    type: z.string().optional(),
+    content: z.any().optional(),
+    isVisible: z.coerce.boolean().optional(),
+  })).optional(),
   notes: z.string().optional(),
   
   // Dynamic pricing and attributes
   pricingTiers: z.array(z.object({
-    minQuantity: z.number().int().min(1, 'Minimum quantity must be at least 1'),
-    maxQuantity: z.number().int().min(1, 'Maximum quantity must be at least 1').optional(),
-    price: z.number().positive('Price must be positive'),
-    discount: z.number().min(0).max(100, 'Discount must be between 0 and 100').optional(),
+    minQuantity: z.coerce.number().int().min(1, 'Minimum quantity must be at least 1'),
+    maxQuantity: z.coerce.number().int().min(1, 'Maximum quantity must be at least 1').optional(),
+    price: z.coerce.number().positive('Price must be positive'),
+    discount: z.coerce.number().min(0).max(100, 'Discount must be between 0 and 100').optional(),
   })).optional(),
   
   attributes: z.array(z.object({
     name: z.string().min(1, 'Attribute name is required'),
     value: z.string().min(1, 'Attribute value is required'),
     type: z.enum(['TEXT', 'NUMBER', 'BOOLEAN', 'COLOR', 'IMAGE', 'SELECT', 'MULTI_SELECT']).default('TEXT'),
-    isRequired: z.boolean().default(false),
-    isFilterable: z.boolean().default(true),
-    sortOrder: z.number().int().default(0),
+    isRequired: z.coerce.boolean().default(false),
+    isFilterable: z.coerce.boolean().default(true),
+    sortOrder: z.coerce.number().int().default(0),
+  })).optional(),
+  
+  // International pricing (multi-currency pricing)
+  currencyPrices: z.array(z.object({
+    country: z.string().min(1, 'Country is required'),
+    price: z.coerce.number().positive('Price must be positive'),
+    comparePrice: z.coerce.number().positive('Compare price must be positive').optional(),
+    minDeliveryDays: z.coerce.number().int().min(1, 'Minimum delivery days must be at least 1'),
+    maxDeliveryDays: z.coerce.number().int().min(1, 'Maximum delivery days must be at least 1'),
+    isActive: z.coerce.boolean().default(true),
   })).optional(),
 });
 
-export const updateProductSchema = createProductSchema.partial();
+export const createProductSchema = productBaseSchema
+  .extend({
+    currencyPrices: z.array(z.object({
+      country: z.string().min(1, 'Country is required'),
+      price: z.coerce.number().positive('Price must be positive'),
+      comparePrice: z.coerce.number().positive('Compare price must be positive').optional(),
+      minDeliveryDays: z.coerce.number().int().min(1, 'Minimum delivery days must be at least 1'),
+      maxDeliveryDays: z.coerce.number().int().min(1, 'Maximum delivery days must be at least 1'),
+      isActive: z.coerce.boolean().default(true),
+    })).min(1, 'At least one country pricing is required'),
+  })
+  .superRefine((data, ctx) => {
+    const hasMedia = (data.images && data.images.length > 0) || !!data.thumbnail;
+    if (!hasMedia) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'At least one product image or a thumbnail is required',
+        path: ['images'],
+      });
+    }
+  });
+
+export const updateProductSchema = productBaseSchema.partial();
 
 // Pricing tier validation schemas
 export const createPricingTierSchema = z.object({

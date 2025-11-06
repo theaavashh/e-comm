@@ -81,7 +81,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-500 transition-colors"
+          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-[#F0F2F5] border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#F0F2F5] disabled:hover:text-gray-500 transition-colors"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Previous
@@ -113,7 +113,7 @@ export default function Pagination({
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-700 bg-[#F0F2F5] border border-gray-300 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 {pageNumber}
@@ -126,7 +126,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-500 transition-colors"
+          className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-[#F0F2F5] border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#F0F2F5] disabled:hover:text-gray-500 transition-colors"
         >
           Next
           <ChevronRight className="w-4 h-4 ml-1" />

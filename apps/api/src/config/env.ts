@@ -11,7 +11,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
   
   // Server
-  PORT: z.string().transform(Number).default('5000'),
+  PORT: z.string().transform(Number).default('4444'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   
   // Redis
@@ -27,12 +27,17 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.string().transform(Number).default('5242880'),
   UPLOAD_PATH: z.string().default('./uploads'),
   
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
   
   // CORS
-  CORS_ORIGIN: z.string().default('http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3006,http://localhost:3007,http://localhost:3008'),
+  CORS_ORIGIN: z.string().default('http://localhost:4000,http://localhost:4001,http://localhost:4444'),
   
   // Security
   BCRYPT_ROUNDS: z.string().transform(Number).default('12'),

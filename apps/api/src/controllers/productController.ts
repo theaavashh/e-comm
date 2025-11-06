@@ -1,7 +1,85 @@
 import { Request, Response } from 'express';
-import { prisma } from '@/config/database';
+import prisma from '@/config/database.js';
 import { AppError } from '@/middleware/errorHandler';
 import { logger } from '@/utils/logger';
+
+/**
+ * Map user country to pricing country
+ * USA/Canada -> USA, UK -> UK, Australia -> Australia, Hong Kong -> Hong Kong
+ * Everything else -> USA (fallback)
+ */
+const mapCountryToPricingCountry = (country: string | undefined): string => {
+  if (!country) return 'USA';
+  
+  const normalized = country.trim();
+  const lower = normalized.toLowerCase();
+  
+  // Exact matches
+  if (lower === 'usa' || lower === 'united states' || lower === 'united states of america') {
+    return 'USA';
+  }
+  if (lower === 'canada') {
+    return 'USA'; // USA/Canada share pricing
+  }
+  if (lower === 'uk' || lower === 'united kingdom' || lower === 'great britain') {
+    return 'UK';
+  }
+  if (lower === 'australia') {
+    return 'Australia';
+  }
+  if (lower === 'hong kong' || lower === 'hk') {
+    return 'Hong Kong';
+  }
+  
+  // Fallback to USA for all other countries
+  return 'USA';
+};
+
+/**
+ * Get the appropriate price for a product based on user country
+ * Returns the country-specific price, or falls back to USA price
+ */
+const getProductDisplayPrice = (product: any, userCountry?: string): {
+  price: number;
+  comparePrice?: number;
+  country: string;
+  currencyPrice?: any;
+} => {
+  const pricingCountry = mapCountryToPricingCountry(userCountry);
+  const currencyPrices = product.currencyPrices || [];
+  
+  // Try to find price for the mapped country
+  let currencyPrice = currencyPrices.find((cp: any) => 
+    cp.country.toLowerCase() === pricingCountry.toLowerCase() && cp.isActive
+  );
+  
+  // If not found, fallback to USA
+  if (!currencyPrice && pricingCountry !== 'USA') {
+    currencyPrice = currencyPrices.find((cp: any) => 
+      (cp.country.toLowerCase() === 'usa' || cp.country.toLowerCase() === 'united states') && cp.isActive
+    );
+  }
+  
+  // If still not found, use first available price
+  if (!currencyPrice && currencyPrices.length > 0) {
+    currencyPrice = currencyPrices.find((cp: any) => cp.isActive) || currencyPrices[0];
+  }
+  
+  if (currencyPrice) {
+    return {
+      price: Number(currencyPrice.price),
+      comparePrice: currencyPrice.comparePrice ? Number(currencyPrice.comparePrice) : undefined,
+      country: currencyPrice.country,
+      currencyPrice,
+    };
+  }
+  
+  // Ultimate fallback: return 0 (no price available)
+  return {
+    price: 0,
+    country: pricingCountry,
+  };
+};
 
 // Get all products with pagination and filters
 export const getProducts = async (req: Request, res: Response) => {
@@ -15,6 +93,7 @@ export const getProducts = async (req: Request, res: Response) => {
     maxPrice,
     search,
     isActive = 'true',
+    country, // User's country for pricing
   } = req.query;
 
   try {
@@ -27,14 +106,35 @@ export const getProducts = async (req: Request, res: Response) => {
     };
 
     if (category) {
-      where.categoryId = category;
+      // Check if category is an ID (UUID format) or name/slug
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category as string);
+      
+      if (isUUID) {
+        // If it's a UUID, use it as categoryId
+        where.categoryId = category;
+      } else {
+        // If it's a name or slug, find the category first
+        const categoryRecord = await prisma.category.findFirst({
+          where: {
+            OR: [
+              { name: { equals: category as string, mode: 'insensitive' } },
+              { slug: { equals: category as string, mode: 'insensitive' } }
+            ],
+            isActive: true
+          }
+        });
+        
+        if (categoryRecord) {
+          where.categoryId = categoryRecord.id;
+        } else {
+          // If category not found, return empty results
+          where.categoryId = 'non-existent-category-id';
+        }
+      }
     }
 
-    if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price.gte = Number(minPrice);
-      if (maxPrice) where.price.lte = Number(maxPrice);
-    }
+    // Price filtering is now done through currencyPrices, so we skip base price filtering
+    // TODO: Implement price filtering using currencyPrices if needed
 
     if (search) {
       where.OR = [
@@ -61,6 +161,17 @@ export const getProducts = async (req: Request, res: Response) => {
               name: true,
               slug: true,
             },
+          },
+          brand: {
+            select: {
+              id: true,
+              name: true,
+              logo: true,
+            },
+          },
+          currencyPrices: {
+            where: { isActive: true },
+            orderBy: { country: 'asc' },
           },
           variants: {
             where: { isActive: true },
@@ -99,17 +210,25 @@ export const getProducts = async (req: Request, res: Response) => {
       prisma.product.count({ where }),
     ]);
 
-    // Calculate average rating for each product
-    const productsWithRating = products.map(product => {
-      const ratings = product.reviews.map(review => review.rating);
+    // Calculate average rating for each product and add derived image + country-specific pricing
+    const productsWithRating = (products as any[]).map((product: any) => {
+      const ratings = (product?.reviews || []).map((review: any) => review.rating);
       const averageRating = ratings.length > 0 
-        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
+        ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
         : 0;
+
+      // Get country-specific pricing
+      const displayPrice = getProductDisplayPrice(product, country as string);
 
       return {
         ...product,
         averageRating: Math.round(averageRating * 10) / 10,
-        reviewCount: product._count.reviews,
+        reviewCount: product?._count?.reviews ?? 0,
+        image: product?.thumbnail || (product?.images?.length ? product.images[0] : null),
+        // Override price fields with country-specific pricing
+        price: displayPrice.price,
+        comparePrice: displayPrice.comparePrice,
+        pricingCountry: displayPrice.country,
         reviews: undefined, // Remove reviews from response
         _count: undefined, // Remove _count from response
       };
@@ -132,7 +251,16 @@ export const getProducts = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error('Get products error:', error);
+    logger.error('Get products error:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Provide more detailed error message
+    if (error instanceof Error) {
+      throw new AppError(`Failed to fetch products: ${error.message}`, 500);
+    }
     throw new AppError('Failed to fetch products', 500);
   }
 };
@@ -140,6 +268,7 @@ export const getProducts = async (req: Request, res: Response) => {
 // Get single product by ID or slug
 export const getProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const { country } = req.query; // User's country for pricing
 
   try {
     const product = await prisma.product.findFirst({
@@ -156,6 +285,13 @@ export const getProduct = async (req: Request, res: Response) => {
             id: true,
             name: true,
             slug: true,
+          },
+        },
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
           },
         },
         variants: {
@@ -179,6 +315,10 @@ export const getProduct = async (req: Request, res: Response) => {
         },
         attributes: {
           orderBy: { sortOrder: 'asc' },
+        },
+        currencyPrices: {
+          where: { isActive: true },
+          orderBy: { country: 'asc' },
         },
         reviews: {
           where: { isActive: true },
@@ -206,15 +346,23 @@ export const getProduct = async (req: Request, res: Response) => {
     }
 
     // Calculate average rating
-    const ratings = product.reviews.map(review => review.rating);
+    const ratings = ((product as any)?.reviews || []).map((review: any) => review.rating);
     const averageRating = ratings.length > 0 
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
+      ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
       : 0;
+
+    // Get country-specific pricing
+    const displayPrice = getProductDisplayPrice(product, country as string);
 
     const productWithRating = {
       ...product,
       averageRating: Math.round(averageRating * 10) / 10,
-      reviewCount: product._count.reviews,
+      reviewCount: (product as any)?._count?.reviews ?? 0,
+      image: (product as any)?.thumbnail || ((product as any)?.images?.length ? (product as any).images[0] : null),
+      // Override price fields with country-specific pricing
+      price: displayPrice.price,
+      comparePrice: displayPrice.comparePrice,
+      pricingCountry: displayPrice.country,
       _count: undefined, // Remove _count from response
     };
 
@@ -237,7 +385,6 @@ export const createProduct = async (req: Request, res: Response) => {
     name,
     description,
     shortDescription,
-    price,
     comparePrice,
     costPrice,
     margin,
@@ -248,6 +395,7 @@ export const createProduct = async (req: Request, res: Response) => {
     isbn,
     trackQuantity,
     quantity,
+    stock, // Support both quantity and stock from form
     lowStockThreshold,
     allowBackorder,
     manageStock,
@@ -270,24 +418,26 @@ export const createProduct = async (req: Request, res: Response) => {
     visibility,
     publishedAt,
     categoryId,
+    subCategoryId,
     tags,
-    brand,
+    brandId,
     requiresShipping,
     shippingClass,
     freeShipping,
     taxable,
     taxClass,
     customFields,
+    customSections,
     notes,
     pricingTiers,
     attributes,
+    currencyPrices,
+    seo,
   } = req.body;
 
   try {
     // Check if category exists
-    const category = await prisma.category.findUnique({
-      where: { id: categoryId },
-    });
+    const category = await prisma.category.findUnique({ where: { id: categoryId } });
 
     if (!category) {
       throw new AppError('Category not found', 404);
@@ -300,87 +450,146 @@ export const createProduct = async (req: Request, res: Response) => {
       .replace(/(^-|-$)/g, '');
 
     // Check if slug already exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { slug },
-    });
+    const existingProduct = await prisma.product.findUnique({ where: { slug } });
 
     if (existingProduct) {
       throw new AppError('A product with this name already exists', 409);
     }
 
-    const product = await prisma.product.create({
-      data: {
-        name,
-        slug,
-        description,
-        shortDescription,
-        price,
-        comparePrice,
-        costPrice,
-        margin,
-        sku,
-        barcode,
-        upc,
-        ean,
-        isbn,
-        trackQuantity,
-        quantity,
-        lowStockThreshold,
-        allowBackorder,
-        manageStock,
-        weight,
-        weightUnit,
-        dimensions,
-        images: images || [],
-        videos: videos || [],
-        thumbnail,
-        seoTitle,
-        seoDescription,
-        seoKeywords: seoKeywords || [],
-        metaTags,
-        isActive: isActive ?? true,
-        isDigital: isDigital ?? false,
-        isFeatured: isFeatured ?? false,
-        isNew: isNew ?? false,
-        isOnSale: isOnSale ?? false,
-        isBestSeller: isBestSeller ?? false,
-        visibility: visibility || 'VISIBLE',
-        publishedAt: publishedAt ? new Date(publishedAt) : null,
-        categoryId,
-        tags: tags || [],
-        brand,
-        requiresShipping: requiresShipping ?? true,
-        shippingClass,
-        freeShipping: freeShipping ?? false,
-        taxable: taxable ?? true,
-        taxClass,
-        customFields,
-        notes,
-        pricingTiers: pricingTiers ? {
-          create: pricingTiers.map((tier: any) => ({
-            minQuantity: tier.minQuantity,
-            maxQuantity: tier.maxQuantity,
-            price: tier.price,
-            discount: tier.discount,
-          }))
-        } : undefined,
-        attributes: attributes ? {
-          create: attributes.map((attr: any) => ({
-            name: attr.name,
-            value: attr.value,
-            type: attr.type || 'TEXT',
-            isRequired: attr.isRequired || false,
-            isFilterable: attr.isFilterable ?? true,
-            sortOrder: attr.sortOrder || 0,
-          }))
-        } : undefined,
-      },
+    // Normalize custom sections alias
+    const normalizedCustomFields = customFields ?? (customSections && Array.isArray(customSections)
+      ? customSections.map((s: any) => ({
+          key: s.key || s.title || s.label || 'section',
+          label: s.label || s.title || s.key || 'Section',
+          content: s.content ?? '',
+          isVisible: s.isVisible !== false,
+        }))
+      : undefined);
+
+    // Build create data and strip undefined to avoid Prisma validation noise
+    const baseCreateData: any = {
+      name,
+      slug,
+      description: description || undefined,
+      shortDescription: shortDescription || undefined,
+      price: 0, // Base price is deprecated, pricing is handled via currencyPrices
+      comparePrice: comparePrice ?? undefined,
+      costPrice: costPrice ?? undefined,
+      margin: margin ?? undefined,
+      sku: sku || undefined,
+      barcode: barcode || undefined,
+      upc: upc || undefined,
+      ean: ean || undefined,
+      isbn: isbn || undefined,
+      trackQuantity,
+      quantity: quantity ?? stock ?? 0,
+      lowStockThreshold,
+      allowBackorder,
+      manageStock,
+      weight: weight ?? undefined,
+      weightUnit,
+      dimensions: dimensions ?? undefined,
+      images: images || [],
+      videos: videos || [],
+      thumbnail: thumbnail ?? undefined,
+      seoTitle: seoTitle || undefined,
+      seoDescription: seoDescription || undefined,
+      seoKeywords: seoKeywords || [],
+      metaTags: metaTags ?? undefined,
+      isActive: isActive ?? true,
+      isDigital: isDigital ?? false,
+      isFeatured: isFeatured ?? false,
+      isNew: isNew ?? false,
+      isOnSale: isOnSale ?? false,
+      isBestSeller: isBestSeller ?? false,
+      visibility: (visibility as any) || 'VISIBLE',
+      publishedAt: publishedAt ? new Date(publishedAt) : null,
+      categoryId,
+      subCategoryId: subCategoryId && subCategoryId.trim() !== '' ? subCategoryId : undefined,
+      tags: tags || [],
+      brandId: brandId && brandId.trim() !== '' ? brandId : undefined,
+      requiresShipping: requiresShipping ?? true,
+      shippingClass: shippingClass ?? undefined,
+      freeShipping: freeShipping ?? false,
+      taxable: taxable ?? true,
+      taxClass: taxClass ?? undefined,
+      customFields: normalizedCustomFields,
+      notes: notes ?? undefined,
+    };
+
+    if (pricingTiers && pricingTiers.length) {
+      baseCreateData.pricingTiers = {
+        create: pricingTiers.map((tier: any) => ({
+          minQuantity: tier.minQuantity,
+          maxQuantity: tier.maxQuantity,
+          price: tier.price,
+          discount: tier.discount,
+        })),
+      };
+    }
+
+    if (attributes && attributes.length) {
+      baseCreateData.attributes = {
+        create: attributes.map((attr: any) => ({
+          name: attr.name,
+          value: attr.value,
+          type: attr.type || 'TEXT',
+          isRequired: attr.isRequired || false,
+          isFilterable: attr.isFilterable ?? true,
+          sortOrder: attr.sortOrder || 0,
+        })),
+      };
+    }
+
+    const product = await prisma.product.create({ data: baseCreateData });
+    
+    // Update SEO fields separately if provided
+    if (seo && (seo.ogImage || seo.canonicalUrl || seo.focusKeyword)) {
+      await prisma.product.update({
+        where: { id: product.id },
+        data: {
+          ogImage: seo.ogImage && seo.ogImage.trim() !== '' ? seo.ogImage : undefined,
+          canonicalUrl: seo.canonicalUrl && seo.canonicalUrl.trim() !== '' ? seo.canonicalUrl : undefined,
+          focusKeyword: seo.focusKeyword && seo.focusKeyword.trim() !== '' ? seo.focusKeyword : undefined,
+        },
+      });
+    }
+
+    // Create currency prices separately if provided
+    if (currencyPrices && currencyPrices.length > 0) {
+      // Delete existing currency prices for this product first
+      await prisma.productCurrencyPrice.deleteMany({ where: { productId: product.id } });
+
+      // Create new currency prices
+      await prisma.productCurrencyPrice.createMany({
+        data: currencyPrices.map((cp: any) => ({
+          productId: product.id,
+          country: cp.country,
+          price: cp.price,
+          comparePrice: cp.comparePrice || null,
+          minDeliveryDays: cp.minDeliveryDays || 1,
+          maxDeliveryDays: cp.maxDeliveryDays || 7,
+          isActive: cp.isActive ?? true,
+        })),
+      });
+    }
+
+    // Fetch the complete product with relations
+    const completeProduct = await prisma.product.findUnique({
+      where: { id: product.id },
       include: {
         category: {
           select: {
             id: true,
             name: true,
             slug: true,
+          },
+        },
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
           },
         },
         pricingTiers: {
@@ -390,21 +599,35 @@ export const createProduct = async (req: Request, res: Response) => {
         attributes: {
           orderBy: { sortOrder: 'asc' },
         },
+        currencyPrices: {
+          where: { isActive: true },
+          orderBy: { country: 'asc' },
+        },
       },
     });
 
-    logger.info('Product created', { productId: product.id, name: product.name });
+    logger.info('Product created', { productId: completeProduct!.id, name: completeProduct!.name });
 
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
-      data: { product },
+      data: { product: completeProduct },
     });
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Create product error:', error);
+    logger.error('Create product error:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      body: req.body,
+    });
+    
+    // Provide more detailed error message
+    if (error instanceof Error) {
+      throw new AppError(`Failed to create product: ${error.message}`, 500);
+    }
     throw new AppError('Failed to create product', 500);
   }
 };
@@ -416,9 +639,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
   try {
     // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-    });
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
 
     if (!existingProduct) {
       throw new AppError('Product not found', 404);
@@ -446,6 +667,51 @@ export const updateProduct = async (req: Request, res: Response) => {
       updateData.slug = slug;
     }
 
+    // Remove deprecated price field - pricing is now handled via currencyPrices
+    if (updateData.price !== undefined) {
+      delete updateData.price;
+      logger.warn(`Price field in update request ignored for product ${id} - use currencyPrices instead`);
+    }
+
+    // Handle SEO fields from seo object
+    if (updateData.seo) {
+      if (updateData.seo.ogImage !== undefined) {
+        updateData.ogImage = updateData.seo.ogImage;
+      }
+      if (updateData.seo.canonicalUrl !== undefined) {
+        updateData.canonicalUrl = updateData.seo.canonicalUrl;
+      }
+      if (updateData.seo.focusKeyword !== undefined) {
+        updateData.focusKeyword = updateData.seo.focusKeyword;
+      }
+      delete updateData.seo;
+    }
+
+    // Handle currency prices update separately if provided
+    if (updateData.currencyPrices) {
+      const currencyPrices = updateData.currencyPrices;
+      delete updateData.currencyPrices;
+
+      // Delete existing currency prices and create new ones
+      await prisma.productCurrencyPrice.deleteMany({
+        where: { productId: id },
+      });
+
+      if (currencyPrices.length > 0) {
+        await prisma.productCurrencyPrice.createMany({
+          data: currencyPrices.map((cp: any) => ({
+            productId: id,
+            country: cp.country,
+            price: cp.price,
+            comparePrice: cp.comparePrice,
+            minDeliveryDays: cp.minDeliveryDays,
+            maxDeliveryDays: cp.maxDeliveryDays,
+            isActive: cp.isActive ?? true,
+          })),
+        });
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: updateData,
@@ -456,6 +722,17 @@ export const updateProduct = async (req: Request, res: Response) => {
             name: true,
             slug: true,
           },
+        },
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+          },
+        },
+        currencyPrices: {
+          where: { isActive: true },
+          orderBy: { country: 'asc' },
         },
       },
     });
@@ -482,19 +759,19 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
   try {
     // Check if product exists
-    const product = await prisma.product.findUnique({
-      where: { id },
-    });
+    const product = await prisma.product.findUnique({ where: { id } });
 
     if (!product) {
       throw new AppError('Product not found', 404);
     }
 
-    // Soft delete by setting isActive to false
-    await prisma.product.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    // Soft delete by setting isActive to false (with fallback to raw SQL)
+    if ( prisma.product.update ) {
+      await prisma.product.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    } 
 
     logger.info('Product deleted', { productId: id, name: product.name });
 
@@ -502,18 +779,27 @@ export const deleteProduct = async (req: Request, res: Response) => {
       success: true,
       message: 'Product deleted successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Delete product error:', error);
-    throw new AppError('Failed to delete product', 500);
+    logger.error('Delete product error:', {
+      error,
+      code: error?.code,
+      message: error?.message,
+      meta: error?.meta,
+    });
+    // Map some common Prisma errors to friendlier responses
+    if (error?.code === 'P2014' || error?.code === 'P2025') {
+      throw new AppError('Product not found', 404);
+    }
+    throw new AppError(`Failed to delete product${error?.message ? `: ${error.message}` : ''}`, 500);
   }
 };
 
 // Get featured products
 export const getFeaturedProducts = async (req: Request, res: Response) => {
-  const { limit = 8 } = req.query;
+  const { limit = 8, country } = req.query; // User's country for pricing
 
   try {
     const products = await prisma.product.findMany({
@@ -533,6 +819,13 @@ export const getFeaturedProducts = async (req: Request, res: Response) => {
             slug: true,
           },
         },
+        brand: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+          },
+        },
         pricingTiers: {
           where: { isActive: true },
           orderBy: { minQuantity: 'asc' },
@@ -550,17 +843,25 @@ export const getFeaturedProducts = async (req: Request, res: Response) => {
       },
     });
 
-    // Calculate average rating for each product
-    const productsWithRating = products.map(product => {
-      const ratings = product.reviews.map(review => review.rating);
+    // Calculate average rating for each product and add derived image + country-specific pricing
+    const productsWithRating = (products as any[]).map((product: any) => {
+      const ratings = (product?.reviews || []).map((review: any) => review.rating);
       const averageRating = ratings.length > 0 
-        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
+        ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
         : 0;
+
+      // Get country-specific pricing
+      const displayPrice = getProductDisplayPrice(product, country as string);
 
       return {
         ...product,
         averageRating: Math.round(averageRating * 10) / 10,
-        reviewCount: product._count.reviews,
+        reviewCount: product?._count?.reviews ?? 0,
+        image: product?.thumbnail || (product?.images?.length ? product.images[0] : null),
+        // Override price fields with country-specific pricing
+        price: displayPrice.price,
+        comparePrice: displayPrice.comparePrice,
+        pricingCountry: displayPrice.country,
         reviews: undefined,
         _count: undefined,
       };
@@ -577,9 +878,11 @@ export const getFeaturedProducts = async (req: Request, res: Response) => {
 };
 
 // Get product pricing for specific quantity
+// Note: Pricing is now handled through currencyPrices, but this endpoint
+// still supports pricing tiers for quantity-based discounts
 export const getProductPricing = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { quantity = 1 } = req.query;
+  const { quantity = 1, country } = req.query;
 
   try {
     const product = await prisma.product.findUnique({
@@ -589,6 +892,10 @@ export const getProductPricing = async (req: Request, res: Response) => {
           where: { isActive: true },
           orderBy: { minQuantity: 'asc' },
         },
+        currencyPrices: {
+          where: { isActive: true },
+          orderBy: { country: 'asc' },
+        },
       },
     });
 
@@ -597,7 +904,27 @@ export const getProductPricing = async (req: Request, res: Response) => {
     }
 
     const qty = Number(quantity);
-    let finalPrice = Number(product.price);
+    
+    // Get base price from currencyPrices if country is specified
+    let basePrice = 0;
+    let currencyPrice = null;
+    
+    if (country) {
+      currencyPrice = product.currencyPrices.find((cp: any) => 
+        cp.country.toLowerCase() === String(country).toLowerCase()
+      );
+      if (currencyPrice) {
+        basePrice = Number(currencyPrice.price);
+      }
+    }
+    
+    // If no country match or no country specified, use first currency price or 0
+    if (basePrice === 0 && product.currencyPrices.length > 0) {
+      basePrice = Number(product.currencyPrices[0].price);
+      currencyPrice = product.currencyPrices[0];
+    }
+    
+    let finalPrice = basePrice;
     let appliedTier = null;
 
     // Find the best pricing tier for the quantity
@@ -619,12 +946,17 @@ export const getProductPricing = async (req: Request, res: Response) => {
       success: true,
       data: {
         productId: product.id,
-        basePrice: Number(product.price),
+        basePrice,
         finalPrice,
         quantity: qty,
         appliedTier,
         discountAmount,
-        savings: Number(product.price) - finalPrice,
+        savings: basePrice - finalPrice,
+        currencyPrice: currencyPrice ? {
+          country: currencyPrice.country,
+          price: Number(currencyPrice.price),
+          comparePrice: currencyPrice.comparePrice ? Number(currencyPrice.comparePrice) : null,
+        } : null,
       },
     });
   } catch (error) {

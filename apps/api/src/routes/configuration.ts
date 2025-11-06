@@ -37,12 +37,27 @@ router.get('/', adminAuth, async (req, res) => {
     const defaultCurrencyConfig = systemConfig.find(config => config.key === 'defaultCurrency');
     const defaultCurrency = defaultCurrencyConfig ? defaultCurrencyConfig.value as string : 'NPR';
 
+    // Get brands
+    const brands = await prisma.brand.findMany({
+      orderBy: [
+        { name: 'asc' }
+      ],
+      include: {
+        _count: {
+          select: {
+            products: true
+          }
+        }
+      }
+    });
+
     res.json({
       success: true,
       data: {
         units: unitsByType,
         currencyRates,
-        defaultCurrency
+        defaultCurrency,
+        brands
       }
     });
   } catch (error) {
@@ -277,6 +292,105 @@ router.delete('/currency-rates/:id', adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete currency rate',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get public site settings (logo, favicon, siteName) - no auth required
+router.get('/public/site-settings', async (req, res) => {
+  try {
+    const siteSettings = await prisma.systemConfig.findMany({
+      where: {
+        key: {
+          in: ['siteName', 'siteLogo', 'siteFavicon']
+        }
+      }
+    });
+
+    // Convert to key-value object
+    const settings: Record<string, any> = {};
+    siteSettings.forEach(config => {
+      settings[config.key] = config.value;
+    });
+
+    // Set default values if not in database
+    const response = {
+      siteName: settings.siteName || 'GharSamma',
+      siteLogo: settings.siteLogo || '/logo.png',
+      siteFavicon: settings.siteFavicon || '/favicon.ico'
+    };
+
+    res.json({
+      success: true,
+      data: response
+    });
+  } catch (error) {
+    console.error('Error fetching public site settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch site settings',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get site settings (siteLogo, siteFavicon, etc.) - admin only
+router.get('/site-settings', adminAuth, async (req, res) => {
+  try {
+    const siteSettings = await prisma.systemConfig.findMany({
+      where: {
+        key: {
+          in: ['siteName', 'siteDescription', 'siteUrl', 'siteLogo', 'siteFavicon', 'email', 'phone', 'address', 'city', 'country', 'currency', 'timezone', 'language']
+        }
+      }
+    });
+
+    // Convert to key-value object
+    const settings: Record<string, any> = {};
+    siteSettings.forEach(config => {
+      settings[config.key] = config.value;
+    });
+
+    res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Error fetching site settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch site settings',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Update site settings
+router.put('/site-settings', adminAuth, async (req, res) => {
+  try {
+    const updates = req.body;
+
+    // Update each setting in the database
+    await Promise.all(
+      Object.entries(updates).map(([key, value]) =>
+        prisma.systemConfig.upsert({
+          where: { key },
+          update: { value: value as any },
+          create: { key, value: value as any }
+        })
+      )
+    );
+
+    res.json({
+      success: true,
+      message: 'Site settings updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating site settings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update site settings',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

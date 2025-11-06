@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/config/database';
 import { env } from '@/config/env';
 
-const prisma = new PrismaClient();
 
 interface AdminRequest extends Request {
   admin?: {
@@ -15,7 +14,12 @@ interface AdminRequest extends Request {
 
 export const adminAuth = async (req: AdminRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    // Check for token in Authorization header first
+    const authHeader = req.headers.authorization;
+    const headerToken = authHeader && authHeader.split(' ')[1];
+    // Also check for token in cookies (for cookie-based auth)
+    const cookieToken = (req as any).cookies?.admin_access_token as string | undefined;
+    const token = headerToken || cookieToken; // Prefer header if present
     
     if (!token) {
       return res.status(401).json({
@@ -27,20 +31,25 @@ export const adminAuth = async (req: AdminRequest, res: Response, next: NextFunc
     // Verify token
     const decoded = jwt.verify(token, env.JWT_SECRET) as any;
     
-    // Check if user exists and is admin
-    const admin = await prisma.user.findUnique({
-      where: {
-        id: decoded.userId,
-        role: 'ADMIN',
-        isActive: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        isActive: true,
-      },
-    });
+    // Check if user exists and is admin (supports both Prisma delegates and raw SQL fallback)
+    const userId = decoded.id || decoded.userId;
+    const admin = (prisma as any).user?.findUnique
+      ? await (prisma as any).user.findUnique({
+          where: { id: userId, role: 'ADMIN', isActive: true },
+          select: { id: true, email: true, role: true, isActive: true },
+        })
+      : ( (prisma as any).users?.findUnique
+          ? await (prisma as any).users.findUnique({
+              where: { id: userId, role: 'ADMIN', isActive: true },
+              select: { id: true, email: true, role: true, isActive: true },
+            })
+          : (await prisma.$queryRaw<any[]>`
+              SELECT id, email, role, "isActive"
+              FROM "users"
+              WHERE id = ${userId} AND role = ${'ADMIN'}::"UserRole" AND "isActive" = true
+              LIMIT 1
+            `)?.[0]
+        );
 
     if (!admin) {
       return res.status(403).json({
