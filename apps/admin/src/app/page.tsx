@@ -65,12 +65,9 @@ export default function AdminLogin() {
       console.log('Login result:', success);
       
       if (success) {
-        const id = toast.success("Login successfully");
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          toast.dismiss(id);
-          router.push("/dashboard");
-        }, 1500);
+        toast.success("Login successfully");
+        // Redirect immediately - state is already updated
+        router.push("/dashboard");
       }
       
     } catch (error) {

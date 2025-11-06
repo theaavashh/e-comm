@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx src/config/seed.ts",
     "db:seed-admin": "tsx src/scripts/seedAdmin.ts",
+    "db:seed-categories": "tsx src/scripts/seedCategories.ts",
     "db:seed-config": "tsx src/scripts/seedConfiguration.ts",
     "db:seed-products": "tsx src/scripts/seedSampleProducts.ts",
     "db:update-brand-logos": "tsx src/scripts/updateBrandLogos.ts",

@@ -64,20 +64,16 @@ async function seedAdmin() {
   }
 }
 
-// Run the seed function
-const isMainModule = require.main === module || process.argv[1]?.endsWith('seedAdmin.ts');
-
-if (isMainModule) {
-  seedAdmin()
-    .then(() => {
-      console.log('🎉 Admin seed completed successfully');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('💥 Admin seed failed:', error);
-      process.exit(1);
-    });
-}
+// Run the seed function if this file is executed directly
+seedAdmin()
+  .then(() => {
+    console.log('🎉 Admin seed completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('💥 Admin seed failed:', error);
+    process.exit(1);
+  });
 
 export default seedAdmin;
 

@@ -8,17 +8,18 @@ import { env } from '@/config/env';
 // CORS configuration
 export const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Get allowed origins from environment variable
+    const corsOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
+    
+    // Also add common localhost and server IPs
     const allowedOrigins = [
-      'http://localhost:3000',  // Website 1
-      'http://localhost:3001',  // Website 2 (admin)
-      'http://localhost:3002',  // Website 3
-      'http://localhost:3003',  // Website 4
-      'http://localhost:3004',  // Website 5
-      'http://localhost:3005',  // Website 6
-      'http://localhost:3006',  // Website 7
-      'http://localhost:3007',  // Website 8
-      'http://localhost:3008',  // Website 9
-      'http://localhost:3009',  // Website 10
+      ...corsOrigins,
+      'http://localhost:4000',
+      'http://localhost:4001',
+      'http://localhost:4444',
+      'http://31.97.189.150:4000',
+      'http://31.97.189.150:4001',
+      'http://31.97.189.150:4444',
     ];
     
     // Allow requests with no origin (mobile apps, Postman, etc.)

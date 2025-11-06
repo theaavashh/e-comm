@@ -955,13 +955,20 @@ async function seedSampleProducts() {
     ];
 
     for (const productData of products) {
-      // Check if product already exists
-      const existing = await prisma.product.findUnique({
+      // Check if product already exists by slug
+      let existing = await prisma.product.findUnique({
         where: { slug: productData.slug },
       });
 
+      // If not found by slug, check by SKU if provided
+      if (!existing && productData.sku) {
+        existing = await prisma.product.findUnique({
+          where: { sku: productData.sku },
+        });
+      }
+
       if (existing) {
-        console.log(`ℹ️  Product already exists: ${productData.name}`);
+        console.log(`⏭️  Product already exists: ${productData.name} (${existing.slug || existing.sku || 'N/A'})`);
         continue;
       }
 
@@ -1016,7 +1023,7 @@ async function seedSampleProducts() {
         });
       }
 
-      console.log(`✅ Created product: ${product.name} (${product.sku})`);
+      console.log(`✅ Created product: ${product.name} (SKU: ${product.sku || 'N/A'}, Slug: ${product.slug})`);
     }
 
     console.log('🎉 Sample data seeding completed!');
@@ -1028,19 +1035,15 @@ async function seedSampleProducts() {
   }
 }
 
-// Check if this file is being run directly
-const isMainModule = require.main === module || process.argv[1]?.endsWith('seedSampleProducts.ts');
-
-if (isMainModule) {
-  seedSampleProducts()
-    .then(() => {
-      console.log('✅ Seed script finished');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ Seed script failed:', error);
-      process.exit(1);
-    });
-}
+// Run the seed function if this file is executed directly
+seedSampleProducts()
+  .then(() => {
+    console.log('✅ Seed script finished');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('❌ Seed script failed:', error);
+    process.exit(1);
+  });
 
 export default seedSampleProducts;

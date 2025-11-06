@@ -45,6 +45,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const result = await dispatch(loginUser({ email, password })).unwrap();
       
       console.log('AuthContext: Login successful', result);
+      
+      // Fetch profile to ensure authentication state is updated
+      await dispatch(fetchProfile()).unwrap();
+      
+      console.log('AuthContext: Profile fetched, authentication complete');
       return true;
     } catch (error) {
       console.error('AuthContext: Login error:', error);
