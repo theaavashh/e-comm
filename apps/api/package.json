@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsup",
+    "build:check": "tsc --noEmit",
     "start": "node dist/index.js",
+    "start:dev": "tsx src/index.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -62,6 +64,7 @@
     "eslint": "^8.56.0",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
     "tsx": "^4.6.2",
     "typescript": "^5.3.3"
   }
