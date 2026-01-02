@@ -1,11 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
 import { 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Youtube, 
   Mail, 
   Phone, 
   MapPin,
@@ -14,106 +11,88 @@ import {
   Truck,
   RefreshCw
 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300 mt-auto">
+    <footer className="bg-[#262626] text-white pl-2  font-inter">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-block">
-              <h2 className="text-2xl font-bold text-white custom-font">GharSamma</h2>
-            </Link>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Your trusted destination for authentic Nepali products. Discover traditional handicrafts, 
-              puja samagri, musical instruments, herbs, and jewelry from the heart of Nepal.
-            </p>
-            <div className="flex space-x-4 pt-2">
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#0077b6] transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#0077b6] transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#0077b6] transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#0077b6] transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 border-t border-[#363636]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
+          {/* Logo Section */}
+          <div className='col-span-1 sm:col-span-2 lg:col-span-1 flex items-center'>
+            {/* <Link href="/" className="inline-block">
+              <Image 
+                src="/gharsamma-logo.png" 
+                alt="Gharsamma" 
+                width={100} 
+                height={60}
+                className="w-40 sm:w-48 md:w-52"
+              />
+            </Link> */}
+          </div>
+
+          {/* About Section */}
+          <div className="space-y-1">
+            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-1 font-inter">About</h3>
+            <ul className="space-y-1">
+              <li>
+                <Link href="/about/company" className="text-sm font-inter text-white hover:text-white transition-colors">
+                  Company
+                </Link>
+              </li>
+              <li>
+                <Link href="/about/policies" className="text-sm text-white hover:text-white transition-colors">
+                  Policies
+                </Link>
+              </li>
+              <li>
+                <Link href="/about/advertise" className="text-sm text-white hover:text-white transition-colors">
+                  Advertise with us
+                </Link>
+              </li>
+            </ul>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4 custom-font">Quick Links</h3>
+            <h3 className="text-white font-extrabold text-xl lg:text-2xl mb-2 font-mono">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/foods" className="text-sm hover:text-white transition-colors">
+                <Link href="/foods" className="text-sm text-white hover:text-white transition-colors">
                   Foods
                 </Link>
               </li>
               <li>
-                <Link href="/products/gift-souvenir" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/gift-souvenir" className="text-sm text-white hover:text-white transition-colors">
                   Gift & Souvenir
                 </Link>
               </li>
               <li>
-                <Link href="/products/puja-samagri" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/puja-samagri" className="text-sm text-white hover:text-white transition-colors">
                   Puja Samagri
                 </Link>
               </li>
               <li>
-                <Link href="/products/handicrafts" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/handicrafts" className="text-sm text-white hover:text-white transition-colors">
                   Handicrafts
                 </Link>
               </li>
               <li>
-                <Link href="/products/musical-instruments" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/musical-instruments" className="text-sm text-white hover:text-white transition-colors">
                   Musical Instruments
                 </Link>
               </li>
               <li>
-                <Link href="/products/herbs-naturals" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/herbs-naturals" className="text-sm text-white hover:text-white transition-colors">
                   Herbs & Naturals
                 </Link>
               </li>
               <li>
-                <Link href="/products/jewellery" className="text-sm hover:text-white transition-colors">
+                <Link href="/products/jewellery" className="text-sm text-white hover:text-white transition-colors">
                   Jewellery
-                </Link>
-              </li>
-              <li>
-                <Link href="/brands" className="text-sm hover:text-white transition-colors">
-                  Our Brands
                 </Link>
               </li>
             </ul>
@@ -121,45 +100,45 @@ export default function Footer() {
 
           {/* Customer Service */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4 custom-font">Customer Service</h3>
+            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-inter">Customer Service</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/account" className="text-sm hover:text-white transition-colors">
+                <Link href="/account" className="text-sm text-white hover:text-white transition-colors">
                   My Account
                 </Link>
               </li>
               <li>
-                <Link href="/cart" className="text-sm hover:text-white transition-colors">
+                <Link href="/cart" className="text-sm text-white hover:text-white transition-colors">
                   Shopping Cart
                 </Link>
               </li>
               <li>
-                <Link href="/checkout" className="text-sm hover:text-white transition-colors">
+                <Link href="/checkout" className="text-sm text-white hover:text-white transition-colors">
                   Checkout
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link href="#" className="text-sm text-white hover:text-white transition-colors">
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link href="#" className="text-sm text-white hover:text-white transition-colors">
                   Shipping Info
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link href="#" className="text-sm text-white hover:text-white transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link href="#" className="text-sm text-white hover:text-white transition-colors">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link href="#" className="text-sm text-white hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
@@ -169,23 +148,23 @@ export default function Footer() {
           {/* Contact Info & Newsletter */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-white font-semibold text-lg mb-4 custom-font">Get in Touch</h3>
+              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-mono">Get in Touch</h3>
               <ul className="space-y-3">
                 <li className="flex items-start space-x-3">
-                  <MapPin className="w-5 h-5 text-[#0077b6] flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">
+                  <MapPin className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-white">
                     Kathmandu, Nepal
                   </span>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-[#0077b6] flex-shrink-0" />
-                  <a href="tel:+9771234567890" className="text-sm hover:text-white transition-colors">
+                  <Phone className="w-5 h-5 text-white flex-shrink-0" />
+                  <a href="tel:+9771234567890" className="text-sm text-white hover:text-white transition-colors">
                     +977 123 456 7890
                   </a>
                 </li>
                 <li className="flex items-center space-x-3">
-                  <Mail className="w-5 h-5 text-[#0077b6] flex-shrink-0" />
-                  <a href="mailto:info@gharsamma.com" className="text-sm hover:text-white transition-colors">
+                  <Mail className="w-5 h-5 text-white flex-shrink-0" />
+                  <a href="mailto:info@gharsamma.com" className="text-sm text-white hover:text-white transition-colors">
                     info@gharsamma.com
                   </a>
                 </li>
@@ -193,77 +172,58 @@ export default function Footer() {
             </div>
 
             <div>
-              <h3 className="text-white font-semibold text-lg mb-4 custom-font">Newsletter</h3>
-              <p className="text-sm text-gray-400 mb-3">
-                Subscribe to get updates on new products and special offers
-              </p>
-              <form className="flex flex-col space-y-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:border-[#0077b6] transition-colors text-sm"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-[#0077b6] text-white rounded-lg hover:bg-[#005f8f] transition-colors text-sm font-medium"
+              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-inter">Social</h3>
+              <div className="flex space-x-4">
+                <a 
+                  href="https://www.facebook.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-white transition-colors"
+                  aria-label="Facebook"
                 >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 pt-8 border-t border-gray-800">
-          <div className="flex items-center space-x-3">
-            <Truck className="w-6 h-6 text-[#0077b6] flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-white">Free Shipping</p>
-              <p className="text-xs text-gray-400">On orders over Rs. 2000</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <RefreshCw className="w-6 h-6 text-[#0077b6] flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-white">Easy Returns</p>
-              <p className="text-xs text-gray-400">30-day return policy</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Shield className="w-6 h-6 text-[#0077b6] flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-white">Secure Payment</p>
-              <p className="text-xs text-gray-400">100% secure transactions</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <CreditCard className="w-6 h-6 text-[#0077b6] flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-white">Multiple Payment</p>
-              <p className="text-xs text-gray-400">Various payment options</p>
+                  <FaFacebookF className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </a>
+                <a 
+                  href="https://www.instagram.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-white transition-colors"
+                  aria-label="Instagram"
+                >
+                  <FaInstagram className="w-5 h-5 sm:w-6 sm:h-6" />
+                </a>
+                <a 
+                  href="https://www.tiktok.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-white transition-colors"
+                  aria-label="TikTok"
+                >
+                  <FaTiktok className="w-5 h-5 sm:w-6 sm:h-6" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800 bg-gray-950">
+      <div className="border-t border-[#363636] bg-[#262626] font-inter">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-sm text-gray-400 text-center md:text-left">
+            <div className="text-sm text-white text-center md:text-left opacity-80">
               <p>
                 © {currentYear} GharSamma. All rights reserved.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center md:justify-end space-x-6 text-sm">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+            <div className="flex flex-wrap justify-center md:justify-end space-x-4 sm:space-x-6 text-sm">
+              <Link href="#" className="text-white hover:text-white transition-colors opacity-80 hover:opacity-100">
                 Privacy Policy
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="#" className="text-white hover:text-white transition-colors opacity-80 hover:opacity-100">
                 Terms of Service
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="#" className="text-white hover:text-white transition-colors opacity-80 hover:opacity-100">
                 Cookie Policy
               </Link>
             </div>
@@ -273,7 +233,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-
-
-

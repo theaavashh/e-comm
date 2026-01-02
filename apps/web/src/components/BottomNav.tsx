@@ -21,7 +21,7 @@ export default function BottomNav() {
 
   return (
     <>
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-[#F0F2F5]/95 backdrop-blur supports-[backdrop-filter]:bg-[#F0F2F5]/60 md:hidden">
+    <nav className="w-screen max-w-screen fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-[#F0F2F5]/95 backdrop-blur supports-[backdrop-filter]:bg-[#F0F2F5]/60 md:hidden">
       <div className="mx-auto max-w-3xl grid grid-cols-5">
         {items.map(({ href, label, icon: Icon, badge }) => {
           const active = pathname === href || (href !== '/' && pathname?.startsWith(href));

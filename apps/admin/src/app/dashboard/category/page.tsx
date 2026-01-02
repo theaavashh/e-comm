@@ -19,7 +19,10 @@ import { categorySchema, CategoryFormData } from '@/schemas/categorySchema';
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
+import axios from "axios";
 
+// Configure axios to include credentials
+axios.defaults.withCredentials = true;
 
 interface Category {
   id: string;
@@ -37,6 +40,59 @@ interface Category {
   // New fields for nested subcategories
   level?: number; // 0 = main category, 1 = subcategory, 2 = sub-subcategory, etc.
   hasChildren?: boolean;
+}
+
+// API Response Interfaces
+interface CategoryApiResponse {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  internalLink?: string;
+  createdAt: string;
+  isActive: boolean;
+  parentId?: string;
+  children?: CategoryApiResponse[];
+  _count?: {
+    products?: number;
+  };
+}
+
+interface CategoriesResponse {
+  success: boolean;
+  data: {
+    categories: CategoryApiResponse[];
+  };
+  message?: string;
+}
+
+interface CreateCategoryResponse {
+  success: boolean;
+  data: {
+    category: CategoryApiResponse;
+  };
+  message?: string;
+}
+
+interface UpdateCategoryResponse {
+  success: boolean;
+  data: {
+    category: CategoryApiResponse;
+  };
+  message?: string;
+}
+
+interface DeleteCategoryResponse {
+  success: boolean;
+  message?: string;
+}
+
+interface UploadImageResponse {
+  success: boolean;
+  data: {
+    url: string;
+  };
+  message?: string;
 }
 
 export default function CategoryPage() {
@@ -154,161 +210,89 @@ export default function CategoryPage() {
     }));
   };
 
+  // Transform API response to Category interface recursively
+  const transformCategoryApiResponse = (apiCategory: CategoryApiResponse, level: number = 0): Category => {
+    const baseCategory: Category = {
+      id: apiCategory.id,
+      name: apiCategory.name,
+      image: apiCategory.image || '/image.png',
+      internalLink: apiCategory.internalLink || undefined,
+      createdAt: new Date(apiCategory.createdAt).toISOString().split('T')[0],
+      status: apiCategory.isActive ? 'active' : 'inactive',
+      parentId: apiCategory.parentId || undefined,
+      level: level,
+      hasChildren: !!(apiCategory.children && apiCategory.children.length > 0),
+      totalQuantity: apiCategory._count?.products || 0,
+      availableUnits: apiCategory._count?.products || 0,
+      subCategories: []
+    };
+
+    // Recursively transform subcategories
+    if (apiCategory.children && apiCategory.children.length > 0) {
+      baseCategory.subCategories = apiCategory.children.map(child => 
+        transformCategoryApiResponse(child, level + 1)
+      );
+    }
+
+    return baseCategory;
+  };
+
   // API Functions
-  const fetchCategories = async () => {
+  const fetchCategories = async (): Promise<void> => {
     try {
       setIsLoadingCategories(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/categories`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.get<CategoriesResponse>(`${API_BASE_URL}/api/v1/categories`);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch categories: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         // Transform API data to match our Category interface
-        const transformedCategories = data.data.categories.map((cat: any) => ({
-          id: cat.id,
-          name: cat.name,
-          image: cat.image || '/image.png',
-          internalLink: cat.internalLink || null,
-          createdAt: new Date(cat.createdAt).toISOString().split('T')[0],
-          status: cat.isActive ? 'active' : 'inactive',
-          parentId: cat.parentId,
-          level: 0, // Main categories are level 0
-          hasChildren: cat.children && cat.children.length > 0,
-          subCategories: cat.children?.map((child: any) => ({
-            id: child.id,
-            name: child.name,
-            description: child.description || '',
-            image: child.image || '/image.png',
-            internalLink: child.internalLink || null,
-            createdAt: new Date(child.createdAt).toISOString().split('T')[0],
-            status: child.isActive ? 'active' : 'inactive',
-            parentId: child.parentId,
-            isSubCategory: true,
-            level: 1, // First level subcategories are level 1
-            hasChildren: child.children && child.children.length > 0,
-            totalQuantity: child._count?.products || 0,
-            availableUnits: child._count?.products || 0,
-            // Recursively handle nested subcategories
-            subCategories: child.children?.map((grandChild: any) => ({
-              id: grandChild.id,
-              name: grandChild.name,
-              description: grandChild.description || '',
-              image: grandChild.image || '/image.png',
-              internalLink: grandChild.internalLink || null,
-              createdAt: new Date(grandChild.createdAt).toISOString().split('T')[0],
-              status: grandChild.isActive ? 'active' : 'inactive',
-              parentId: grandChild.parentId,
-              isSubCategory: true,
-              level: 2, // Second level subcategories are level 2
-              hasChildren: grandChild.children && grandChild.children.length > 0,
-              totalQuantity: grandChild._count?.products || 0,
-              availableUnits: grandChild._count?.products || 0,
-              subCategories: grandChild.children || []
-            })) || []
-          })) || [],
-          totalQuantity: cat._count?.products || 0,
-          availableUnits: cat._count?.products || 0
-        }));
+        const transformedCategories = response.data.data.categories.map(cat => 
+          transformCategoryApiResponse(cat, 0)
+        );
         
         setCategories(transformedCategories);
       } else {
-        throw new Error(data.message || 'Failed to fetch categories');
+        throw new Error(response.data.message || 'Failed to fetch categories');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching categories:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch categories');
+      setError(err.response?.data?.message || err.message || 'Failed to fetch categories');
     } finally {
       setIsLoadingCategories(false);
     }
   };
 
-  const createCategory = async (categoryData: any) => {
+  const createCategory = async (categoryData: CategoryFormData) => {
     try {
       setIsLoading(true);
       
-      console.log('API_BASE_URL:', API_BASE_URL);
-      console.log('Request URL:', `${API_BASE_URL}/api/v1/categories`);
-      console.log('Request data:', {
+      const payload = {
         name: categoryData.name,
         image: categoryData.image,
         internalLink: categoryData.internalLink || null,
         parentId: categoryData.parentId || null,
-      });
+      };
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: categoryData.name,
-          image: categoryData.image,
-          internalLink: categoryData.internalLink || null,
-          parentId: categoryData.parentId || null,
-        }),
-      });
+      const response = await axios.post<CreateCategoryResponse>(
+        `${API_BASE_URL}/api/v1/categories`, 
+        payload
+      );
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      if (!response.ok) {
-        console.error('Response not ok:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          bodyUsed: response.bodyUsed
-        });
-        
-        let errorData;
-        try {
-          // Clone the response to avoid consuming it
-          const responseClone = response.clone();
-          const responseText = await responseClone.text();
-          console.error('Raw response text:', responseText);
-          errorData = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
-          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
-        }
-        
-        const errorMessage = errorData.error || errorData.message || errorData.error || `Failed to create category: ${response.statusText}`;
-        console.error('Category creation error:', { 
-          status: response.status, 
-          statusText: response.statusText, 
-          errorData,
-          errorMessage
-        });
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         // Store the created category ID
-        setLastCreatedCategoryId(data.data.category.id);
+        setLastCreatedCategoryId(response.data.data.category.id);
         
         // Optimistic update - add the new category to the existing state
-        const newCategory = data.data.category;
+        const newCategory = response.data.data.category;
         const transformedCategory: Category = {
           id: newCategory.id,
           name: newCategory.name,
           image: newCategory.image || '/image.png',
-          internalLink: newCategory.internalLink || null,
+          internalLink: newCategory.internalLink || undefined,
           createdAt: new Date(newCategory.createdAt).toISOString().split('T')[0],
           status: newCategory.isActive ? 'active' : 'inactive',
-          parentId: newCategory.parentId,
+          parentId: newCategory.parentId || undefined,
           level: newCategory.parentId ? 1 : 0,
           hasChildren: false,
           subCategories: [],
@@ -353,56 +337,48 @@ export default function CategoryPage() {
         }
         
         toast.success('Category created successfully!');
-        return { success: true, categoryId: data.data.category.id };
+        return { success: true, categoryId: response.data.data.category.id };
       } else {
-        throw new Error(data.message || 'Failed to create category');
+        throw new Error(response.data.message || 'Failed to create category');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating category:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to create category');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create category';
+      toast.error(errorMessage);
       return { success: false };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateCategory = async (categoryId: string, categoryData: any) => {
+  const updateCategory = async (categoryId: string, categoryData: CategoryFormData) => {
     try {
       setIsLoading(true);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/categories/${categoryId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: categoryData.name,
-          image: categoryData.image,
-          internalLink: categoryData.internalLink || null,
-          isActive: categoryData.status === 'active',
-          parentId: categoryData.parentId || null,
-        }),
-      });
+      const payload = {
+        name: categoryData.name,
+        image: categoryData.image,
+        internalLink: categoryData.internalLink || null,
+        isActive: categoryData.status === 'active',
+        parentId: categoryData.parentId || null,
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || `Failed to update category: ${response.statusText}`);
-      }
+      const response = await axios.put<UpdateCategoryResponse>(
+        `${API_BASE_URL}/api/v1/categories/${categoryId}`, 
+        payload
+      );
 
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         // Optimistic update - update the category in the state
-        const updatedCategory = data.data.category;
+        const updatedCategory = response.data.data.category;
         const transformedCategory: Category = {
           id: updatedCategory.id,
           name: updatedCategory.name,
           image: updatedCategory.image || '/image.png',
-          internalLink: updatedCategory.internalLink || null,
+          internalLink: updatedCategory.internalLink || undefined,
           createdAt: new Date(updatedCategory.createdAt).toISOString().split('T')[0],
           status: updatedCategory.isActive ? 'active' : 'inactive',
-          parentId: updatedCategory.parentId,
+          parentId: updatedCategory.parentId || undefined,
           level: updatedCategory.parentId ? 1 : 0,
           hasChildren: false,
           subCategories: [],
@@ -455,11 +431,12 @@ export default function CategoryPage() {
         toast.success('Category updated successfully!');
         return true;
       } else {
-        throw new Error(data.message || 'Failed to update category');
+        throw new Error(response.data.message || 'Failed to update category');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating category:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to update category');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update category';
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -468,29 +445,11 @@ export default function CategoryPage() {
 
   const deleteCategory = async (categoryId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
+      const response = await axios.delete<DeleteCategoryResponse>(
+        `${API_BASE_URL}/api/v1/categories/${categoryId}`
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || errorData.error || `Failed to delete category: ${response.statusText}`;
-        // Gracefully handle known constraint errors without throwing
-        if (errorMessage.toLowerCase().includes('existing products')) {
-          toast.error('Cannot delete category: remove or reassign products linked to it first.');
-          return false;
-        }
-        toast.error(errorMessage);
-        return false;
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         // Optimistic update - remove the category from the state
         setCategories(prevCategories => 
           prevCategories
@@ -530,11 +489,17 @@ export default function CategoryPage() {
         toast.success('Category deleted successfully!');
         return true;
       } else {
-        throw new Error(data.message || 'Failed to delete category');
+        throw new Error(response.data.message || 'Failed to delete category');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting category:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to delete category');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to delete category';
+      // Gracefully handle known constraint errors without throwing
+      if (errorMessage.toLowerCase().includes('existing products')) {
+        toast.error('Cannot delete category: remove or reassign products linked to it first.');
+        return false;
+      }
+      toast.error(errorMessage);
       return false;
     }
   };
@@ -631,46 +596,26 @@ export default function CategoryPage() {
       const formData = new FormData();
       formData.append('image', file);
 
-      console.log('Uploading image:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        apiUrl: `${API_BASE_URL}/api/v1/upload/category`
-      });
-
-      // Upload to Cloudinary via API
-      const response = await fetch(`${API_BASE_URL}/api/v1/upload/category`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to upload image';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
-        } catch (parseError) {
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      const response = await axios.post<UploadImageResponse>(
+        `${API_BASE_URL}/api/v1/upload/category`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
-        console.error('Upload error details:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorMessage
-        });
-        throw new Error(errorMessage);
-      }
+      );
 
-      const result = await response.json();
-      
-      if (result.success) {
-        setValue('image', result.data.url);
+      if (response.data.success) {
+        setValue('image', response.data.data.url);
         toast.success('Image uploaded successfully');
       } else {
-        throw new Error(result.message || 'Failed to upload image');
+        throw new Error(response.data.message || 'Failed to upload image');
       }
-    } catch (error) {
-      console.error('Image upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+    } catch (err: any) {
+      console.error('Image upload error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to upload image';
+      toast.error(errorMessage);
     } finally {
       setIsUploadingImage(false);
     }
@@ -710,11 +655,15 @@ export default function CategoryPage() {
     // Determine if this is a subcategory based on editing context or creation step
     const isSubCategory = editingCategory ? !!editingCategory.parentId : (creationStep !== 'main');
     
-    const formData = {
-      ...data,
+    // Construct form data according to the schema
+    const formData: CategoryFormData = {
+      name: data.name,
+      image: data.image,
+      status: data.status,
       isSubCategory: isSubCategory,
-      // Clear internal link for subcategories since it's not needed
-      internalLink: isSubCategory ? null : data.internalLink
+      parentId: data.parentId || undefined,
+      // Internal link is only required for main categories
+      ...(isSubCategory ? {} : { internalLink: data.internalLink || undefined })
     };
     
     if (editingCategory) {
@@ -905,21 +854,22 @@ export default function CategoryPage() {
   return (
     <DashboardLayout title="Category Management" showBackButton={true}>
       <motion.div 
-        className="space-y-6"
+        className="space-y-6 bg-white rounded-lg shadow-lg p-6 min-h-[60vh] "
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
+        <h1 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200 title-regular">Category</h1>
         {/* Search and Add Button */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search categories..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
             />
           </div>
           <button
@@ -939,7 +889,7 @@ export default function CategoryPage() {
               setLastCreatedCategoryId(null);
               setShowAddModal(true);
             }}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            className="bg-[#EB2464] text-white px-6 py-2 rounded-lg hover:bg-[#d01e57] transition-colors flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add Category</span>
@@ -977,8 +927,8 @@ export default function CategoryPage() {
         {/* Empty State */}
         {!isLoadingCategories && !error && paginatedCategories.length === 0 && (
           <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="text-gray-400 text-6xl mb-4">📁</div>
+            <div className="text-center flex flex-col items-center">
+              <Image src="/categorization.png" alt="No Categories" width={200} height={200} className="mx-auto" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Categories Found</h3>
               <p className="text-gray-600 mb-4">
                 {searchTerm ? 'No categories match your search.' : 'Get started by creating your first category.'}
@@ -1021,7 +971,7 @@ export default function CategoryPage() {
             {paginatedCategories.map((category, index) => (
             <motion.div 
               key={category.id}
-              className="space-y-4"
+              className="space-y-4 ml-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -1453,7 +1403,7 @@ export default function CategoryPage() {
             }}
           >
             <motion.div 
-              className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
@@ -1549,7 +1499,7 @@ export default function CategoryPage() {
                         {creationStep === 'sub' 
                           ? categories.filter(cat => !cat.parentId).map(category => (
                               <option key={category.id} value={category.id}>
-                                📁 {category.name}
+                                {category.name}
                               </option>
                             ))
                           : getAllAvailableParents().filter(cat => cat.level === 1).map(category => (
@@ -1565,7 +1515,7 @@ export default function CategoryPage() {
                     <p className="text-red-500 text-sm mt-1">{String(errors.parentId.message)}</p>
                   )}
                   
-                  {/* Show selected parent info */}
+                  {/* Show selected parent info
                   {selectedParentCategory && (
                     <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center space-x-2">
@@ -1583,7 +1533,7 @@ export default function CategoryPage() {
                         </p>
                       )}
                     </div>
-                  )}
+                  )} */}
                 </div>
               )}
 
@@ -1616,12 +1566,11 @@ export default function CategoryPage() {
                   )}
                 </div>
 
-              {/* Image Upload */}
+              {/* Image Upload - Only for main categories */}
+              {creationStep === 'main' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 text-black">
-                  {creationStep === 'main' ? 'Category Image' : 
-                   creationStep === 'sub' ? 'Sub-category Image' : 
-                   'Sub-subcategory Image'} <span className="text-red-500">*</span>
+                    Category Image <span className="text-red-500">*</span>
                   </label>
                   <Controller
                     name="image"
@@ -1680,32 +1629,35 @@ export default function CategoryPage() {
                     <p className="text-red-500 text-sm mt-1">{String(errors.image.message)}</p>
                   )}
                 </div>
-
-              {/* Internal Link - Only for main categories */}
-              {creationStep === 'main' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-black custom-font">
-                    Internal Link <span className="text-red-500">*</span>
-                    </label>
-                    <Controller
-                  name="internalLink"
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          {...field}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
-                      placeholder="e.g., /foods, /products/electronics, https://example.com"
-                        />
-                      )}
-                    />
-                {errors.internalLink && (
-                  <p className="text-red-500 text-sm mt-1">{String(errors.internalLink.message)}</p>
+              )}
+              
+              {/* Internal Link - For main categories and sub-categories */}
+              {(creationStep === 'main' || creationStep === 'sub') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-black custom-font">
+                    Internal Link {creationStep === 'main' && <span className="text-red-500">*</span>}
+                  </label>
+                  <Controller
+                    name="internalLink"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
+                        placeholder="e.g., /foods, /products/electronics, https://example.com"
+                      />
                     )}
+                  />
+                  {errors.internalLink && (
+                    <p className="text-red-500 text-sm mt-1">{String(errors.internalLink.message)}</p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
-                    Required. Enter a relative path (e.g., /foods) or full URL for internal navigation.
+                    {creationStep === 'main' 
+                      ? 'Required. Enter a relative path (e.g., /foods) or full URL for internal navigation.' 
+                      : 'Optional. Enter a relative path (e.g., /foods) or full URL for internal navigation.'}
                   </p>
-                            </div>
+                </div>
               )}
 
               {/* Status */}

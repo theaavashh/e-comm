@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
-import { zodResolver } from '@hookform/resolvers/zod';
-import Image from 'next/image';
+import { zodResolver } from "@hookform/resolvers/zod";
 import EnhancedProductForm from "@/components/EnhancedProductForm";
 import AdvancedProductFilter from "@/components/AdvancedProductFilter";
 import EnhancedProductCard from "@/components/EnhancedProductCard";
 import BulkOperations from "@/components/BulkOperations";
 import DashboardLayout from "@/components/DashboardLayout";
-import ProductDetailsModal from "@/components/ProductDetailsModal";
-import { productFilterSchema, ProductFilterData } from "@/schemas/productSchema";
-import { useAuth } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import {
+  productFilterSchema,
+  ProductFilterData,
+} from "@/schemas/productSchema";
+import { getApiBaseUrl } from "@/utils/api";
 import {
   Plus,
   Search,
@@ -31,11 +30,9 @@ import {
   Download,
   Upload,
   RefreshCw,
-  Trash2,
-  Edit,
-  Eye,
   Settings,
-  EyeOff
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface Product {
@@ -43,13 +40,11 @@ interface Product {
   name: string;
   slug: string;
   description: string;
-  shortDescription: string;
   price: number;
   comparePrice?: number;
   sku: string;
-  category: string;
+  category: string | { id: string; name: string; slug: string };
   categoryId: string;
-  brandId?: string;
   tags: string[];
   images: string[];
   isActive: boolean;
@@ -71,52 +66,55 @@ interface Product {
   reviews?: number;
   isFeatured?: boolean;
   isDigital?: boolean;
-  isNew?: boolean;
-  isOnSale?: boolean;
-  isBestSeller?: boolean;
-  visibility?: string;
-  requiresShipping?: boolean;
-  freeShipping?: boolean;
-  taxable?: boolean;
-  videos?: string[];
-  seoKeywords?: string[];
 }
 
-function ProductsPageContent() {
-  const { token, isAuthenticated, user, logout } = useAuth();
-  const router = useRouter();
+interface Brand {
+  id: string;
+  name: string;
+  logo?: string;
+  website?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    products: number;
+  };
+}
+
+export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Array<{id: string, name: string, children?: Array<{id: string, name: string}>}>>([]);
+  const [categories, setCategories] = useState<
+    Array<{
+      id: string;
+      name: string;
+      children?: Array<{ id: string; name: string }>;
+    }>
+  >([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [brands, setBrands] = useState<Array<{id: string, name: string, slug: string, isActive: boolean, sortOrder: number}>>([]);
-  const [isLoadingBrands, setIsLoadingBrands] = useState(false);
-  
+
   // UI State
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [itemsPerPage] = useState(12);
 
   // Filter form
   const {
     control,
     handleSubmit,
     watch,
-    setValue,
     reset: resetFilters,
-    formState: { errors: filterErrors }
+    formState: { errors: filterErrors },
   } = useForm<ProductFilterData>({
     defaultValues: {
-      search: '',
-      categoryId: '',
+      search: "",
+      categoryId: "",
       isActive: undefined,
       priceMin: undefined,
       priceMax: undefined,
@@ -124,30 +122,29 @@ function ProductsPageContent() {
       stockMax: undefined,
       isFeatured: undefined,
       isDigital: undefined,
-      dateFrom: '',
-      dateTo: '',
-      sortBy: 'createdAt' as const,
-      sortOrder: 'desc' as const,
-    }
+      dateFrom: "",
+      dateTo: "",
+      sortBy: "createdAt" as const,
+      sortOrder: "desc" as const,
+    },
   });
 
   const watchedFilters = watch();
 
   // API Base URL
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const API_BASE_URL = getApiBaseUrl();
 
   // Fetch products from API
   const fetchProducts = async () => {
     try {
       setIsLoadingProducts(true);
       setError(null);
-      
+
       const response = await fetch(`${API_BASE_URL}/api/v1/products`, {
-        method: 'GET',
+        method: "GET",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
-          // Add authentication header if needed
-          // 'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
         },
       });
 
@@ -156,16 +153,16 @@ function ProductsPageContent() {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setProducts(data.data.products || []);
       } else {
-        throw new Error(data.message || 'Failed to fetch products');
+        throw new Error(data.message || "Failed to fetch products");
       }
     } catch (err) {
-      console.error('Error fetching products:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch products');
-      toast.error('Failed to load products');
+      console.error("Error fetching products:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch products");
+      toast.error("Failed to load products");
     } finally {
       setIsLoadingProducts(false);
     }
@@ -175,74 +172,105 @@ function ProductsPageContent() {
   const createProduct = async (productData: any) => {
     try {
       setIsLoading(true);
-      
-      // Debug: Log authentication status
-      console.log('Authentication status:', { isAuthenticated, hasToken: !!token, user: user?.email });
-      
-      // Check if user is authenticated (cookie-based auth)
-      if (!isAuthenticated) {
-        throw new Error('You must be logged in to create products. Please log in again.');
-      }
-      
-      // Debug: Log the data being sent
-      console.log('Creating product with data:', JSON.stringify(productData, null, 2));
-      console.log('Token available:', !!token);
-      console.log('Token value:', token ? `${token.substring(0, 20)}...` : 'null');
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      console.log('Making API request to:', `${API_BASE_URL}/api/v1/products`);
-      console.log('Request headers:', headers);
-      console.log('Request body:', JSON.stringify(productData, null, 2));
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/products`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(productData),
-        credentials: 'include',
-      });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-      if (!response.ok) {
-        console.error('API request failed with status:', response.status);
-        console.error('Response status text:', response.statusText);
-        
-        let errorMessage = `Failed to create product: ${response.statusText}`;
-        
-        try {
-          const errorData = await response.json();
-          console.error('API error response:', errorData);
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (parseError) {
-          console.error('Could not parse error response:', parseError);
-        }
-        
-        if (response.status === 401) {
-          errorMessage = 'Authentication failed. Please log in again.';
-        }
-        
-        throw new Error(errorMessage);
-      }
+      // Transform data to match API requirements
+      const transformedData = {
+        ...productData,
+        // Ensure currencyPrices has at least one entry for API requirement
+        currencyPrices:
+          productData.currencyPrices && productData.currencyPrices.length > 0
+            ? productData.currencyPrices.map((cp: any) => ({
+                country: cp.country,
+                price: cp.price,
+                comparePrice: cp.comparePrice,
+                minDeliveryDays: cp.minDeliveryDays || 1,
+                maxDeliveryDays: cp.maxDeliveryDays || 7,
+                isActive: cp.isActive !== false,
+              }))
+            : [
+                {
+                  country: "USA",
+                  price: productData.price || 0,
+                  minDeliveryDays: 1,
+                  maxDeliveryDays: 7,
+                  isActive: true,
+                },
+              ],
+        // Set required fields with defaults if missing
+        sku:
+          productData.sku ||
+          `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        trackQuantity: productData.trackQuantity !== false,
+        manageStock: productData.manageStock !== false,
+        requiresShipping: productData.requiresShipping !== false,
+        taxable: productData.taxable !== false,
+        // Include weight and dimensions if present
+        ...(productData.weight &&
+          productData.weight > 0 && { weight: Number(productData.weight) }),
+        ...(productData.weightUnit &&
+          productData.weightUnit.trim() && {
+            weightUnit: productData.weightUnit,
+          }),
+        ...(productData.dimensions && {
+          dimensions: {
+            length: productData.dimensions.length || 0,
+            width: productData.dimensions.width || 0,
+            height: productData.dimensions.height || 0,
+            unit: productData.dimensions.unit || "cm",
+          },
+        }),
+        // Transform variants to ensure proper structure with new fields
+        variants: productData.variants && productData.variants.length > 0
+          ? productData.variants.map((variant: any) => ({
+              ...variant,
+              options: variant.options && variant.options.length > 0
+                ? variant.options.map((option: any) => ({
+                    ...option,
+                    // Ensure numeric fields are properly converted
+                    price: option.price !== undefined ? Number(option.price) : undefined,
+                    comparePrice: option.comparePrice !== undefined ? Number(option.comparePrice) : undefined,
+                    weight: option.weight !== undefined ? Number(option.weight) : undefined,
+                    additionalCost: option.additionalCost !== undefined ? Number(option.additionalCost) : 0,
+                    stock: option.stock !== undefined ? Number(option.stock) : 0,
+                  }))
+                : [],
+            }))
+          : [],
+        // Remove fields not expected by API
+        currency: undefined,
+        symbol: undefined,
+      };
+
+      console.log("Creating product with data:", transformedData);
+      const response = await fetch(`${API_BASE_URL}/api/v1/products`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transformedData),
+      });
 
       const data = await response.json();
-      
-      // Debug: Log the response
-      console.log('Product creation response:', JSON.stringify(data, null, 2));
-      
+
+      if (!response.ok) {
+        const errorMessage = data.error || data.message || response.statusText;
+        console.error("API Error Response:", JSON.stringify(data, null, 2));
+        throw new Error(`Failed to create product: ${errorMessage}`);
+      }
+
       if (data.success) {
         // Refresh the products list
         await fetchProducts();
         return true;
       } else {
-        throw new Error(data.message || 'Failed to create product');
+        throw new Error(data.message || "Failed to create product");
       }
     } catch (err) {
-      console.error('Error creating product:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to create product');
+      console.error("Error creating product:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create product",
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -253,38 +281,77 @@ function ProductsPageContent() {
   const updateProduct = async (productId: string, productData: any) => {
     try {
       setIsLoading(true);
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+
+      // Transform data to match API requirements
+      const transformedData = {
+        ...productData,
+        // Ensure all required fields are present
+        name: productData.name || "",
+        description: productData.description || "",
+        sku:
+          productData.sku ||
+          `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        categoryId: productData.categoryId || "",
+        // Ensure currencyPrices has at least one entry for API requirement
+        currencyPrices:
+          productData.currencyPrices && productData.currencyPrices.length > 0
+            ? productData.currencyPrices.map((cp: any) => ({
+                country: cp.country,
+                price: cp.price,
+                comparePrice: cp.comparePrice,
+                minDeliveryDays: cp.minDeliveryDays || 1,
+                maxDeliveryDays: cp.maxDeliveryDays || 7,
+                isActive: cp.isActive !== false,
+              }))
+            : [
+                {
+                  country: "USA",
+                  price: productData.price || 0,
+                  minDeliveryDays: 1,
+                  maxDeliveryDays: 7,
+                  isActive: true,
+                },
+              ],
+        // Set boolean defaults
+        trackQuantity: productData.trackQuantity !== false,
+        manageStock: productData.manageStock !== false,
+        requiresShipping: productData.requiresShipping !== false,
+        taxable: productData.taxable !== false,
+        // Remove fields not expected by API
+        currency: undefined,
+        symbol: undefined,
       };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(productData),
-        credentials: 'include',
-      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/products/${productId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(transformedData),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to update product: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Refresh the products list
         await fetchProducts();
         return true;
       } else {
-        throw new Error(data.message || 'Failed to update product');
+        throw new Error(data.message || "Failed to update product");
       }
     } catch (err) {
-      console.error('Error updating product:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to update product');
+      console.error("Error updating product:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update product",
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -294,47 +361,35 @@ function ProductsPageContent() {
   // Delete product via API
   const deleteProduct = async (productId: string) => {
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}`, {
-        method: 'DELETE',
-        headers,
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/products/${productId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          toast.error('Your session has expired or you lack permissions. Please log in again.');
-          try { logout?.(); } catch {}
-          try { router.push('/'); } catch {}
-        }
-        // Try to provide a more helpful error message
-        let errorMessage = `Failed to delete product: ${response.statusText}`;
-        try {
-          const clone = response.clone();
-          const text = await clone.text();
-          const json = JSON.parse(text);
-          errorMessage = json.message || json.error || errorMessage;
-        } catch (_) {
-          // ignore parse failures
-        }
-        toast.error(errorMessage);
-        return false;
+        throw new Error(`Failed to delete product: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Refresh the products list
         await fetchProducts();
         return true;
       } else {
-        throw new Error(data.message || 'Failed to delete product');
+        throw new Error(data.message || "Failed to delete product");
       }
     } catch (err) {
-      console.error('Error deleting product:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to delete product');
+      console.error("Error deleting product:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete product",
+      );
       return false;
     }
   };
@@ -344,11 +399,11 @@ function ProductsPageContent() {
     try {
       setIsLoadingCategories(true);
       const response = await fetch(`${API_BASE_URL}/api/v1/categories`, {
-        method: 'GET',
+        method: "GET",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include', // Send httpOnly cookie automatically
       });
 
       if (!response.ok) {
@@ -356,46 +411,16 @@ function ProductsPageContent() {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setCategories(data.data.categories || []);
       } else {
-        throw new Error(data.message || 'Failed to fetch categories');
+        throw new Error(data.message || "Failed to fetch categories");
       }
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      console.error("Error fetching categories:", err);
     } finally {
       setIsLoadingCategories(false);
-    }
-  };
-
-  // Fetch brands from API
-  const fetchBrands = async () => {
-    try {
-      setIsLoadingBrands(true);
-      const response = await fetch(`${API_BASE_URL}/api/v1/brands`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Send httpOnly cookie automatically
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch brands: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setBrands(data.data.brands || []);
-      } else {
-        throw new Error(data.message || 'Failed to fetch brands');
-      }
-    } catch (err) {
-      console.error('Error fetching brands:', err);
-    } finally {
-      setIsLoadingBrands(false);
     }
   };
 
@@ -403,99 +428,119 @@ function ProductsPageContent() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    fetchBrands();
   }, []);
 
   // Memoized filtering logic for performance
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const {
-        search,
-        categoryId,
-        isActive,
-        priceMin,
-        priceMax,
-        stockMin,
-        stockMax,
-        isFeatured,
-        isDigital,
-        dateFrom,
-        dateTo
-      } = watchedFilters;
+    if (!Array.isArray(products)) {
+      return [];
+    }
 
-      // Search filter
-      const categoryName = typeof product.category === 'string' 
-        ? product.category 
-        : (product.category as any)?.name || 'Uncategorized';
-      const matchesSearch = !search || 
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        (product.sku || '').toLowerCase().includes(search.toLowerCase()) ||
-        categoryName.toLowerCase().includes(search.toLowerCase()) ||
-        (product.shortDescription || '').toLowerCase().includes(search.toLowerCase());
+    return products
+      .filter((product) => {
+        const {
+          search,
+          categoryId,
+          isActive,
+          priceMin,
+          priceMax,
+          stockMin,
+          stockMax,
+          isFeatured,
+          isDigital,
+          dateFrom,
+          dateTo,
+        } = watchedFilters;
 
-      // Category filter (only main categories)
-      const matchesCategory = !categoryId || product.categoryId === categoryId;
+        // Search filter
+        const category =
+          typeof product.category === "string"
+            ? product.category
+            : product.category.name;
+        const matchesSearch =
+          !search ||
+          product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.sku.toLowerCase().includes(search.toLowerCase()) ||
+          category.toLowerCase().includes(search.toLowerCase()) ||
+          product.description.toLowerCase().includes(search.toLowerCase());
 
-      // Status filter
-      const matchesStatus = isActive === undefined || product.isActive === isActive;
+        // Category filter (only main categories)
+        const matchesCategory =
+          !categoryId || product.categoryId === categoryId;
 
-      // Price range filter
-      const matchesPrice = (!priceMin || product.price >= priceMin) && 
-                          (!priceMax || product.price <= priceMax);
+        // Status filter - using isActive instead of status
+        const matchesStatus = true; // All products are shown since we're using isActive
 
-      // Stock range filter
-      const matchesStock = (!stockMin || product.stock >= stockMin) && 
-                          (!stockMax || product.stock <= stockMax);
+        // Price range filter
+        const matchesPrice =
+          (!priceMin || product.price >= priceMin) &&
+          (!priceMax || product.price <= priceMax);
 
-      // Featured filter
-      const matchesFeatured = isFeatured === undefined || product.isFeatured === isFeatured;
+        // Stock range filter
+        const matchesStock =
+          (!stockMin || product.stock >= stockMin) &&
+          (!stockMax || product.stock <= stockMax);
 
-      // Digital filter
-      const matchesDigital = isDigital === undefined || product.isDigital === isDigital;
+        // Featured filter
+        const matchesFeatured =
+          isFeatured === undefined || product.isFeatured === isFeatured;
 
-      // Date range filter
-      const productDate = new Date(product.createdAt);
-      const matchesDate = (!dateFrom || productDate >= new Date(dateFrom)) && 
-                         (!dateTo || productDate <= new Date(dateTo));
+        // Digital filter
+        const matchesDigital =
+          isDigital === undefined || product.isDigital === isDigital;
 
-      return matchesSearch && matchesCategory && matchesStatus && 
-             matchesPrice && matchesStock && matchesFeatured && 
-             matchesDigital && matchesDate;
-    }).sort((a, b) => {
-      const { sortBy, sortOrder } = watchedFilters;
-      let aValue, bValue;
+        // Date range filter
+        const productDate = new Date(product.createdAt);
+        const matchesDate =
+          (!dateFrom || productDate >= new Date(dateFrom)) &&
+          (!dateTo || productDate <= new Date(dateTo));
 
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'price':
-          aValue = a.price;
-          bValue = b.price;
-          break;
-        case 'stock':
-          aValue = a.stock;
-          bValue = b.stock;
-          break;
-        case 'createdAt':
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-          break;
-        case 'updatedAt':
-          aValue = new Date(a.updatedAt).getTime();
-          bValue = new Date(b.updatedAt).getTime();
-          break;
-        default:
-          return 0;
-      }
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesStatus &&
+          matchesPrice &&
+          matchesStock &&
+          matchesFeatured &&
+          matchesDigital &&
+          matchesDate
+        );
+      })
+      .sort((a, b) => {
+        const { sortBy, sortOrder } = watchedFilters;
+        let aValue, bValue;
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
+        switch (sortBy) {
+          case "name":
+            aValue = a.name.toLowerCase();
+            bValue = b.name.toLowerCase();
+            break;
+          case "price":
+            aValue = a.price;
+            bValue = b.price;
+            break;
+          case "stock":
+            aValue = a.stock;
+            bValue = b.stock;
+            break;
+          case "createdAt":
+            aValue = new Date(a.createdAt).getTime();
+            bValue = new Date(b.createdAt).getTime();
+            break;
+          case "updatedAt":
+            aValue = new Date(a.updatedAt).getTime();
+            bValue = new Date(b.updatedAt).getTime();
+            break;
+          default:
+            return 0;
+        }
+
+        if (sortOrder === "asc") {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
   }, [products, watchedFilters]);
 
   // Pagination
@@ -510,203 +555,202 @@ function ProductsPageContent() {
   }, [watchedFilters]);
 
   // Enhanced handlers with performance optimizations
-  const handleViewProduct = useCallback((product: Product) => {
-    setViewingProduct(product);
-    setShowViewModal(true);
+  const handleDelete = useCallback(async (id: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      const success = await deleteProduct(id);
+      if (success) {
+        toast.success("Product deleted successfully!");
+        setSelectedProducts((prev) =>
+          prev.filter((productId) => productId !== id),
+        );
+      }
+    }
   }, []);
+
+  const handleStatusChange = useCallback(
+    async (id: string, isActive: boolean) => {
+      const success = await updateProduct(id, { isActive });
+      if (success) {
+        toast.success(
+          `Product status updated to ${isActive ? "active" : "inactive"}`,
+        );
+      }
+    },
+    [],
+  );
 
   const handleEditProduct = useCallback((product: Product) => {
     setEditingProduct(product);
     setShowAddModal(true);
   }, []);
 
-  const handleDelete = useCallback(async (id: string, productName?: string) => {
-    const confirmMessage = productName 
-      ? `Are you sure you want to delete "${productName}"? This action cannot be undone.`
-      : "Are you sure you want to delete this product? This action cannot be undone.";
-    
-    if (confirm(confirmMessage)) {
-      try {
-      const success = await deleteProduct(id);
-      if (success) {
-        toast.success("Product deleted successfully!");
-        setSelectedProducts(prev => prev.filter(productId => productId !== id));
-          // Close view modal if it's open for the deleted product
-          if (viewingProduct?.id === id) {
-            setShowViewModal(false);
-            setViewingProduct(null);
-          }
+  const handleProductSubmit = useCallback(
+    async (data: any) => {
+      if (editingProduct) {
+        const success = await updateProduct(editingProduct.id, data);
+        if (success) {
+          toast.success("Product updated successfully!");
+          setShowAddModal(false);
+          setEditingProduct(null);
         }
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        toast.error("Failed to delete product. Please try again.");
+      } else {
+        const success = await createProduct(data);
+        if (success) {
+          toast.success("Product created successfully!");
+          setShowAddModal(false);
+        }
       }
-    }
-  }, [viewingProduct]);
-
-  const handleStatusChange = useCallback(async (id: string, newStatus: boolean) => {
-    const success = await updateProduct(id, { isActive: newStatus });
-    if (success) {
-      toast.success(`Product status updated to ${newStatus ? 'active' : 'inactive'}`);
-    }
-  }, []);
-
-  const handleProductSubmit = useCallback(async (data: any) => {
-    if (editingProduct) {
-      const success = await updateProduct(editingProduct.id, data);
-      if (success) {
-        toast.success("Product updated successfully!");
-        setShowAddModal(false);
-        setEditingProduct(null);
-      }
-    } else {
-      const success = await createProduct(data);
-      if (success) {
-        toast.success("Product created successfully!");
-        setShowAddModal(false);
-      }
-    }
-  }, [editingProduct]);
+    },
+    [editingProduct],
+  );
 
   const handleCloseModal = useCallback(() => {
     setShowAddModal(false);
     setEditingProduct(null);
   }, []);
 
-  const handleCloseViewModal = useCallback(() => {
-    setShowViewModal(false);
-    setViewingProduct(null);
-  }, []);
-
   // Bulk operations
   const handleBulkDelete = useCallback(async (ids: string[]) => {
-    const promises = ids.map(id => deleteProduct(id));
+    const promises = ids.map((id) => deleteProduct(id));
     const results = await Promise.all(promises);
     const successCount = results.filter(Boolean).length;
-    
+
     if (successCount > 0) {
       toast.success(`${successCount} products deleted successfully!`);
       setSelectedProducts([]);
     }
   }, []);
 
-  const handleBulkStatusChange = useCallback(async (ids: string[], isActive: boolean) => {
-    const promises = ids.map(id => updateProduct(id, { isActive }));
-    const results = await Promise.all(promises);
-    const successCount = results.filter(Boolean).length;
-    
-    if (successCount > 0) {
-      toast.success(`${successCount} products status updated to ${isActive ? 'active' : 'inactive'}!`);
-      setSelectedProducts([]);
-    }
-  }, []);
+  const handleBulkStatusChange = useCallback(
+    async (ids: string[], isActive: boolean) => {
+      const promises = ids.map((id) => updateProduct(id, { isActive }));
+      const results = await Promise.all(promises);
+      const successCount = results.filter(Boolean).length;
+
+      if (successCount > 0) {
+        toast.success(
+          `${successCount} products status updated to ${isActive ? "active" : "inactive"}!`,
+        );
+        setSelectedProducts([]);
+      }
+    },
+    [],
+  );
 
   const handleBulkFeaturedToggle = useCallback(async (ids: string[]) => {
     // This would need to be implemented in the API
-    toast("Bulk featured toggle feature coming soon!", { icon: 'ℹ️' });
+    toast("Bulk featured toggle feature coming soon!", { icon: "ℹ️" });
   }, []);
 
   const handleProductSelect = useCallback((id: string, selected: boolean) => {
-    setSelectedProducts(prev => 
-      selected 
-        ? [...prev, id]
-        : prev.filter(productId => productId !== id)
+    setSelectedProducts((prev) =>
+      selected ? [...prev, id] : prev.filter((productId) => productId !== id),
     );
   }, []);
 
-  const handleSelectAll = useCallback((selected: boolean) => {
-    if (selected) {
-      setSelectedProducts(paginatedProducts.map(p => p.id));
-    } else {
-      setSelectedProducts([]);
-    }
-  }, [paginatedProducts]);
+  const handleSelectAll = useCallback(
+    (selected: boolean) => {
+      if (selected) {
+        setSelectedProducts(paginatedProducts.map((p) => p.id));
+      } else {
+        setSelectedProducts([]);
+      }
+    },
+    [paginatedProducts],
+  );
 
   const handleFilterChange = useCallback((filters: ProductFilterData) => {
     // Filters are automatically applied via watchedFilters
   }, []);
 
-  // Utility functions
+  // Utility functions - simplified for isActive boolean
   const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'text-green-600 bg-green-50' : 'text-gray-600 bg-gray-50';
+    return isActive ? "text-green-600 bg-green-50" : "text-gray-600 bg-gray-50";
   };
 
   const getStatusIcon = (isActive: boolean) => {
-    return isActive ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />;
+    return isActive ? (
+      <CheckCircle className="w-4 h-4" />
+    ) : (
+      <AlertCircle className="w-4 h-4" />
+    );
   };
 
   return (
     <DashboardLayout title="Product Management" showBackButton={true}>
-      <motion.div 
+      <motion.div
         className="space-y-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {/* Header with Actions */}
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
-              <h1 className="text-2xl font-bold text-gray-900 custom-font">All Products</h1>
-              <div className="flex items-center mt-2">
-                <Package className="w-4 h-4 text-gray-500 mr-2" />
-                <span className="text-gray-600 custom-font">
-                  {isLoadingProducts ? 'Loading...' : `${filteredProducts.length} Total Products`}
-                </span>
+            <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+            <p className="text-gray-600 mt-1">
+              Manage your product catalog ({filteredProducts.length} products)
+            </p>
           </div>
-          </div>
-          
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search product"
-                  value={watchedFilters.search || ''}
-                  onChange={(e) => setValue('search', e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64 text-black custom-font"
-                />
+
+          <div className="flex items-center space-x-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === "list"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
             </div>
 
-              {/* Show Entries Dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600 custom-font">Show</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black custom-font"
-                >
-                  <option value={10}>10 Entries</option>
-                  <option value={25}>25 Entries</option>
-                  <option value={50}>50 Entries</option>
-                  <option value={100}>100 Entries</option>
-                </select>
-              </div>
+            {/* Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                showFilters
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </button>
 
             {/* Add Product Button */}
             <motion.button
               onClick={() => setShowAddModal(true)}
-                className="flex items-center px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium custom-font"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Plus className="w-5 h-5 mr-2" />
-                Add New
+              Add Product
             </motion.button>
           </div>
         </div>
-        </div>
-        {/* Advanced Filters - Hidden for cleaner UI */}
+        {/* Advanced Filters */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-6"
             >
               <AdvancedProductFilter
                 onFilterChange={handleFilterChange}
@@ -719,7 +763,7 @@ function ProductsPageContent() {
 
         {/* Loading State */}
         {isLoadingProducts && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -727,189 +771,82 @@ function ProductsPageContent() {
           >
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 custom-font">Loading products...</p>
+              <p className="text-gray-600">Loading products...</p>
             </div>
           </motion.div>
         )}
 
         {/* Error State */}
         {error && !isLoadingProducts && (
-          <motion.div 
+          <motion.div
             className="bg-red-50 border border-red-200 rounded-lg p-6 text-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-red-800 mb-2 custom-font">Error Loading Products</h3>
-            <p className="text-red-600 mb-4 custom-font">{error}</p>
+            <h3 className="text-lg font-semibold text-red-800 mb-2">
+              Error Loading Products
+            </h3>
+            <p className="text-red-600 mb-4">{error}</p>
             <button
               onClick={fetchProducts}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors custom-font"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Try Again
             </button>
           </motion.div>
         )}
 
-        {/* Products Table */}
+        {/* Products Grid/List */}
         {!isLoadingProducts && !error && (
-          <motion.div 
-            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          <motion.div
+            className={`${
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                : "space-y-4"
+            }`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Product
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider custom-font">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      {/* Product Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-12 w-12">
-                            {product.images && product.images.length > 0 ? (
-                              <Image
-                                src={product.images[0]}
-                                alt={product.name}
-                                width={48}
-                                height={48}
-                                className="h-12 w-12 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <Package className="w-6 h-6 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 custom-font">{product.name}</div>
-                            <div className="text-sm text-gray-500 custom-font">SKU: {product.sku || 'N/A'}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Category Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 custom-font">
-                          {typeof product.category === 'string' ? product.category : (product.category as any)?.name || 'Uncategorized'}
-                        </div>
-                      </td>
-
-                      {/* Price Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 custom-font">
-                          ${(Number(product.price) || 0).toFixed(2)}
-                        </div>
-                        {product.comparePrice && Number(product.comparePrice) > 0 && (
-                          <div className="text-sm text-gray-500 line-through custom-font">
-                            ${Number(product.comparePrice).toFixed(2)}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Stock Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 custom-font">{product.stock || 0}</div>
-                      </td>
-
-                      {/* Status Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full custom-font ${
-                          product.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {product.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-
-                      {/* Created Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 custom-font">
-                        {new Date(product.createdAt).toLocaleDateString('en-GB')}
-                      </td>
-
-                      {/* Actions Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleViewProduct(product)}
-                            className="text-purple-600 hover:text-purple-900 p-1 rounded transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEditProduct(product)}
-                            className="text-gray-600 hover:text-gray-900 p-1 rounded transition-colors"
-                            title="Edit Product"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                            title="Delete Product"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {paginatedProducts.map((product, index) => (
+              <EnhancedProductCard
+                key={product.id}
+                product={product}
+                index={index}
+                onEdit={handleEditProduct}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onToggleFeatured={(id) => handleBulkFeaturedToggle([id])}
+              />
+            ))}
           </motion.div>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-between mt-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-sm text-gray-700 custom-font">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
+            <div className="text-sm text-gray-700">
+              Showing {startIndex + 1} to{" "}
+              {Math.min(endIndex, filteredProducts.length)} of{" "}
+              {filteredProducts.length} products
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed custom-font"
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              
+
               <div className="flex space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   const page = i + 1;
@@ -917,10 +854,10 @@ function ProductsPageContent() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md custom-font ${
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
                         currentPage === page
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       {page}
@@ -928,11 +865,13 @@ function ProductsPageContent() {
                   );
                 })}
               </div>
-              
+
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed custom-font"
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -942,26 +881,21 @@ function ProductsPageContent() {
 
         {/* Empty State */}
         {!isLoadingProducts && !error && filteredProducts.length === 0 && (
-          <motion.div 
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center"
+          <motion.div
+            className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg custom-font">No products found</p>
-            <p className="text-gray-400 text-sm mt-2 custom-font">
-              {watchedFilters.search || watchedFilters.categoryId || watchedFilters.isActive !== undefined 
+            <p className="text-gray-500 text-lg">No products found</p>
+            <p className="text-gray-400 text-sm mt-2">
+              {watchedFilters.search ||
+              watchedFilters.categoryId ||
+              watchedFilters.isActive !== undefined
                 ? "Try adjusting your search or filter criteria"
-                : "Get started by adding your first product"
-              }
+                : "Get started by adding your first product"}
             </p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors custom-font"
-            >
-              Add Product
-            </button>
           </motion.div>
         )}
 
@@ -973,16 +907,7 @@ function ProductsPageContent() {
           initialData={editingProduct}
           isLoading={isLoading}
           categories={categories}
-          brands={brands as any}
-        />
-
-        {/* Product Details Modal */}
-        <ProductDetailsModal
-          isOpen={showViewModal}
-          onClose={handleCloseViewModal}
-          product={viewingProduct}
-          onEdit={handleEditProduct}
-          onDelete={handleDelete}
+          brands={brands}
         />
 
         {/* Bulk Operations */}
@@ -998,12 +923,3 @@ function ProductsPageContent() {
     </DashboardLayout>
   );
 }
-
-export default function ProductsPage() {
-  return (
-    <ProtectedRoute>
-      <ProductsPageContent />
-    </ProtectedRoute>
-  );
-}
-

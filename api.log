@@ -1,0 +1,1290 @@
+
+> dev
+> turbo run dev
+
+turbo 2.5.6
+
+• Packages in scope: @gharsamma/api, @repo/eslint-config, @repo/typescript-config, @repo/ui, admin, web
+• Running dev in 6 packages
+• Remote caching disabled
+web:dev: cache bypass, force executing 7e203bc9161e09ef
+admin:dev: cache bypass, force executing 9ec350c3b0fd851a
+@gharsamma/api:dev: cache bypass, force executing 0662694c5a354e2d
+admin:dev: 
+admin:dev: > admin@0.1.0 dev /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/apps/admin
+admin:dev: > next dev --turbopack -p 4001
+admin:dev: 
+@gharsamma/api:dev: 
+@gharsamma/api:dev: > @gharsamma/api@0.1.0 dev /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/apps/api
+@gharsamma/api:dev: > tsx watch src/index.ts
+@gharsamma/api:dev: 
+web:dev: 
+web:dev: > web@0.1.0 dev /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/apps/web
+web:dev: > next dev -p 4000
+web:dev: 
+admin:dev:  ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+admin:dev:  We detected multiple lockfiles and selected the directory of /home/theaavashh/workplace/celebrate-multi/pnpm-lock.yaml as the root directory.
+admin:dev:  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+admin:dev:    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+admin:dev:  Detected additional lockfiles: 
+admin:dev:    * /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/pnpm-lock.yaml
+admin:dev: 
+@gharsamma/api:dev: 🚀 Server running on port 4444
+@gharsamma/api:dev: 📊 Environment: development
+@gharsamma/api:dev: 🔗 Health check: http://localhost:4444/health
+web:dev:    ▲ Next.js 15.5.3
+web:dev:    - Local:        http://localhost:4000
+web:dev:    - Network:      http://192.168.1.10:4000
+web:dev:    - Environments: .env.local
+web:dev: 
+web:dev:  ✓ Starting...
+admin:dev:    ▲ Next.js 15.5.3 (Turbopack)
+admin:dev:    - Local:        http://localhost:4001
+admin:dev:    - Network:      http://192.168.1.10:4001
+admin:dev:    - Environments: .env.local
+admin:dev: 
+admin:dev:  ✓ Starting...
+@gharsamma/api:dev: 2026-01-01 23:45:39:4539 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:00:39 +0000] "GET /health HTTP/1.1" 200 110 "-" "curl/8.5.0"[39m
+admin:dev:  ✓ Ready in 4.2s
+web:dev:  ✓ Ready in 4.7s
+@gharsamma/api:dev: 2026-01-01 23:45:48:4548 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:00:48 +0000] "GET /health HTTP/1.1" 200 110 "-" "curl/8.5.0"[39m
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE "public"."top_banners"."isActive" = $1 ORDER BY "public"."top_banners"."createdAt" DESC OFFSET $2
+@gharsamma/api:dev: 2026-01-01 23:46:04:464 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:04 +0000] "GET /api/v1/banners HTTP/1.1" 304 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+admin:dev:  ○ Compiling /dashboard ...
+admin:dev:  ✓ Compiled /dashboard in 17s
+admin:dev:  GET /dashboard?tab=top-banner 200 in 18381ms
+@gharsamma/api:dev: prisma:query SELECT 1
+@gharsamma/api:dev: prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."username", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."phone", "public"."users"."avatar", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."emailVerified", "public"."users"."createdAt", "public"."users"."updatedAt" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND "public"."users"."role" = CAST($2::text AS "public"."UserRole") AND "public"."users"."isActive" = $3) LIMIT $4 OFFSET $5
+@gharsamma/api:dev: 2026-01-01 23:46:31:4631 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:31 +0000] "GET /api/v1/admin/profile HTTP/1.1" 304 - "http://localhost:4001/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE "public"."top_banners"."isActive" = $1 ORDER BY "public"."top_banners"."createdAt" DESC OFFSET $2
+@gharsamma/api:dev: 2026-01-01 23:46:31:4631 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:31 +0000] "GET /api/v1/banners HTTP/1.1" 304 - "http://localhost:4001/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+@gharsamma/api:dev: prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."username", "public"."users"."role"::text, "public"."users"."isActive" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+@gharsamma/api:dev: prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."role"::text, "public"."users"."isActive" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND ("public"."users"."role" = CAST($2::text AS "public"."UserRole") AND "public"."users"."isActive" = $3)) LIMIT $4 OFFSET $5
+@gharsamma/api:dev: 🔄 TOGGLE: Attempting to toggle banner cmjvqzpba0001139pxxhfkur2
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE ("public"."top_banners"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+@gharsamma/api:dev: 🔄 TOGGLE: Banner cmjvqzpba0001139pxxhfkur2 current status: true
+@gharsamma/api:dev: 🔄 TOGGLE: Setting banner cmjvqzpba0001139pxxhfkur2 to status: false
+@gharsamma/api:dev: prisma:query UPDATE "public"."top_banners" SET "isActive" = $1, "updatedAt" = $2 WHERE ("public"."top_banners"."id" = $3 AND 1=1) RETURNING "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt"
+@gharsamma/api:dev: ✅ TOGGLE: Banner cmjvqzpba0001139pxxhfkur2 updated successfully. Final status: false
+@gharsamma/api:dev: 2026-01-01 23:46:33:4633 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:33 +0000] "PATCH /api/v1/banners/cmjvqzpba0001139pxxhfkur2/toggle HTTP/1.1" 200 219 "http://localhost:4001/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE "public"."top_banners"."isActive" = $1 ORDER BY "public"."top_banners"."createdAt" DESC OFFSET $2
+@gharsamma/api:dev: 2026-01-01 23:46:33:4633 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:33 +0000] "GET /api/v1/banners HTTP/1.1" 200 26 "http://localhost:4001/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE "public"."top_banners"."isActive" = $1 ORDER BY "public"."top_banners"."createdAt" DESC OFFSET $2
+@gharsamma/api:dev: 2026-01-01 23:46:37:4637 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:37 +0000] "GET /api/v1/banners HTTP/1.1" 304 - "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"[39m
+@gharsamma/api:dev: prisma:query SELECT 1
+@gharsamma/api:dev: prisma:query SELECT "public"."top_banners"."id", "public"."top_banners"."title", "public"."top_banners"."isActive", "public"."top_banners"."createdAt", "public"."top_banners"."updatedAt" FROM "public"."top_banners" WHERE "public"."top_banners"."isActive" = $1 ORDER BY "public"."top_banners"."createdAt" DESC OFFSET $2
+@gharsamma/api:dev: 2026-01-01 23:46:58:4658 [35mhttp[39m: [35m::1 - - [01/Jan/2026:18:01:58 +0000] "GET /api/v1/banners HTTP/1.1" 200 26 "-" "curl/8.5.0"[39m
+@gharsamma/api:dev: SIGTERM received. Shutting down gracefully...
+@gharsamma/api:dev:  ELIFECYCLE  Command failed.
+admin:dev:  GET /dashboard?tab=top-banner 200 in 207ms
+admin:dev:  ✓ Compiled in 560ms
+web:dev:  ○ Compiling / ...
+web:dev:  ✓ Compiled / in 7.2s (1762 modules)
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: AuthModal isOpen: false
+web:dev:  GET / 200 in 10210ms
+web:dev:  ○ Compiling /api/auth/[...nextauth] ...
+web:dev:  ✓ Compiled /_not-found in 3.6s (2020 modules)
+web:dev:  GET /api/navigation 200 in 4097ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: [next-auth][warn][NEXTAUTH_URL] 
+web:dev: https://next-auth.js.org/warnings#nextauth_url
+web:dev: [next-auth][warn][NO_SECRET] 
+web:dev: https://next-auth.js.org/warnings#no_secret
+web:dev:  GET /api/auth/session 200 in 5392ms
+web:dev:  GET /logo.png 404 in 4897ms
+web:dev:  GET /dress5.jpg 404 in 4374ms
+web:dev:  GET /dress4.jpg 404 in 4378ms
+web:dev:  GET /dress3.jpg 404 in 4407ms
+web:dev:  GET /saree2.webp 404 in 1373ms
+web:dev: [TypeError: fetch failed] {
+web:dev:   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5000
+web:dev:       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5000) {
+web:dev:     errno: -111,
+web:dev:     code: 'ECONNREFUSED',
+web:dev:     syscall: 'connect',
+web:dev:     address: '127.0.0.1',
+web:dev:     port: 5000
+web:dev:   }
+web:dev: }
+web:dev: [TypeError: fetch failed] {
+web:dev:   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5000
+web:dev:       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5000) {
+web:dev:     errno: -111,
+web:dev:     code: 'ECONNREFUSED',
+web:dev:     syscall: 'connect',
+web:dev:     address: '127.0.0.1',
+web:dev:     port: 5000
+web:dev:   }
+web:dev: }
+admin:dev:  ○ Compiling /dashboard/sliders ...
+admin:dev:  ✓ Compiled /dashboard/sliders in 1786ms
+admin:dev:  GET /dashboard/sliders 200 in 1917ms
+admin:dev:  GET /dashboard?tab=top-banner 200 in 637ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: AuthModal isOpen: false
+web:dev:  GET / 200 in 776ms
+web:dev:  GET /api/navigation 200 in 196ms
+web:dev:  GET /api/auth/session 200 in 182ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /logo.png 404 in 230ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /dress3.jpg 404 in 754ms
+web:dev:  GET /dress5.jpg 404 in 736ms
+web:dev:  GET /dress4.jpg 404 in 752ms
+web:dev:  GET /saree2.webp 404 in 905ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: AuthModal isOpen: false
+web:dev:  GET / 200 in 192ms
+web:dev:  GET /api/navigation 200 in 46ms
+web:dev:  GET /api/auth/session 200 in 91ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /logo.png 404 in 285ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /dress5.jpg 404 in 640ms
+web:dev:  GET /dress4.jpg 404 in 651ms
+web:dev:  GET /dress3.jpg 404 in 655ms
+web:dev:  GET /saree2.webp 404 in 643ms
+admin:dev:  ✓ Compiled in 18.2s
+admin:dev:  GET /dashboard?tab=top-banner 200 in 15374ms
+admin:dev:  ✓ Compiled in 1312ms
+admin:dev:  ✓ Compiled in 445ms
+admin:dev:  ✓ Compiled in 347ms
+admin:dev:  GET /dashboard?tab=top-banner 200 in 1236ms
+admin:dev:  ✓ Compiled in 312ms
+admin:dev:  ✓ Compiled in 477ms
+admin:dev:  ✓ Compiled in 589ms
+admin:dev:  ✓ Compiled in 416ms
+admin:dev:  ✓ Compiled in 341ms
+admin:dev:  ✓ Compiled in 528ms
+admin:dev:  ✓ Compiled in 402ms
+admin:dev:  ✓ Compiled in 323ms
+admin:dev:  ✓ Compiled in 353ms
+admin:dev:  ✓ Compiled in 384ms
+admin:dev:  ✓ Compiled in 299ms
+admin:dev:  ✓ Compiled in 480ms
+admin:dev:  ✓ Compiled in 561ms
+admin:dev:  ✓ Compiled in 312ms
+admin:dev:  ✓ Compiled in 469ms
+admin:dev:  ✓ Compiled in 331ms
+admin:dev:  ✓ Compiled in 275ms
+admin:dev:  ✓ Compiled in 465ms
+admin:dev:  ✓ Compiled in 664ms
+admin:dev:  ✓ Compiled in 630ms
+admin:dev:  ✓ Compiled in 506ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: AuthModal isOpen: false
+web:dev:  GET / 200 in 2305ms
+web:dev:  GET /api/auth/session 200 in 344ms
+web:dev:  GET /api/navigation 200 in 574ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /logo.png 404 in 775ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /dress5.jpg 404 in 790ms
+web:dev:  GET /dress4.jpg 404 in 795ms
+web:dev:  GET /dress3.jpg 404 in 798ms
+web:dev:  GET /saree2.webp 404 in 1172ms
+admin:dev:  ○ Compiling /dashboard/navigation ...
+admin:dev:  ✓ Compiled /dashboard/navigation in 6.2s
+admin:dev:  GET /dashboard/navigation 200 in 6420ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: AuthModal isOpen: false
+web:dev:  GET / 200 in 238ms
+web:dev:  GET /api/navigation 200 in 841ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /logo.png 404 in 4392ms
+web:dev:  GET /api/auth/session 200 in 4631ms
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev: No banners found, not showing banner
+web:dev: AuthModal isOpen: false
+web:dev:  GET /dress4.jpg 404 in 1049ms
+web:dev:  GET /dress3.jpg 404 in 1577ms
+web:dev:  GET /dress5.jpg 404 in 1024ms
+web:dev:  GET /saree2.webp 404 in 1023ms
+admin:dev:  GET /dashboard/sliders 200 in 429ms
+web:dev: [TypeError: fetch failed] {
+web:dev:   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5000
+web:dev:       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5000) {
+web:dev:     errno: -111,
+web:dev:     code: 'ECONNREFUSED',
+web:dev:     syscall: 'connect',
+web:dev:     address: '127.0.0.1',
+web:dev:     port: 5000
+web:dev:   }
+web:dev: }
+web:dev: [TypeError: fetch failed] {
+web:dev:   [cause]: Error: connect ECONNREFUSED 127.0.0.1:5000
+web:dev:       at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:5000) {
+web:dev:     errno: -111,
+web:dev:     code: 'ECONNREFUSED',
+web:dev:     syscall: 'connect',
+web:dev:     address: '127.0.0.1',
+web:dev:     port: 5000
+web:dev:   }
+web:dev: }
+admin:dev:  ○ Compiling /dashboard/products ...
+web:dev:  ✓ Compiled in 44.1s (1777 modules)
+web:dev:  GET / 200 in 1224ms
+admin:dev:  ✓ Compiled /dashboard/products in 5.7s
+admin:dev:  GET /dashboard/products 200 in 6326ms
+admin:dev:  GET /dashboard/products 200 in 1179ms
+admin:dev:  ✓ Compiled in 1364ms
+admin:dev:  ✓ Compiled in 1431ms
+admin:dev:  ✓ Compiled /dashboard/products in 108ms
+admin:dev:  GET /dashboard/products 200 in 551ms
+admin:dev:  ✓ Compiled in 506ms
+admin:dev:  GET /dashboard/products 200 in 2279ms
+admin:dev:  ✓ Compiled in 3.2s
+admin:dev:  ✓ Compiled in 1870ms
+admin:dev:  ✓ Compiled in 1026ms
+admin:dev:  ✓ Compiled in 298ms
+admin:dev:  ✓ Compiled in 4.8s
+admin:dev:  ✓ Compiled in 2.3s
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx:544:15
+admin:dev: Parsing ecmascript source code failed
+admin:dev: [0m [90m 542 |[39m           }
+admin:dev:  [90m 543 |[39m               }
+admin:dev: [31m[1m>[22m[39m[90m 544 |[39m             } [36melse[39m [36mif[39m (errorData[33m.[39mmessage) {
+admin:dev:  [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 545 |[39m               [90m// Handle specific server errors with user-friendly messages[39m
+admin:dev:  [90m 546 |[39m               [36mif[39m (errorData[33m.[39mmessage[33m?[39m[33m.[39mincludes([32m'Authentication failed'[39m)) {
+admin:dev:  [90m 547 |[39m                 errorMessage [33m=[39m [32m'Your session has expired or you lack permissions. Please log in again.'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: Expression expected
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev: 
+admin:dev:  ○ Compiling /_error ...
+admin:dev:  ✓ Compiled /_error in 8.3s
+admin:dev:  GET /dashboard/products 500 in 11319ms
+admin:dev:  ○ Compiling /favicon.ico ...
+admin:dev:  ✓ Compiled /favicon.ico in 3s
+admin:dev:  GET /favicon.ico 500 in 3578ms
+admin:dev:  ✓ Compiled in 2.6s
+admin:dev:  ○ Compiling /dashboard/products ...
+admin:dev:  ✓ Compiled /dashboard/products in 974ms
+admin:dev:  GET /dashboard/products 200 in 5028ms
+admin:dev:  GET /favicon.ico?favicon.0b3bf435.ico 200 in 1321ms
+admin:dev:  ✓ Compiled in 2.3s
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx:265:3
+admin:dev: Parsing ecmascript source code failed
+admin:dev: [0m [90m 263 |[39m       setIsLoading([36mfalse[39m)[33m;[39m
+admin:dev:  [90m 264 |[39m     }
+admin:dev: [31m[1m>[22m[39m[90m 265 |[39m   }[33m;[39m
+admin:dev:  [90m     |[39m   [31m[1m^[22m[39m
+admin:dev:  [90m 266 |[39m
+admin:dev:  [90m 267 |[39m   [90m// Update product via API[39m
+admin:dev:  [90m 268 |[39m   [36mconst[39m updateProduct [33m=[39m [36masync[39m (productId[33m:[39m string[33m,[39m productData[33m:[39m any) [33m=>[39m {[0m
+admin:dev: 
+admin:dev: Expression expected
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev: 
+admin:dev:  GET /dashboard/products 500 in 1722ms
+admin:dev:  GET /favicon.ico 500 in 406ms
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx:265:3
+admin:dev: Parsing ecmascript source code failed
+admin:dev: [0m [90m 263 |[39m       setIsLoading([36mfalse[39m)[33m;[39m
+admin:dev:  [90m 264 |[39m     }
+admin:dev: [31m[1m>[22m[39m[90m 265 |[39m   }[33m;[39m
+admin:dev:  [90m     |[39m   [31m[1m^[22m[39m
+admin:dev:  [90m 266 |[39m
+admin:dev:  [90m 267 |[39m   [90m// Update product via API[39m
+admin:dev:  [90m 268 |[39m   [36mconst[39m updateProduct [33m=[39m [36masync[39m (productId[33m:[39m string[33m,[39m productData[33m:[39m any) [33m=>[39m {[0m
+admin:dev: 
+admin:dev: Expression expected
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/products/page.tsx [Server Component]
+admin:dev: 
+admin:dev: 
+admin:dev:  GET /dashboard/products 500 in 2646ms
+admin:dev:  GET /favicon.ico 500 in 305ms
+admin:dev:  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+admin:dev:  ⚠ Fast Refresh had to perform a full reload when ./gharsamma-ecommerce/node_modules/.pnpm/next@15.5.3_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/shared/lib/router/router.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+admin:dev:  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+admin:dev:  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+admin:dev:  ⚠ Fast Refresh had to perform a full reload when ./gharsamma-ecommerce/node_modules/.pnpm/next@15.5.3_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/shared/lib/router/router.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+admin:dev:  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+admin:dev:  ○ Compiling /_not-found/page ...
+admin:dev:  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx:6:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 4 |[39m [36mimport[39m { [33mPlus[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEdit[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mEye[39m[33m,[39m [33mEyeOff[39m[33m,[39m [33mArrowUp[39m[33m,[39m [33mArrowDown[39m[33m,[39m [33mImage[39m [36mas[39m [33mImageIcon[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m'@/components/DashboardLayout'[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 7 |[39m
+admin:dev:  [90m 8 |[39m [36minterface[39m [33mSliderImage[39m {
+admin:dev:  [90m 9 |[39m   id[33m:[39m string[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx:6:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 4 |[39m [36mimport[39m { [33mPlus[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEdit[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mEye[39m[33m,[39m [33mEyeOff[39m[33m,[39m [33mArrowUp[39m[33m,[39m [33mArrowDown[39m[33m,[39m [33mImage[39m [36mas[39m [33mImageIcon[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m'@/components/DashboardLayout'[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 7 |[39m
+admin:dev:  [90m 8 |[39m [36minterface[39m [33mSliderImage[39m {
+admin:dev:  [90m 9 |[39m   id[33m:[39m string[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx:6:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 4 |[39m [36mimport[39m { [33mPlus[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEdit[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mEye[39m[33m,[39m [33mEyeOff[39m[33m,[39m [33mArrowUp[39m[33m,[39m [33mArrowDown[39m[33m,[39m [33mImage[39m [36mas[39m [33mImageIcon[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m'@/components/DashboardLayout'[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 7 |[39m
+admin:dev:  [90m 8 |[39m [36minterface[39m [33mSliderImage[39m {
+admin:dev:  [90m 9 |[39m   id[33m:[39m string[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx:6:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 4 |[39m [36mimport[39m { [33mPlus[39m[33m,[39m [33mUpload[39m[33m,[39m [33mEdit[39m[33m,[39m [33mTrash2[39m[33m,[39m [33mEye[39m[33m,[39m [33mEyeOff[39m[33m,[39m [33mArrowUp[39m[33m,[39m [33mArrowDown[39m[33m,[39m [33mImage[39m [36mas[39m [33mImageIcon[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 6 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m'@/components/DashboardLayout'[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 7 |[39m
+admin:dev:  [90m 8 |[39m [36minterface[39m [33mSliderImage[39m {
+admin:dev:  [90m 9 |[39m   id[33m:[39m string[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/sliders/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx:21:1
+admin:dev: Module not found: Can't resolve '@/utils/api'
+admin:dev: [0m [90m 19 |[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 20 |[39m [36mimport[39m axios [36mfrom[39m [32m'axios'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 21 |[39m [36mimport[39m { getApiBaseUrl } [36mfrom[39m [32m'@/utils/api'[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 22 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev:  [90m 23 |[39m [36mimport[39m {
+admin:dev:  [90m 24 |[39m     [33mDndContext[39m[33m,[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx:21:1
+admin:dev: Module not found: Can't resolve '@/utils/api'
+admin:dev: [0m [90m 19 |[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 20 |[39m [36mimport[39m axios [36mfrom[39m [32m'axios'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 21 |[39m [36mimport[39m { getApiBaseUrl } [36mfrom[39m [32m'@/utils/api'[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 22 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev:  [90m 23 |[39m [36mimport[39m {
+admin:dev:  [90m 24 |[39m     [33mDndContext[39m[33m,[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx:21:1
+admin:dev: Module not found: Can't resolve '@/utils/api'
+admin:dev: [0m [90m 19 |[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 20 |[39m [36mimport[39m axios [36mfrom[39m [32m'axios'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 21 |[39m [36mimport[39m { getApiBaseUrl } [36mfrom[39m [32m'@/utils/api'[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 22 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev:  [90m 23 |[39m [36mimport[39m {
+admin:dev:  [90m 24 |[39m     [33mDndContext[39m[33m,[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx:21:1
+admin:dev: Module not found: Can't resolve '@/utils/api'
+admin:dev: [0m [90m 19 |[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+admin:dev:  [90m 20 |[39m [36mimport[39m axios [36mfrom[39m [32m'axios'[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 21 |[39m [36mimport[39m { getApiBaseUrl } [36mfrom[39m [32m'@/utils/api'[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 22 |[39m [36mimport[39m toast [36mfrom[39m [32m'react-hot-toast'[39m[33m;[39m
+admin:dev:  [90m 23 |[39m [36mimport[39m {
+admin:dev:  [90m 24 |[39m     [33mDndContext[39m[33m,[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/navigation/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:48:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 46 |[39m [36mimport[39m [33mImage[39m [36mfrom[39m [32m"next/image"[39m[33m;[39m
+admin:dev:  [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:48:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 46 |[39m [36mimport[39m [33mImage[39m [36mfrom[39m [32m"next/image"[39m[33m;[39m
+admin:dev:  [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:48:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 46 |[39m [36mimport[39m [33mImage[39m [36mfrom[39m [32m"next/image"[39m[33m;[39m
+admin:dev:  [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:48:1
+admin:dev: Module not found: Can't resolve '@/components/DashboardLayout'
+admin:dev: [0m [90m 46 |[39m [36mimport[39m [33mImage[39m [36mfrom[39m [32m"next/image"[39m[33m;[39m
+admin:dev:  [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:53:1
+admin:dev: Module not found: Can't resolve '@/components/FacebookPixelReport'
+admin:dev: [0m [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {
+admin:dev:  [90m 56 |[39m   [36mconst[39m [activeTab[33m,[39m setActiveTab] [33m=[39m useState([32m"dashboard"[39m)[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:53:1
+admin:dev: Module not found: Can't resolve '@/components/FacebookPixelReport'
+admin:dev: [0m [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {
+admin:dev:  [90m 56 |[39m   [36mconst[39m [activeTab[33m,[39m setActiveTab] [33m=[39m useState([32m"dashboard"[39m)[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:53:1
+admin:dev: Module not found: Can't resolve '@/components/FacebookPixelReport'
+admin:dev: [0m [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {
+admin:dev:  [90m 56 |[39m   [36mconst[39m [activeTab[33m,[39m setActiveTab] [33m=[39m useState([32m"dashboard"[39m)[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:53:1
+admin:dev: Module not found: Can't resolve '@/components/FacebookPixelReport'
+admin:dev: [0m [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {
+admin:dev:  [90m 56 |[39m   [36mconst[39m [activeTab[33m,[39m setActiveTab] [33m=[39m useState([32m"dashboard"[39m)[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:52:1
+admin:dev: Module not found: Can't resolve '@/components/GoogleAnalyticsReport'
+admin:dev: [0m [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:52:1
+admin:dev: Module not found: Can't resolve '@/components/GoogleAnalyticsReport'
+admin:dev: [0m [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:52:1
+admin:dev: Module not found: Can't resolve '@/components/GoogleAnalyticsReport'
+admin:dev: [0m [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:52:1
+admin:dev: Module not found: Can't resolve '@/components/GoogleAnalyticsReport'
+admin:dev: [0m [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m
+admin:dev:  [90m 54 |[39m
+admin:dev:  [90m 55 |[39m [36mfunction[39m [33mDashboardContent[39m() {[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:50:1
+admin:dev: Module not found: Can't resolve '@/components/ProtectedRoute'
+admin:dev: [0m [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:50:1
+admin:dev: Module not found: Can't resolve '@/components/ProtectedRoute'
+admin:dev: [0m [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:50:1
+admin:dev: Module not found: Can't resolve '@/components/ProtectedRoute'
+admin:dev: [0m [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:50:1
+admin:dev: Module not found: Can't resolve '@/components/ProtectedRoute'
+admin:dev: [0m [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev:  [90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m
+admin:dev:  [90m 53 |[39m [36mimport[39m [33mFacebookPixelReport[39m [36mfrom[39m [32m"@/components/FacebookPixelReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:49:1
+admin:dev: Module not found: Can't resolve '@/components/RichTextEditor'
+admin:dev: [0m [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev:  [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:49:1
+admin:dev: Module not found: Can't resolve '@/components/RichTextEditor'
+admin:dev: [0m [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev:  [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:49:1
+admin:dev: Module not found: Can't resolve '@/components/RichTextEditor'
+admin:dev: [0m [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev:  [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx:49:1
+admin:dev: Module not found: Can't resolve '@/components/RichTextEditor'
+admin:dev: [0m [90m 47 |[39m [36mimport[39m { motion[33m,[39m [33mAnimatePresence[39m } [36mfrom[39m [32m"framer-motion"[39m[33m;[39m
+admin:dev:  [90m 48 |[39m [36mimport[39m [33mDashboardLayout[39m [36mfrom[39m [32m"@/components/DashboardLayout"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 49 |[39m [36mimport[39m [33mRichTextEditor[39m [36mfrom[39m [32m"@/components/RichTextEditor"[39m[33m;[39m
+admin:dev:  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 50 |[39m [36mimport[39m [33mProtectedRoute[39m [36mfrom[39m [32m"@/components/ProtectedRoute"[39m[33m;[39m
+admin:dev:  [90m 51 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 52 |[39m [36mimport[39m [33mGoogleAnalyticsReport[39m [36mfrom[39m [32m"@/components/GoogleAnalyticsReport"[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: Import traces:
+admin:dev:   Client Component Browser:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component Browser]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev:   Client Component SSR:
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Client Component SSR]
+admin:dev:     ./gharsamma-ecommerce/apps/admin/src/app/dashboard/page.tsx [Server Component]
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ✓ Compiled in 27.1s
+admin:dev:  ✓ Compiled /_not-found/page in 30.8s
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:4:1
+admin:dev: Module not found: Can't resolve '@/contexts/AuthContext'
+admin:dev: [0m [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev:  [90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m
+admin:dev:  [90m 7 |[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 
+admin:dev:  ⨯ ./gharsamma-ecommerce/apps/admin/src/app/layout.tsx:3:1
+admin:dev: Module not found: Can't resolve '@/store/StoreProvider'
+admin:dev: [0m [90m 1 |[39m [36mimport[39m type { [33mMetadata[39m } [36mfrom[39m [32m"next"[39m[33m;[39m
+admin:dev:  [90m 2 |[39m [36mimport[39m [32m"./globals.css"[39m[33m;[39m
+admin:dev: [31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m [33mStoreProvider[39m [36mfrom[39m [32m"@/store/StoreProvider"[39m[33m;[39m
+admin:dev:  [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+admin:dev:  [90m 4 |[39m [36mimport[39m { [33mAuthProvider[39m } [36mfrom[39m [32m"@/contexts/AuthContext"[39m[33m;[39m
+admin:dev:  [90m 5 |[39m [36mimport[39m { [33mToaster[39m } [36mfrom[39m [32m"react-hot-toast"[39m[33m;[39m
+admin:dev:  [90m 6 |[39m [36mimport[39m { inter[33m,[39m poppins } [36mfrom[39m [32m'./fonts'[39m[33m;[39m[0m
+admin:dev: 
+admin:dev: 
+admin:dev: 
+admin:dev: https://nextjs.org/docs/messages/module-not-found
+admin:dev: 
+admin:dev: 

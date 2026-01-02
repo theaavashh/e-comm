@@ -11,15 +11,12 @@ export const corsOptions = {
     // Get allowed origins from environment variable
     const corsOrigins = env.CORS_ORIGIN.split(',').map(o => o.trim());
     
-    // Also add common localhost and server IPs
+    // Also add common localhost IPs
     const allowedOrigins = [
       ...corsOrigins,
       'http://localhost:4000',
       'http://localhost:4001',
       'http://localhost:4444',
-      'http://31.97.189.150:4000',
-      'http://31.97.189.150:4001',
-      'http://31.97.189.150:4444',
     ];
     
     // Allow requests with no origin (mobile apps, Postman, etc.)

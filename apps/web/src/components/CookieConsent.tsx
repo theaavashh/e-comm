@@ -48,51 +48,168 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-0 left-0 right-0 z-[10002] p-4 md:p-6 pointer-events-none"
+          style={{ 
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: '100%',
+            maxWidth: '100vw',
+            paddingLeft: 'env(safe-area-inset-left)',
+            paddingRight: 'env(safe-area-inset-right)',
+            overflow: 'hidden',
+            boxSizing: 'border-box'
+          }}
+          className="z-[10002] px-2 pb-2 pointer-events-none"
         >
-          <div className="max-w-6xl mx-auto pointer-events-auto">
-            <div className="bg-[#F0F2F5] rounded-2xl shadow-2xl border-2 border-gray-200 p-6 md:p-8">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+          <div style={{ 
+            width: '100%', 
+            maxWidth: '100%', 
+            overflow: 'hidden',
+            boxSizing: 'border-box'
+          }} className="pointer-events-auto">
+            <div style={{ 
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              border: '1px solid #e5e7eb',
+              padding: '0.5rem',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              width: '100%',
+              maxWidth: '100%'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '0.5rem',
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                boxSizing: 'border-box'
+              }}>
                 {/* Cookie Icon and Content */}
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="bg-[#0077b6]/10 rounded-full p-3 flex-shrink-0">
-                    <Cookie className="w-6 h-6 md:w-8 md:h-8 text-[#0077b6]" />
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: '0.375rem',
+                  width: '100%',
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ 
+                    backgroundColor: 'rgba(235, 100, 38, 0.1)',
+                    borderRadius: '9999px',
+                    padding: '0.25rem',
+                    flexShrink: 0,
+                    marginTop: '0.125rem'
+                  }}>
+                    <Cookie style={{ width: '0.875rem', height: '0.875rem', color: '#EB6426' }} />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg md:text-xl font-bold text-gray-900 custom-font mb-2">
-                      We Use Cookies
+                  <div style={{ 
+                    flex: 1, 
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    boxSizing: 'border-box'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '0.75rem', 
+                      fontWeight: '700', 
+                      color: '#111827', 
+                      marginBottom: '0.125rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      We Value Your Privacy
                     </h3>
-                    <p className="text-sm md:text-base text-gray-600 leading-relaxed custom-font">
-                      We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic. 
-                      By clicking "Accept All", you consent to our use of cookies.{' '}
-                      <Link href="#" className="text-[#0077b6] hover:underline font-medium">
+                    <p style={{ 
+                      fontSize: '0.625rem', 
+                      color: '#4b5563', 
+                      lineHeight: '1.25',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      We use cookies to enhance your experience.{' '}
+                      <Link href="/privacy-policy" style={{ 
+                        color: '#EB6426', 
+                        textDecoration: 'underline',
+                        fontSize: '0.625rem'
+                      }}>
                         Learn more
                       </Link>
                     </p>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <button
-                    onClick={handleDecline}
-                    className="px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors custom-font"
-                  >
-                    Decline
-                  </button>
-                  <button
-                    onClick={handleAccept}
-                    className="px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium text-white bg-[#0077b6] rounded-lg hover:bg-[#005f8f] transition-colors custom-font"
-                  >
-                    Accept All
-                  </button>
                   <button
                     onClick={handleClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-2"
+                    style={{ 
+                      color: '#9ca3af',
+                      padding: '0.125rem',
+                      flexShrink: 0
+                    }}
                     aria-label="Close"
                   >
-                    <X className="w-5 h-5" />
+                    <X style={{ width: '0.75rem', height: '0.75rem' }} />
                   </button>
+                </div>
+
+                {/* Action Buttons - Stacked vertically on mobile */}
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '0.25rem', 
+                  width: '100%',
+                  maxWidth: '100%',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '0.25rem', 
+                    width: '100%',
+                    maxWidth: '100%',
+                    overflow: 'hidden'
+                  }}>
+                    <button
+                      onClick={handleDecline}
+                      style={{
+                        flex: 1,
+                        padding: '0.25rem 0.375rem',
+                        fontSize: '0.625rem',
+                        fontWeight: '500',
+                        color: '#374151',
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: '0.25rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={handleAccept}
+                      style={{
+                        flex: 1,
+                        padding: '0.25rem 0.375rem',
+                        fontSize: '0.625rem',
+                        fontWeight: '500',
+                        color: 'white',
+                        backgroundColor: '#EB6426',
+                        borderRadius: '0.25rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Accept All
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -102,4 +219,3 @@ export default function CookieConsent() {
     </AnimatePresence>
   );
 }
-

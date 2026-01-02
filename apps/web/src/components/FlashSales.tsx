@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, ShoppingCart, Heart, Eye, Plus, Minus, TrendingDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/contexts/CartContext';
 
 interface Product {
   id: string;
@@ -41,17 +42,6 @@ interface Product {
   }>;
 }
 
-interface CartItem {
-  id: string;
-  product: Product;
-  quantity: number;
-  variant?: {
-    id: string;
-    name: string;
-    value: string;
-  };
-}
-
 interface FlashSalesProps {
   className?: string;
 }
@@ -61,10 +51,12 @@ const FlashSales: React.FC<FlashSalesProps> = ({ className = '' }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  
+  // Use global cart context
+  const { cartItems: cart, addToCart: addToGlobalCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -92,17 +84,13 @@ const FlashSales: React.FC<FlashSalesProps> = ({ className = '' }) => {
   }, []);
 
   const addToCart = (product: Product, quantity: number = 1) => {
-    const existingItem = cart.find(item => item.product.id === product.id);
-    
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.product.id === product.id 
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
-    } else {
-      setCart([...cart, { id: Date.now().toString(), product, quantity }]);
-    }
+    // Add to global cart context
+    addToGlobalCart({
+      id: product.id,
+      name: product.name,
+      price: product.salePrice || product.price,
+      image: product.images?.[0] || product.image || ''
+    }, quantity);
     
     // Reset quantity for this product
     setQuantities({ ...quantities, [product.id]: 1 });
@@ -352,7 +340,7 @@ const FlashSales: React.FC<FlashSalesProps> = ({ className = '' }) => {
                   {cart.reduce((sum, item) => sum + item.quantity, 0)} items
                 </p>
                 <p className="text-xs text-gray-600">
-                  {formatPrice(cart.reduce((sum, item) => sum + ((item.product.salePrice || item.product.price) * item.quantity), 0))}
+                  {formatPrice(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0))}
                 </p>
               </div>
               <button className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors">

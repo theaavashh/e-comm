@@ -20,9 +20,10 @@ import Dress from './Dress';
 import Slider from './Slider';
 import CategoryShowcase from './CategoryShowcase';
 import OngoingSales from './OngoingSales';
-import AboutUs from './AboutUs';
-import Testimonials from './Testimonials';
 import SignupModal from './SignupModal';
+import Statues from './Statues';
+import AfterForYouBanner from './AfterForYouBanner';
+import DiamondJewelleryShowcase from './DiamondJewelleryShowcase';
 
 export default function Homepage() {
   // Helper function to format price safely
@@ -366,7 +367,7 @@ export default function Homepage() {
 
 
   return (
-    <div className="min-h-screen bg-[#f9f6f6]">
+    <div className="min-h-screen ">
      
 
     
@@ -375,7 +376,7 @@ export default function Homepage() {
 
       {/* Hero Section - Column Layout */}
             <div>
-        <div className="w-full">
+        <div className="w-[95vw] mx-auto">
           {/* Top Section - Slider */}
           <div className="h-48 sm:h-64 md:h-80 lg:h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden mx-2 sm:mx-4 md:mx-6 my-4 md:my-6 rounded-lg">
             <Slider />
@@ -388,113 +389,19 @@ export default function Homepage() {
       {/* Ongoing Sales Section */}
       <OngoingSales />
 
-      {/* Bento Grid Promotional Section */}
-      <div className="bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          
-          
-          {specialOffersMedia.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {specialOffersMedia.map((media, index) => {
-                // For special offers, only link to special offers page, not categories
-                const isCategoryLink = media.internalLink?.startsWith('/products/');
-                const linkHref = isCategoryLink ? '/special-offers' : (media.internalLink || '/special-offers');
-                
-                return (
-                <Link 
-                  key={media.id} 
-                  href={linkHref}
-                  className={`
-                    relative group cursor-pointer overflow-hidden rounded-lg
-                    ${index === 0 ? 'md:col-span-2 md:row-span-2' : ''}
-                    ${index === 1 ? 'md:col-span-2' : ''}
-                  `}
-                >
-                  <img 
-                    src={media.mediaUrl} 
-                    alt="Special Offer"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 max-h-[400px]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                <div>
-                      <button className="px-4 py-2 bg-[#F0F2F5] text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors custom-font">
-                    Shop Now
-                    </button>
-                  </div>
-                </div>
-                </Link>
-                );
-              })}
-              </div>
-          ) : (
-            <div className="text-center text-gray-500 py-12">
-              No special offers available at the moment.
-                  </div>
-          )}
-              </div>
-            </div>
+     
             
 
         {/* Category Section - Dynamic from API */}
       <CategorySection />
       <CarouselCategory />
       {/* For You Section */}
+
+     
       <ForYou />
+     
 
-      {/* Features Section */}
-      <div className="bg-[#F0F2F5] py-12 mt-8 md:mt-0">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Free Delivery Worldwide Feature */}
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-4 flex-shrink-0">
-                <Truck className="w-12 h-12 text-black" strokeWidth={2.5} />
-          </div>
-              <div>
-                <h3 className="text-lg font-bold text-black custom-font uppercase">FREE DELIVERY</h3>
-                <p className="text-sm text-gray-600 uppercase">WORLDWIDE</p>
-              </div>
-            </div>
-
-            {/* International Payment Feature */}
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-4 flex-shrink-0 relative overflow-visible">
-                <Globe className="w-12 h-12 text-black" strokeWidth={2.5} />
-                <div className="absolute -bottom-1 -right-1 rounded-full p-1 border-2 border-black bg-[#F0F2F5]">
-                  <CreditCard className="w-4 h-4 text-black" strokeWidth={3} />
-                </div>
-                  </div>
-              <div>
-                <h3 className="text-lg font-bold text-black custom-font uppercase">INTERNATIONAL</h3>
-                <p className="text-sm text-gray-600 uppercase">PAYMENT</p>
-              </div>
-            </div>
-
-            {/* Coupons Feature */}
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-4 flex-shrink-0">
-                <svg className="w-12 h-12 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
-                  </div>
-              <div>
-                <h3 className="text-lg font-bold text-black custom-font uppercase">COUPONS</h3>
-                </div>
-                  </div>
-
-            {/* 24/7 Support Feature */}
-            <div className="flex items-center space-x-4">
-              <div className="rounded-full p-4 flex-shrink-0">
-                <Headphones className="w-12 h-12 text-black" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-black custom-font uppercase">24/7</h3>
-                <p className="text-sm text-gray-600 uppercase">SUPPORT</p>
-              </div>
-            </div>
-                    </div>
-              </div>
-            </div>
+   
       
       {/* Category Showcase Section */}
       <CategoryShowcase />
@@ -503,7 +410,7 @@ export default function Homepage() {
 
       {/* Promotional Banner Section */}
       {promotionalBanners.length > 0 ? (
-        <div className="bg-white py-8 md:py-12">
+        <div className="bg-white bg-red-300">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {promotionalBanners.slice(0, 1).map((banner) => (
               <Link 
@@ -545,7 +452,7 @@ export default function Homepage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white py-8 md:py-12">
+        <div className="bg-white pb-5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Link href="/special-offers" className="block group">
               <div className="relative w-full h-48 md:h-64 lg:h-80 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-r from-blue-600 to-purple-600">
@@ -570,74 +477,67 @@ export default function Homepage() {
       
       <Dress />
 
-      {/* Brands Section */}
-      <BrandSection />
+      <Statues/>
 
+      <DiamondJewelleryShowcase />
+
+      
       {/* Bento Grid Section */}
-      <div className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-6">
+      <div className="py-2 pt-5">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Large Featured Image - Spans 2 columns and 2 rows */}
-            <div className="md:col-span-2 md:row-span-2 rounded-2xl overflow-hidden bg-white shadow-lg relative group min-h-[400px] md:min-h-[500px]">
+            <div className="md:col-span-2 md:row-span-2 rounded-md  overflow-hidden  relative group min-h-[400px] md:min-h-[800px]">
               <Image
-                src="/Simple_Ingredients_D_12fbce96-a3b5-4ba9-b044-de6c3c5a561f.webp"
-                alt="Simple Ingredients"
+                src="/grid1.jpeg"
+                alt="Featured Collection"
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-contain  transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">Premium Ingredients</h3>
-                <p className="text-sm md:text-base opacity-90">Discover authentic flavors</p>
-                  </div>
-                </div>
-                
+             
+             
+            </div>
+            
             {/* Small Card 1 */}
-            <div className="rounded-2xl bg-gradient-to-br from-green-50 to-green-100 p-6 shadow-lg flex flex-col justify-center items-center relative overflow-hidden group hover:shadow-xl transition-shadow min-h-[200px]">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Home Decor</h4>
-              <p className="text-sm text-gray-700 text-center">Transform your space</p>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-green-200 rounded-full opacity-20 transform translate-x-6 translate-y-6"></div>
-              </div>
+            <div className="rounded-md overflow-hidden relative group min-h-[600px]">
+              <Image
+                src="/grid2.jpeg"
+                alt="New Arrivals"
+                fill
+                className="object-contain transition-transform duration-300"
+              />
+             
               
+            </div>
+            
             {/* Small Card 2 */}
-            <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-6 shadow-lg flex flex-col justify-center items-center relative overflow-hidden group hover:shadow-xl transition-shadow min-h-[200px]">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                    </svg>
-                  </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Quality Products</h4>
-              <p className="text-sm text-gray-700 text-center">Trusted by millions</p>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-blue-200 rounded-full opacity-20 transform translate-x-6 translate-y-6"></div>
-          </div>
+            <div className="rounded-md overflow-hidden shadow-lg relative group min-h-[200px]">
+              <Image
+                src="/grid3.jpeg"
+                alt="Special Offers"
+                fill
+                className="object-contain transition-transform duration-300"
+              />
+              
+              
+            </div>
 
             {/* Medium Card - Spans 2 columns */}
-            <div className="md:col-span-2 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 p-8 shadow-lg relative overflow-hidden group hover:shadow-xl transition-shadow min-h-[200px]">
-              <div className="relative z-10">
-                <div className="text-amber-600 text-sm font-medium mb-2">Limited Time</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Flash Sale!</h3>
-                <p className="text-gray-700 text-lg mb-6">Get 25% off - Limited Time Offer!</p>
-                <button className="bg-amber-600 hover:bg-amber-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
-                  Shop Now
-                </button>
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200 rounded-full opacity-20 transform translate-x-8 -translate-y-8"></div>
+            <div className="md:col-span-2 rounded-md overflow-hidden shadow-lg relative group min-h-[400px]">
+              <Image
+                src="/banner.jpg"
+                alt="Seasonal Collection"
+                fill
+                className="object-cover transition-transform duration-300"
+              />
+            
+               
+            
             </div>
-                    </div>
-                  </div>
-                </div>
-
-      {/* About Us Section */}
-      <AboutUs />
-      
-      {/* Testimonials Section */}
-      <Testimonials />
+          </div>
+        </div>
+      </div>
 
       {/* Signup Discount Modal */}
       <SignupModal />

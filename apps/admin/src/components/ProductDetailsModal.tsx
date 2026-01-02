@@ -28,8 +28,9 @@ import {
   Image as ImageIcon,
   FileText,
   Search,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
+import DeleteAlert from "./DeleteAlert";
 
 interface Product {
   id: string;
@@ -80,7 +81,11 @@ interface ProductDetailsModalProps {
   onClose: () => void;
   product: Product | null;
   onEdit?: (product: Product) => void;
-  onDelete?: (productId: string) => void;
+  onDelete?: (
+    productId: string,
+    productName?: string,
+    productImage?: string,
+  ) => void;
 }
 
 export default function ProductDetailsModal({
@@ -88,42 +93,61 @@ export default function ProductDetailsModal({
   onClose,
   product,
   onEdit,
-  onDelete
+  onDelete,
 }: ProductDetailsModalProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+
+  const handleDeleteClick = () => {
+    if (onDelete && product) {
+      onDelete(
+        product.id,
+        product.name,
+        product.images && product.images.length > 0
+          ? product.images[0]
+          : undefined,
+      );
+    }
+  };
 
   if (!product) return null;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive 
-      ? 'bg-green-100 text-green-800 border-green-200' 
-      : 'bg-red-100 text-red-800 border-red-200';
+    return isActive
+      ? "bg-green-100 text-green-800 border-green-200"
+      : "bg-red-100 text-red-800 border-red-200";
   };
 
   const getStatusIcon = (isActive: boolean) => {
-    return isActive ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />;
+    return isActive ? (
+      <CheckCircle className="w-4 h-4" />
+    ) : (
+      <AlertCircle className="w-4 h-4" />
+    );
   };
 
-  const categoryName = typeof product.category === 'string' 
-    ? product.category 
-    : (product.category as any)?.name || 'Uncategorized';
+  const categoryName =
+    typeof product.category === "string"
+      ? product.category
+      : (product.category as any)?.name || "Uncategorized";
 
   return (
     <AnimatePresence>
@@ -136,8 +160,11 @@ export default function ProductDetailsModal({
           transition={{ duration: 0.2 }}
         >
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-          
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50"
+            onClick={onClose}
+          />
+
           {/* Modal */}
           <div className="relative min-h-screen flex items-center justify-center p-4">
             <motion.div
@@ -154,11 +181,15 @@ export default function ProductDetailsModal({
                     <Package className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{product.name}</h2>
-                    <p className="text-sm text-gray-500">SKU: {product.sku || 'N/A'}</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {product.name}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      SKU: {product.sku || "N/A"}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   {/* Action Buttons */}
                   {onEdit && (
@@ -170,17 +201,17 @@ export default function ProductDetailsModal({
                       Edit
                     </button>
                   )}
-                  
+
                   {onDelete && (
                     <button
-                      onClick={() => onDelete(product.id)}
+                      onClick={handleDeleteClick}
                       className="flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete
                     </button>
                   )}
-                  
+
                   <button
                     onClick={onClose}
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -201,7 +232,7 @@ export default function ProductDetailsModal({
                         <ImageIcon className="w-5 h-5 mr-2" />
                         Product Images
                       </h3>
-                      
+
                       {product.images && product.images.length > 0 ? (
                         <div className="space-y-4">
                           {/* Main Image */}
@@ -213,7 +244,7 @@ export default function ProductDetailsModal({
                               className="object-cover"
                             />
                           </div>
-                          
+
                           {/* Thumbnail Images */}
                           {product.images.length > 1 && (
                             <div className="grid grid-cols-4 gap-2">
@@ -223,8 +254,8 @@ export default function ProductDetailsModal({
                                   onClick={() => setActiveImageIndex(index)}
                                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
                                     index === activeImageIndex
-                                      ? 'border-purple-500'
-                                      : 'border-gray-200 hover:border-gray-300'
+                                      ? "border-purple-500"
+                                      : "border-gray-200 hover:border-gray-300"
                                   }`}
                                 >
                                   <Image
@@ -254,36 +285,58 @@ export default function ProductDetailsModal({
                         <FileText className="w-5 h-5 mr-2" />
                         Basic Information
                       </h3>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Status</span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(product.isActive)}`}>
+                          <span className="text-sm font-medium text-gray-600">
+                            Status
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(product.isActive)}`}
+                          >
                             {getStatusIcon(product.isActive)}
-                            <span className="ml-1">{product.isActive ? 'Active' : 'Inactive'}</span>
+                            <span className="ml-1">
+                              {product.isActive ? "Active" : "Inactive"}
+                            </span>
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Category</span>
-                          <span className="text-sm text-gray-900">{categoryName}</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Category
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {categoryName}
+                          </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Stock</span>
-                          <span className="text-sm text-gray-900">{product.stock || 0} units</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Stock
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {product.stock || 0} units
+                          </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Weight</span>
-                          <span className="text-sm text-gray-900">{product.weight || 0} lbs</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Weight
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {product.weight || 0} lbs
+                          </span>
                         </div>
-                        
+
                         {product.dimensions && (
                           <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Dimensions</span>
+                            <span className="text-sm font-medium text-gray-600">
+                              Dimensions
+                            </span>
                             <span className="text-sm text-gray-900">
-                              {product.dimensions.length}" × {product.dimensions.width}" × {product.dimensions.height}"
+                              {product.dimensions.length}" ×{" "}
+                              {product.dimensions.width}" ×{" "}
+                              {product.dimensions.height}"
                             </span>
                           </div>
                         )}
@@ -299,28 +352,35 @@ export default function ProductDetailsModal({
                         <DollarSign className="w-5 h-5 mr-2" />
                         Pricing
                       </h3>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Price</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Price
+                          </span>
                           <span className="text-lg font-semibold text-gray-900">
                             {formatCurrency(Number(product.price) || 0)}
                           </span>
                         </div>
-                        
-                        {product.comparePrice && Number(product.comparePrice) > 0 && (
-                          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Compare Price</span>
-                            <span className="text-sm text-gray-500 line-through">
-                              {formatCurrency(Number(product.comparePrice))}
-                            </span>
-                          </div>
-                        )}
-                        
+
+                        {product.comparePrice &&
+                          Number(product.comparePrice) > 0 && (
+                            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                              <span className="text-sm font-medium text-gray-600">
+                                Compare Price
+                              </span>
+                              <span className="text-sm text-gray-500 line-through">
+                                {formatCurrency(Number(product.comparePrice))}
+                              </span>
+                            </div>
+                          )}
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Taxable</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Taxable
+                          </span>
                           <span className="text-sm text-gray-900">
-                            {product.taxable ? 'Yes' : 'No'}
+                            {product.taxable ? "Yes" : "No"}
                           </span>
                         </div>
                       </div>
@@ -332,32 +392,56 @@ export default function ProductDetailsModal({
                         <Zap className="w-5 h-5 mr-2" />
                         Features
                       </h3>
-                      
+
                       <div className="grid grid-cols-2 gap-3">
-                        <div className={`flex items-center p-3 rounded-lg ${product.isFeatured ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50 border border-gray-200'}`}>
-                          <Award className={`w-4 h-4 mr-2 ${product.isFeatured ? 'text-yellow-600' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-medium ${product.isFeatured ? 'text-yellow-800' : 'text-gray-600'}`}>
+                        <div
+                          className={`flex items-center p-3 rounded-lg ${product.isFeatured ? "bg-yellow-50 border border-yellow-200" : "bg-gray-50 border border-gray-200"}`}
+                        >
+                          <Award
+                            className={`w-4 h-4 mr-2 ${product.isFeatured ? "text-yellow-600" : "text-gray-400"}`}
+                          />
+                          <span
+                            className={`text-sm font-medium ${product.isFeatured ? "text-yellow-800" : "text-gray-600"}`}
+                          >
                             Featured
                           </span>
                         </div>
-                        
-                        <div className={`flex items-center p-3 rounded-lg ${product.isDigital ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200'}`}>
-                          <Globe className={`w-4 h-4 mr-2 ${product.isDigital ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-medium ${product.isDigital ? 'text-blue-800' : 'text-gray-600'}`}>
+
+                        <div
+                          className={`flex items-center p-3 rounded-lg ${product.isDigital ? "bg-blue-50 border border-blue-200" : "bg-gray-50 border border-gray-200"}`}
+                        >
+                          <Globe
+                            className={`w-4 h-4 mr-2 ${product.isDigital ? "text-blue-600" : "text-gray-400"}`}
+                          />
+                          <span
+                            className={`text-sm font-medium ${product.isDigital ? "text-blue-800" : "text-gray-600"}`}
+                          >
                             Digital
                           </span>
                         </div>
-                        
-                        <div className={`flex items-center p-3 rounded-lg ${product.isNew ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
-                          <Star className={`w-4 h-4 mr-2 ${product.isNew ? 'text-green-600' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-medium ${product.isNew ? 'text-green-800' : 'text-gray-600'}`}>
+
+                        <div
+                          className={`flex items-center p-3 rounded-lg ${product.isNew ? "bg-green-50 border border-green-200" : "bg-gray-50 border border-gray-200"}`}
+                        >
+                          <Star
+                            className={`w-4 h-4 mr-2 ${product.isNew ? "text-green-600" : "text-gray-400"}`}
+                          />
+                          <span
+                            className={`text-sm font-medium ${product.isNew ? "text-green-800" : "text-gray-600"}`}
+                          >
                             New
                           </span>
                         </div>
-                        
-                        <div className={`flex items-center p-3 rounded-lg ${product.isOnSale ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'}`}>
-                          <TrendingUp className={`w-4 h-4 mr-2 ${product.isOnSale ? 'text-red-600' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-medium ${product.isOnSale ? 'text-red-800' : 'text-gray-600'}`}>
+
+                        <div
+                          className={`flex items-center p-3 rounded-lg ${product.isOnSale ? "bg-red-50 border border-red-200" : "bg-gray-50 border border-gray-200"}`}
+                        >
+                          <TrendingUp
+                            className={`w-4 h-4 mr-2 ${product.isOnSale ? "text-red-600" : "text-gray-400"}`}
+                          />
+                          <span
+                            className={`text-sm font-medium ${product.isOnSale ? "text-red-800" : "text-gray-600"}`}
+                          >
                             On Sale
                           </span>
                         </div>
@@ -370,26 +454,32 @@ export default function ProductDetailsModal({
                         <Truck className="w-5 h-5 mr-2" />
                         Shipping & Logistics
                       </h3>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Requires Shipping</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Requires Shipping
+                          </span>
                           <span className="text-sm text-gray-900">
-                            {product.requiresShipping ? 'Yes' : 'No'}
+                            {product.requiresShipping ? "Yes" : "No"}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Free Shipping</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Free Shipping
+                          </span>
                           <span className="text-sm text-gray-900">
-                            {product.freeShipping ? 'Yes' : 'No'}
+                            {product.freeShipping ? "Yes" : "No"}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Visibility</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Visibility
+                          </span>
                           <span className="text-sm text-gray-900">
-                            {product.visibility || 'Visible'}
+                            {product.visibility || "Visible"}
                           </span>
                         </div>
                       </div>
@@ -402,33 +492,46 @@ export default function ProductDetailsModal({
                           <Search className="w-5 h-5 mr-2" />
                           SEO Information
                         </h3>
-                        
+
                         <div className="space-y-3">
                           <div>
-                            <span className="text-sm font-medium text-gray-600 block mb-1">SEO Title</span>
-                            <p className="text-sm text-gray-900">{product.seo.title || 'Not set'}</p>
+                            <span className="text-sm font-medium text-gray-600 block mb-1">
+                              SEO Title
+                            </span>
+                            <p className="text-sm text-gray-900">
+                              {product.seo.title || "Not set"}
+                            </p>
                           </div>
-                          
+
                           <div>
-                            <span className="text-sm font-medium text-gray-600 block mb-1">SEO Description</span>
-                            <p className="text-sm text-gray-900">{product.seo.description || 'Not set'}</p>
+                            <span className="text-sm font-medium text-gray-600 block mb-1">
+                              SEO Description
+                            </span>
+                            <p className="text-sm text-gray-900">
+                              {product.seo.description || "Not set"}
+                            </p>
                           </div>
-                          
-                          {product.seo.keywords && product.seo.keywords.length > 0 && (
-                            <div>
-                              <span className="text-sm font-medium text-gray-600 block mb-1">Keywords</span>
-                              <div className="flex flex-wrap gap-1">
-                                {product.seo.keywords.map((keyword, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                  >
-                                    {keyword}
-                                  </span>
-                                ))}
+
+                          {product.seo.keywords &&
+                            product.seo.keywords.length > 0 && (
+                              <div>
+                                <span className="text-sm font-medium text-gray-600 block mb-1">
+                                  Keywords
+                                </span>
+                                <div className="flex flex-wrap gap-1">
+                                  {product.seo.keywords.map(
+                                    (keyword, index) => (
+                                      <span
+                                        key={index}
+                                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                      >
+                                        {keyword}
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
                       </div>
                     )}
@@ -439,16 +542,24 @@ export default function ProductDetailsModal({
                         <Clock className="w-5 h-5 mr-2" />
                         Timestamps
                       </h3>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Created</span>
-                          <span className="text-sm text-gray-900">{formatDate(product.createdAt)}</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Created
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {formatDate(product.createdAt)}
+                          </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                          <span className="text-sm font-medium text-gray-600">Last Updated</span>
-                          <span className="text-sm text-gray-900">{formatDate(product.updatedAt)}</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            Last Updated
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {formatDate(product.updatedAt)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -462,22 +573,30 @@ export default function ProductDetailsModal({
                       <FileText className="w-5 h-5 mr-2" />
                       Description
                     </h3>
-                    
+
                     <div className="space-y-4">
                       {product.shortDescription && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-600 mb-2">Short Description</h4>
+                          <h4 className="text-sm font-medium text-gray-600 mb-2">
+                            Short Description
+                          </h4>
                           <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
                             {product.shortDescription}
                           </p>
                         </div>
                       )}
-                      
+
                       {product.description && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-600 mb-2">Full Description</h4>
+                          <h4 className="text-sm font-medium text-gray-600 mb-2">
+                            Full Description
+                          </h4>
                           <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg prose prose-sm max-w-none">
-                            <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: product.description,
+                              }}
+                            />
                           </div>
                         </div>
                       )}

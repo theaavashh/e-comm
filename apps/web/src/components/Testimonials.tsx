@@ -56,15 +56,15 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="bg-gradient-to-br from-gray-50 to-white py-16 md:py-20">
+    <section className="py-16 md:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 custom-font mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 font-inter mb-4">
             What Our Customers Say
           </h2>
-          <div className="w-24 h-1 bg-[#0077b6] mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <div className="w-24 h-1 bg-[#EB6426] mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto font-inter">
             Discover why thousands of customers trust GharSamma for authentic Nepali products
           </p>
         </div>
@@ -78,18 +78,18 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-[#F0F2F5] rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-100"
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-100"
             >
               {/* Customer Info */}
               <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#0077b6] to-[#005f8f] rounded-full flex items-center justify-center text-2xl mr-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#EB6426] to-[#d65a1f] rounded-full flex items-center justify-center text-2xl mr-4">
                   {testimonial.image}
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 custom-font">
+                  <h4 className="text-lg font-semibold text-gray-900 font-inter">
                     {testimonial.name}
                   </h4>
-                  <p className="text-sm text-gray-600">{testimonial.location}</p>
+                  <p className="text-sm text-gray-600 font-inter">{testimonial.location}</p>
                 </div>
               </div>
 
@@ -108,7 +108,7 @@ export default function Testimonials() {
               </div>
 
               {/* Comment */}
-              <p className="text-gray-700 leading-relaxed italic">
+              <p className="text-gray-700 leading-relaxed italic font-inter">
                 "{testimonial.comment}"
               </p>
             </motion.div>
@@ -124,32 +124,31 @@ export default function Testimonials() {
           className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8"
         >
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-[#0077b6] custom-font mb-2">
+            <div className="text-4xl md:text-5xl font-bold text-[#EB6426] font-inter mb-2">
               10K+
             </div>
-            <div className="text-gray-600 text-sm md:text-base">Happy Customers</div>
+            <div className="text-gray-600 text-sm md:text-base font-inter">Happy Customers</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-[#0077b6] custom-font mb-2">
+            <div className="text-4xl md:text-5xl font-bold text-[#EB6426] font-inter mb-2">
               5K+
             </div>
-            <div className="text-gray-600 text-sm md:text-base">Products Sold</div>
+            <div className="text-gray-600 text-sm md:text-base font-inter">Products Sold</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-[#0077b6] custom-font mb-2">
+            <div className="text-4xl md:text-5xl font-bold text-[#EB6426] font-inter mb-2">
               4.9★
             </div>
-            <div className="text-gray-600 text-sm md:text-base">Average Rating</div>
+            <div className="text-gray-600 text-sm md:text-base font-inter">Average Rating</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-[#0077b6] custom-font mb-2">
+            <div className="text-4xl md:text-5xl font-bold text-[#EB6426] font-inter mb-2">
               50+
             </div>
-            <div className="text-gray-600 text-sm md:text-base">Countries Served</div>
+            <div className="text-gray-600 text-sm md:text-base font-inter">Countries Served</div>
           </div>
         </motion.div>
       </div>
     </section>
   );
 }
-

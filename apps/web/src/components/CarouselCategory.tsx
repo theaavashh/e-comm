@@ -124,7 +124,7 @@ export default function CarouselCategory() {
 
   if (loading) {
     return (
-      <div className="py-16">
+      <div className="py-5">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header Skeleton */}
           <div className="mb-12 mx-20 mt-10">
@@ -165,14 +165,14 @@ export default function CarouselCategory() {
   }
 
   return (
-    <div className="py-10 bg-[#F0F2F5]">
+    <div className="py-3 ">
       <div className="max-w-8xl mx-auto px-6">
       
         
         {/* All Media Items Row */}
         <div 
           ref={scrollContainerRef}
-          className="w-full h-[500px] md:h-[600px] lg:h-[800px] overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
+          className="w-full h-[500px] md:h-[500px] lg:h-[500px] overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
           style={{
             scrollBehavior: 'smooth',
             scrollbarWidth: 'none',

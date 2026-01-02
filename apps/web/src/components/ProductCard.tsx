@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCart } from '@/contexts/CartContext';
 
 interface Product {
   id: number | string;
@@ -43,6 +44,9 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Use global cart context
+  const { addToCart: addToGlobalCart } = useCart();
 
   const handleWishlistToggle = () => {
     setIsWishlisted(!isWishlisted);
@@ -50,6 +54,15 @@ export default function ProductCard({
   };
 
   const handleAddToCart = () => {
+    // Add to global cart context
+    addToGlobalCart({
+      id: String(product.id),
+      name: product.name,
+      price: product.price,
+      image: product.image
+    }, 1);
+    
+    // Call the original onAddToCart callback if provided
     onAddToCart?.(product);
   };
 
@@ -70,8 +83,8 @@ export default function ProductCard({
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Image Section */}
-        <div className="relative w-48 h-56 flex-shrink-0">
-          <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur text-white text-xs px-2 py-1 rounded-full shadow">
+        <div className="relative w-56 h-56 flex-shrink-0">
+          <div className="absolute top-2 left-2 bg-[#EB6426] backdrop-blur text-white text-xs px-2 py-1 rounded-full shadow">
             {product.discount}% OFF
           </div>
           <button
@@ -83,7 +96,7 @@ export default function ProductCard({
             <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
           </button>
           <Link href={`/product/${product.id}`}>
-            <div className="w-full h-full bg-gray-50 rounded-l-2xl flex items-center justify-center cursor-pointer group overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center cursor-pointer group overflow-hidden">
               <img
                 src={product.image}
                 alt={product.name}
@@ -96,21 +109,33 @@ export default function ProductCard({
         {/* Content Section */}
         <div className="flex-1 p-5">
           <div className="space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <Link href={`/product/${product.id}`}>
-                  <h3 className="font-semibold text-gray-900 text-base leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors cursor-pointer">
-                    {product.name}
-                  </h3>
-                </Link>
-              </div>
-            </div>
+          
             
-            <div className="flex items-center space-x-2">
-              <span className="text-green-600 font-semibold text-xl">${product.price.toLocaleString()}</span>
+            <div className="flex items-center space-x-2 mt-3">
+              <span className="text-[#EB6426] font-extrabold text-xl">${product.price.toLocaleString()}</span>
               {product.comparePrice && product.comparePrice > product.price && (
                 <span className="text-gray-400 line-through text-sm">${product.comparePrice.toLocaleString()}</span>
               )}
+            </div>
+
+
+              <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <Link href={`/product/${product.id}`}>
+                  <h3 className="font-semibold text-black text-lg leading-snug line-clamp-2  transition-colors cursor-pointer">
+                    {product.name}
+                  </h3>
+                </Link>
+                
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!product.inStock}
+                  className="bg-[#EB6426] disabled:bg-gray-400 text-white px-5 py-3 rounded-full text-md font-medium transition-colors flex items-center justify-center mt-2"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-1" />
+                  <span>Add to Cart</span>
+                </button>
+              </div>
             </div>
             
             <div className="flex items-center space-x-1">
@@ -127,38 +152,7 @@ export default function ProductCard({
             
             <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
             
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleQuickView}
-                  className="p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Quick View"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!product.inStock}
-                  className="bg-gray-900 hover:bg-black disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  <span>Add to Cart</span>
-                </button>
-              </div>
-              <div className="flex items-center space-x-1">
-                {product.inStock ? (
-                  <>
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-green-600 text-xs">In Stock</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span className="text-red-600 text-xs">Out of Stock</span>
-                  </>
-                )}
-              </div>
-            </div>
+           
           </div>
         </div>
       </motion.div>
@@ -177,8 +171,8 @@ export default function ProductCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Section */}
-      <div className="relative w-full h-56 flex-shrink-0">
-        <div className="absolute top-2 left-2 bg-green-600/90 backdrop-blur text-white text-xs px-2 py-1 rounded-full shadow">
+      <div className="relative w-full h-64 flex-shrink-0">
+        <div className="absolute top-2 left-2 bg-[#EB6426] backdrop-blur text-white text-xs px-2 py-1 rounded-full shadow">
           {product.discount}% OFF
         </div>
         <button
@@ -199,22 +193,38 @@ export default function ProductCard({
           </div>
         </Link>
       </div>
+
+
+       
       
       {/* Content Section */}
       <div className="p-5 flex-1 flex flex-col">
         <div className="space-y-2 flex-1">
+
+           <div className="flex items-center space-x-2 mt-3 font-extrabold" >
+            <span className="text-[#EB6426]  text-xl">$ {product.price.toLocaleString()}</span>
+            {product.comparePrice && product.comparePrice > product.price && (
+              <span className="text-black line-through text-md font-medium">$ {product.comparePrice.toLocaleString()}</span>
+            )}
+          </div>
           <Link href={`/product/${product.id}`}>
-            <h3 className="font-semibold text-gray-900 text-base leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors cursor-pointer">
+            <h3 className="font-semibold text-black text-lg leading-snug line-clamp-2 transition-colors cursor-pointer">
               {product.name}
             </h3>
           </Link>
           
-          <div className="flex items-center space-x-2">
-            <span className="text-green-600 font-semibold text-xl">NPR {product.price.toLocaleString()}</span>
-            {product.comparePrice && product.comparePrice > product.price && (
-              <span className="text-gray-400 line-through text-sm">NPR {product.comparePrice.toLocaleString()}</span>
-            )}
-          </div>
+         
+          
+        
+
+           <button
+            onClick={handleAddToCart}
+            disabled={!product.inStock}
+            className="bg-[#EB6426] disabled:bg-gray-400 text-white px-3 py-2 mt-5 rounded-full text-lg font-medium transition-colors flex items-center justify-center w-full mt-2"
+          >
+            <ShoppingCart className="w-4 h-4 mr-1" />
+            <span>Add to Cart</span>
+          </button>
           
           <div className="flex items-center space-x-1">
             <div className="flex text-yellow-400">
@@ -229,24 +239,8 @@ export default function ProductCard({
           </div>
         </div>
         
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-4 mt-auto">
-          <button
-            onClick={handleQuickView}
-            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Quick View"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleAddToCart}
-            disabled={!product.inStock}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>Add to Cart</span>
-          </button>
-        </div>
+      
+
       </div>
     </motion.div>
   );

@@ -43,113 +43,226 @@ interface CartItem {
 
 const Foods = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
-  const [activeFilter, setActiveFilter] = useState<string>('All');
-  const [showAcharModal, setShowAcharModal] = useState(false);
   const router = useRouter();
 
-  // Filter categories
-  const filterCategories = [
-    { id: 'all', name: 'All' },
-    { id: 'achar', name: 'Achar' },
-    { id: 'tea', name: 'Tea' },
-    { id: 'typical-nepali', name: 'Typical Nepali' },
-    { id: 'special-masala', name: 'Special Masala' }
+  // Hardcoded food product data
+  const hardcodedFoodProducts: Product[] = [
+    {
+      id: '1',
+      name: 'Mixed Vegetable Achar',
+      slug: 'mixed-vegetable-achar',
+      description: 'A delicious blend of seasonal vegetables marinated in traditional Nepali spices.',
+      shortDescription: 'Spicy mixed vegetable pickle',
+      price: 4.99,
+      comparePrice: 6.99,
+      sku: 'ACH-001',
+      quantity: 25,
+      image: '/achar-layout.webp',
+      images: ['/achar-layout.webp', '/achar-layout.webp'],
+      category: {
+        id: '1',
+        name: 'Achar',
+        slug: 'achar'
+      },
+      averageRating: 4.5,
+      reviewCount: 12,
+      variants: [],
+      attributes: [],
+      tags: ['achar', 'pickle', 'vegetarian']
+    },
+    {
+      id: '2',
+      name: 'Organic Green Tea',
+      slug: 'organic-green-tea',
+      description: 'Premium organic green tea leaves sourced from the highlands of Nepal.',
+      shortDescription: 'Premium organic green tea',
+      price: 8.99,
+      comparePrice: 12.99,
+      sku: 'TEA-002',
+      quantity: 30,
+      image: '/tea-layout.webp',
+      images: ['/tea-layout.webp', '/tea-layout.webp'],
+      category: {
+        id: '2',
+        name: 'Tea',
+        slug: 'tea'
+      },
+      averageRating: 4.8,
+      reviewCount: 18,
+      variants: [],
+      attributes: [],
+      tags: ['tea', 'organic', 'green tea']
+    },
+    {
+      id: '3',
+      name: 'Traditional Nepali Thukpa Soup',
+      slug: 'traditional-nepali-thukpa-soup',
+      description: 'Authentic Nepali soup made with fresh vegetables and traditional spices.',
+      shortDescription: 'Traditional Nepali soup',
+      price: 5.99,
+      comparePrice: 7.99,
+      sku: 'TNP-003',
+      quantity: 20,
+      image: '/typical-layout.webp',
+      images: ['/typical-layout.webp', '/typical-layout.webp'],
+      category: {
+        id: '3',
+        name: 'Typical Nepali',
+        slug: 'typical-nepali'
+      },
+      averageRating: 4.6,
+      reviewCount: 15,
+      variants: [],
+      attributes: [],
+      tags: ['nepali', 'soup', 'thukpa', 'traditional']
+    },
+    {
+      id: '4',
+      name: 'Special Chicken Masala',
+      slug: 'special-chicken-masala',
+      description: 'Rich and flavorful chicken masala with authentic Nepali spices.',
+      shortDescription: 'Authentic chicken masala',
+      price: 12.99,
+      comparePrice: 15.99,
+      sku: 'MAS-004',
+      quantity: 15,
+      image: '/masala-layout.webp',
+      images: ['/masala-layout.webp', '/masala-layout.webp'],
+      category: {
+        id: '4',
+        name: 'Special Masala',
+        slug: 'special-masala'
+      },
+      averageRating: 4.9,
+      reviewCount: 22,
+      variants: [],
+      attributes: [],
+      tags: ['masala', 'chicken', 'spicy']
+    },
+    {
+      id: '5',
+      name: 'Momo Spice Mix',
+      slug: 'momo-spice-mix',
+      description: 'Traditional spice blend for making authentic Nepali momos.',
+      shortDescription: 'Momo spice blend',
+      price: 3.99,
+      comparePrice: 5.99,
+      sku: 'MAS-005',
+      quantity: 40,
+      image: '/masala-layout.webp',
+      images: ['/masala-layout.webp', '/masala-layout.webp'],
+      category: {
+        id: '4',
+        name: 'Special Masala',
+        slug: 'special-masala'
+      },
+      averageRating: 4.7,
+      reviewCount: 14,
+      variants: [],
+      attributes: [],
+      tags: ['masala', 'momo', 'spice']
+    },
+    {
+      id: '6',
+      name: 'Himalayan Black Tea',
+      slug: 'himalayan-black-tea',
+      description: 'Premium black tea leaves grown in the pristine Himalayan region.',
+      shortDescription: 'Premium Himalayan black tea',
+      price: 9.99,
+      comparePrice: 13.99,
+      sku: 'TEA-006',
+      quantity: 28,
+      image: '/tea-layout.webp',
+      images: ['/tea-layout.webp', '/tea-layout.webp'],
+      category: {
+        id: '2',
+        name: 'Tea',
+        slug: 'tea'
+      },
+      averageRating: 4.6,
+      reviewCount: 16,
+      variants: [],
+      attributes: [],
+      tags: ['tea', 'black tea', 'himalayan']
+    },
+    {
+      id: '7',
+      name: 'Mixed Non-Veg Achar',
+      slug: 'mixed-non-veg-achar',
+      description: 'Spicy pickle made with mixed non-vegetarian ingredients and traditional spices.',
+      shortDescription: 'Spicy non-veg pickle',
+      price: 6.99,
+      comparePrice: 8.99,
+      sku: 'ACH-007',
+      quantity: 18,
+      image: '/achar-layout.webp',
+      images: ['/achar-layout.webp', '/achar-layout.webp'],
+      category: {
+        id: '1',
+        name: 'Achar',
+        slug: 'achar'
+      },
+      averageRating: 4.4,
+      reviewCount: 10,
+      variants: [],
+      attributes: [],
+      tags: ['achar', 'pickle', 'non-vegetarian']
+    },
+    {
+      id: '8',
+      name: 'Dal Bhat Spice Set',
+      slug: 'dal-bhat-spice-set',
+      description: 'Complete spice set for preparing traditional Nepali Dal Bhat.',
+      shortDescription: 'Dal Bhat spice set',
+      price: 14.99,
+      comparePrice: 19.99,
+      sku: 'MAS-008',
+      quantity: 12,
+      image: '/masala-layout.webp',
+      images: ['/masala-layout.webp', '/masala-layout.webp'],
+      category: {
+        id: '4',
+        name: 'Special Masala',
+        slug: 'special-masala'
+      },
+      averageRating: 4.8,
+      reviewCount: 19,
+      variants: [],
+      attributes: [],
+      tags: ['masala', 'dal bhat', 'traditional']
+    }
   ];
 
-  // Fetch foods products
-  useEffect(() => {
-    const fetchFoodsProducts = async () => {
-      try {
-        setLoading(true);
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/products?category=foods&isActive=true&limit=20`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch foods products');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.data.products) {
-          setProducts(data.data.products);
-          setFilteredProducts(data.data.products);
-        }
-      } catch (error) {
-        console.error('Error fetching foods products:', error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchFoodsProducts = async () => {
+    try {
+      setLoading(true);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      const response = await fetch(`${API_BASE_URL}/api/v1/products?category=foods&isActive=true&limit=20`);
 
+      if (!response.ok) {
+        throw new Error('Failed to fetch foods products');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data.products) {
+        setProducts(data.data.products);
+      }
+    } catch (error) {
+      console.error('Error fetching foods products:', error);
+      // Fallback to hardcoded if API fails
+      setProducts(hardcodedFoodProducts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchFoodsProducts();
   }, []);
-
-  // Handle filter click
-  const handleFilterClick = (categoryName: string) => {
-    if (categoryName === 'Achar') {
-      setShowAcharModal(true);
-    } else {
-      setActiveFilter(categoryName);
-    }
-  };
-
-  // Handle Achar subcategory selection
-  const handleAcharSubcategory = (subcategory: string) => {
-    setActiveFilter(subcategory);
-    setShowAcharModal(false);
-  };
-
-  // Filter products based on active filter
-  useEffect(() => {
-    if (activeFilter === 'All') {
-      setFilteredProducts(products);
-    } else {
-      const filtered = products.filter(product => {
-        const productName = product.name.toLowerCase();
-        const productTags = product.tags?.map((tag: string) => tag.toLowerCase()) || [];
-        const productDescription = product.description?.toLowerCase() || '';
-        
-        switch (activeFilter) {
-          case 'Veg Achar':
-            return (productName.includes('achar') || 
-                   productTags.some((tag: string) => tag.includes('achar')) ||
-                   productDescription.includes('achar')) &&
-                   (productName.includes('veg') || 
-                   productTags.some((tag: string) => tag.includes('veg')) ||
-                   productDescription.includes('vegetarian'));
-          case 'Non-veg Achar':
-            return (productName.includes('achar') || 
-                   productTags.some((tag: string) => tag.includes('achar')) ||
-                   productDescription.includes('achar')) &&
-                   (productName.includes('non-veg') || 
-                   productTags.some((tag: string) => tag.includes('non-veg')) ||
-                   productDescription.includes('non-vegetarian'));
-          case 'Tea':
-            return productName.includes('tea') || 
-                   productTags.some((tag: string) => tag.includes('tea')) ||
-                   productDescription.includes('tea');
-          case 'Typical Nepali':
-            return productName.includes('nepali') || 
-                   productTags.some((tag: string) => tag.includes('nepali')) ||
-                   productDescription.includes('nepali') ||
-                   productName.includes('traditional');
-          case 'Special Masala':
-            return productName.includes('masala') || 
-                   productTags.some((tag: string) => tag.includes('masala')) ||
-                   productDescription.includes('masala') ||
-                   productName.includes('spice');
-          default:
-            return true;
-        }
-      });
-      setFilteredProducts(filtered);
-    }
-  }, [activeFilter, products]);
 
   // Format price
   const formatPrice = (price: number) => {
@@ -163,7 +276,7 @@ const Foods = () => {
   // Add to cart
   const addToCart = (product: Product, quantity: number = 1) => {
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
       setCart(cart.map(item =>
         item.id === product.id
@@ -211,42 +324,23 @@ const Foods = () => {
     <div className="py-16 bg-white mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-
-        {/* Header with Title and Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="mb-4 sm:mb-0 flex-1">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-2xl md:text-4xl font-bold text-gray-900 custom-font">Foods</h2>
               <button
                 onClick={() => router.push('/products/foods')}
-                className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium -mr-96"
+                className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
               >
                 View More
               </button>
             </div>
             <p className="text-lg text-gray-600">Discover delicious and fresh food products</p>
           </div>
-          <div className="flex flex-col items-end gap-4">
-            <div className="flex flex-wrap gap-6">
-              {filterCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveFilter(category.name)}
-                  className={`text-base font-medium transition-colors duration-200 ${
-                    activeFilter === category.name
-                      ? 'text-blue-600'
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No food products available at the moment.</p>
           </div>
@@ -257,7 +351,7 @@ const Foods = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6 gap-6"
           >
-            {filteredProducts.slice(0, 8).map((product, index) => (
+            {products.slice(0, 8).map((product, index) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -284,9 +378,9 @@ const Foods = () => {
                         }}
                       />
                     ) : null}
-                    
+
                     {/* Fallback when no image or image fails to load */}
-                    <div 
+                    <div
                       className="w-full h-full bg-gray-50 flex items-center justify-center"
                       style={{ display: product.images && product.images.length > 0 ? 'none' : 'flex' }}
                     >
@@ -302,16 +396,14 @@ const Foods = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-xl font-semibold text-gray-900">
-                          <sup className="text-[0.7em]">$</sup>
-                          {new Intl.NumberFormat('en-US', {
+                          ${new Intl.NumberFormat('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           }).format(product.price)}
                         </span>
                         {product.comparePrice && Number(product.comparePrice) > Number(product.price) && (
                           <span className="text-sm text-gray-500 line-through">
-                            <sup className="text-[0.7em]">$</sup>
-                            {new Intl.NumberFormat('en-US', {
+                            ${new Intl.NumberFormat('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             }).format(Number(product.comparePrice))}
@@ -338,7 +430,7 @@ const Foods = () => {
                           addToCart(product, quantities[product.id] || 1);
                         }}
                         disabled={product.quantity === 0}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+                        className="bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-300 text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         {product.quantity === 0 ? (
                           'Out of Stock'
@@ -394,4 +486,3 @@ const Foods = () => {
 };
 
 export default Foods;
-

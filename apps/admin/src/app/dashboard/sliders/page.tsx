@@ -35,7 +35,9 @@ export default function SlidersPage() {
   const fetchSliders = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders`, {
+        credentials: 'include',
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch sliders');
@@ -67,6 +69,7 @@ export default function SlidersPage() {
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/upload/slider`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 
@@ -114,6 +117,7 @@ export default function SlidersPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(sliderData),
       });
 
@@ -163,8 +167,9 @@ export default function SlidersPage() {
     if (!sliderToDelete) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders/test/${sliderToDelete}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders/${sliderToDelete}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -198,6 +203,7 @@ export default function SlidersPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ isActive: !isActive }),
       });
 
@@ -245,6 +251,7 @@ export default function SlidersPage() {
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ order: slider.order }),
           })
         )

@@ -143,13 +143,13 @@ export default function Navbar({ className = '' }: NavbarProps) {
   return (
     <div>
       {/* Top Section - Logo/Menu (Mobile) or Search/Location/Track (Desktop) */}
-      <div className="bg-[#252C6A] border-b border-[#1a2052]">
+      <div className="bg-[#622A1F] border-b border-[#1a2052]">
         <div className="max-w-8xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-1.5 sm:py-2 md:py-4">
           {/* Mobile: Logo and Menu Row */}
           <div className="flex flex-col md:hidden gap-2 mb-0">
             <div className="flex items-center justify-between gap-2">
               <Link href="/" className="flex-shrink-0">
-                <h3 className="text-white text-lg font-bold custom-font hover:text-gray-200 transition-colors">
+                <h3 className="text-white text-lg font-bold font-inter hover:text-gray-200 transition-colors">
                   GharSamma
                 </h3>
               </Link>
@@ -171,7 +171,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
               <input
                 type="text"
                 placeholder="Search"
-                className="w-full text-xs px-3 py-1.5 pr-10 border border-gray-200 rounded-lg focus:outline-none bg-[#F0F2F5] text-black placeholder-gray-500 custom-font"
+                className="w-full text-xs px-3 py-1.5 pr-10 border border-gray-200 rounded-lg focus:outline-none bg-[#F0F2F5] text-black placeholder-gray-500 font-inter"
               />
               <button className="absolute right-0 top-1/2 transform -translate-y-1/2 p-1.5 bg-[#F0F2F5] hover:bg-gray-50 transition-colors rounded-full">
                 <Search className="w-3.5 h-3.5 text-gray-600" />
@@ -186,7 +186,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
             >
               <MapPin className="w-4 h-4 text-white" />
               <div className="flex flex-col">
-                <span className="text-[10px] text-white/80 custom-font">Deliver to</span>
+                <span className="text-[10px] text-white/80 font-inter">Deliver to</span>
                 <div className="flex items-center gap-1">
                   {isLocationLoading ? (
                     <div className="flex items-center gap-1">
@@ -195,7 +195,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                     </div>
                   ) : (
                     <>
-                      <span className="text-xs font-medium text-white custom-font whitespace-nowrap">{userLocation}</span>
+                      <span className="text-xs font-medium text-white font-inter whitespace-nowrap">{userLocation}</span>
                       <ChevronDown className={`w-3 h-3 text-white transition-transform ${isLocationModalOpen ? 'rotate-180' : ''}`} />
                     </>
                   )}
@@ -215,7 +215,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                   >
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-white font-semibold custom-font">Selectsss Location</h3>
+                      <h3 className="text-white font-semibold font-inter">Selectsss Location</h3>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -227,11 +227,11 @@ export default function Navbar({ className = '' }: NavbarProps) {
                       </button>
                     </div>
                     <div>
-                      <label className="block text-white/80 text-sm mb-2 custom-font">Country</label>
+                      <label className="block text-white/80 text-sm mb-2 font-inter">Country</label>
                       <select
                         value={selectedCountry}
                         onChange={(e) => setSelectedCountry(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 custom-font"
+                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 font-inter"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <option value="Nepal">Nepal</option>
@@ -251,7 +251,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                           localStorage.setItem('selectedCountry', selectedCountry);
                         }
                       }}
-                      className="w-full mt-4 bg-white text-[#252C6A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors custom-font"
+                      className="w-full mt-4 bg-white text-[#252C6A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors font-inter"
                     >
                       Save
                     </button>
@@ -271,7 +271,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                   <input
                     type="text"
                     placeholder="Search"
-                    className="w-full text-sm md:text-base lg:text-lg px-4 lg:px-5 py-2.5 lg:py-3 pr-12 lg:pr-14 border border-gray-200 rounded-2xl focus:outline-none bg-white text-black placeholder-gray-500 custom-font"
+                    className="w-full text-sm md:text-base lg:text-lg px-4 lg:px-5 py-2.5 lg:py-3 pr-12 lg:pr-14 border border-gray-200 rounded-2xl focus:outline-none bg-white text-black placeholder-gray-500 font-inter"
                   />
                   <button className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1.5 lg:p-2 bg-white hover:bg-gray-50 transition-colors rounded-full">
                     <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
@@ -288,7 +288,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
             >
               <MapPin className="w-5 h-5 text-white" />
               <div className="flex flex-col">
-                <span className="text-xs text-white/80 custom-font">Deliver to</span>
+                <span className="text-xs text-white/80 font-inter">Deliver to</span>
                 <div className="flex items-center gap-1">
                   {isLocationLoading ? (
                     <div className="flex items-center gap-1">
@@ -297,7 +297,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                     </div>
                   ) : (
                     <>
-                      <span className="text-xs font-medium text-white custom-font whitespace-nowrap">{userLocation}</span>
+                      <span className="text-xs font-medium text-white font-inter whitespace-nowrap">{userLocation}</span>
                       <ChevronDown className={`w-3.5 h-3.5 text-white transition-transform ${isLocationModalOpen ? 'rotate-180' : ''}`} />
                     </>
                   )}
@@ -317,7 +317,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                   >
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-white font-semibold custom-font">Select Location</h3>
+                        <h3 className="text-white font-semibold font-inter">Select Location</h3>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -329,11 +329,11 @@ export default function Navbar({ className = '' }: NavbarProps) {
                         </button>
                       </div>
                       <div>
-                        <label className="block text-white/80 text-sm mb-2 custom-font">Country</label>
+                        <label className="block text-white/80 text-sm mb-2 font-inter">Country</label>
                         <select
                           value={selectedCountry}
                           onChange={(e) => setSelectedCountry(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 custom-font"
+                          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 font-inter"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <option value="Nepal">Nepal</option>
@@ -353,7 +353,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                             localStorage.setItem('selectedCountry', selectedCountry);
                           }
                         }}
-                        className="w-full mt-4 bg-white text-[#252C6A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors custom-font"
+                        className="w-full mt-4 bg-white text-[#252C6A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors font-inter"
                       >
                         Save
                       </button>
@@ -367,7 +367,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
             <button className="hidden lg:flex items-center gap-2 text-white hover:text-white/80 transition-colors flex-shrink-0">
               <div className="flex flex-col items-center">
                 <PackageSearch className="w-5 h-5 text-white" />
-                <span className="text-sm font-medium text-white custom-font mt-0.5">Track Order</span>
+                <span className="text-sm font-medium text-white font-inter mt-0.5">Track Order</span>
               </div>
             </button>
           </div>
@@ -375,97 +375,103 @@ export default function Navbar({ className = '' }: NavbarProps) {
       </div>
 
       {/* Category Navigation Bar */}
-      <div className="border-b border-gray-200 bg-[#F0F2F5] relative">
+      <div className="border-b border-gray-200 bg-[#622A1F] relative">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-3">
           {/* Desktop Navigation (Full Labels) */}
-          <nav className="hidden xl:flex items-center justify-center gap-4 lg:gap-6 overflow-x-auto relative custom-font text-base lg:text-lg font-extrabold text-black">
+          <nav className="hidden xl:flex items-center justify-center gap-4 lg:gap-6 overflow-x-auto relative font-inter text-base lg:text-lg font-extrabold text-white">
             <Link 
               href="/foods" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               FOODS
             </Link>
             <Link 
               href="/products/gift-souvenir" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               GIFT & SOUVENIR
             </Link>
             <Link 
               href="/products/puja-samagri" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               PUJA SAMAGRI
             </Link>
             <Link 
               href="/products/handicrafts" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               HANDICRAFTS
             </Link>
             <Link 
               href="/products/musical-instruments" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               MUSICAL INSTRUMENTS
             </Link>
             <Link 
               href="/products/herbs-naturals" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               HERBS & NATURALS
             </Link>
             <Link 
               href="/products/jewellery" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               JEWELLERY
             </Link>
           </nav>
 
           {/* Tablet/Medium Desktop Navigation (Abbreviated) */}
-          <nav className="hidden md:flex xl:hidden items-center gap-3 lg:gap-4 overflow-x-auto relative custom-font text-sm lg:text-base font-extrabold text-black">
+          <nav className="hidden md:flex xl:hidden items-center gap-3 lg:gap-4 overflow-x-auto relative font-inter text-sm lg:text-base font-extrabold text-white">
             <Link 
               href="/foods" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               FOODS
             </Link>
             <Link 
               href="/products/gift-souvenir" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               GIFTS
             </Link>
             <Link 
               href="/products/puja-samagri" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               PUJA
             </Link>
             <Link 
               href="/products/handicrafts" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               HANDICRAFTS
             </Link>
             <Link 
               href="/products/musical-instruments" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               MUSICAL
             </Link>
             <Link 
               href="/products/herbs-naturals" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               HERBS
             </Link>
             <Link 
               href="/products/jewellery" 
-              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-600"
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
             >
               JEWELLERY
+            </Link>
+            <Link 
+              href="/about" 
+              className="transition-colors whitespace-nowrap block py-2 px-1 hover:text-gray-200"
+            >
+              ABOUT
             </Link>
           </nav>
 
@@ -509,7 +515,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                     damping: 30,
                     mass: 0.8
                   }}
-                  className="md:hidden absolute left-0 right-0 top-full bg-[#F0F2F5] border-b border-gray-200 shadow-2xl z-50 overflow-hidden"
+                  className="md:hidden absolute left-0 right-0 top-full bg-[#622A1F] border-b border-gray-200 shadow-2xl z-50 overflow-hidden"
                   style={{
                     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
                   }}
@@ -524,7 +530,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                     damping: 25,
                     delay: 0.1
                   }}
-                  className="flex flex-col custom-font font-extrabold text-black"
+                  className="flex flex-col font-inter font-extrabold text-white"
                 >
                   {[
                     { href: '/foods', label: 'FOODS' },
@@ -533,7 +539,8 @@ export default function Navbar({ className = '' }: NavbarProps) {
                     { href: '/products/handicrafts', label: 'HANDICRAFTS' },
                     { href: '/products/musical-instruments', label: 'MUSICAL INSTRUMENTS' },
                     { href: '/products/herbs-naturals', label: 'HERBS & NATURALS' },
-                    { href: '/products/jewellery', label: 'JEWELLERY' }
+                    { href: '/products/jewellery', label: 'JEWELLERY' },
+                    { href: '/about', label: 'ABOUT' }
                   ].map((item, index) => (
                     <motion.div
                       key={item.href}
@@ -578,7 +585,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                       <Link 
                         href={item.href} 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="relative block py-3 px-4 hover:bg-gray-50 border-b border-gray-100 text-sm overflow-hidden group"
+                        className="relative block py-3 px-4 hover:bg-orange-600 border-b border-orange-700 text-sm overflow-hidden group"
                       >
                         <motion.span
                           className="relative z-10"
@@ -589,7 +596,7 @@ export default function Navbar({ className = '' }: NavbarProps) {
                           {item.label}
                         </motion.span>
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100"
+                          className="absolute inset-0 bg-gradient-to-r from-orange-500 to-transparent opacity-0 group-hover:opacity-100"
                           initial={{ x: '-100%' }}
                           whileHover={{ x: 0 }}
                           transition={{ type: 'spring', stiffness: 300, damping: 30 }}

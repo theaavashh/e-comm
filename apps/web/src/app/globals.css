@@ -1,16 +1,6 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'CustomFont';
-  src: url('/fonts/title-regular.f7f2da3f7d1f78b3f788.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
 
-.custom-font {
-  font-family: 'CustomFont', sans-serif;
-}
 
 @keyframes shimmer {
   0% {
@@ -22,29 +12,30 @@
 }
 
 :root {
-  --background: ##ebecea;
+  --background: #ebecea;
   --foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-urbanist);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-poppins);
 }
 
 /* Disable automatic dark background to avoid black gaps behind header */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: ##ebecea;
+    --background: #ebecea;
     --foreground: #171717;
   }
 }
 
 body {
-  background: var(--background);
+  background: #F1F2F2;
   color: var(--foreground);
-  font-family: var(--font-urbanist), system-ui, -apple-system, Segoe UI, Urbanist, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  overflow-x: hidden;
+  
 
 }
 

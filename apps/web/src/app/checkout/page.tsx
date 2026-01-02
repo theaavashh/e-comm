@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const productId = searchParams.get('product');
-  const quantity = searchParams.get('quantity') || '1';
-  const variant = searchParams.get('variant') || '0';
+  const productId = searchParams?.get('product') ?? null;
+  const quantity = searchParams?.get('quantity') || '1';
+  const variant = searchParams?.get('variant') || '0';
 
   return (
     <div className="min-h-screen bg-gray-50">

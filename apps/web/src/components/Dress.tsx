@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, Star, Heart, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useCart } from '@/contexts/CartContext';
 
 interface Product {
   id: string;
@@ -34,117 +35,195 @@ interface Product {
   tags?: string[];
 }
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
-
 const Dress = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [activeFilter, setActiveFilter] = useState<string>('All');
   const [promotionalBanner, setPromotionalBanner] = useState<any>(null);
   const router = useRouter();
+  
+  // Use global cart context
+  const { cartItems: cart, addToCart: addToGlobalCart } = useCart();
 
-  // Filter categories
-  const filterCategories = [
-    { id: 'all', name: 'All' },
-    { id: 'sari', name: 'Sari' },
-    { id: 'lehenga', name: 'Lehenga' },
-    { id: 'gown', name: 'Gown' },
-    { id: 'cultural', name: 'Cultural' }
+  // Hardcoded dress products
+  const hardcodedProducts: Product[] = [
+    {
+      id: '1',
+      name: 'Elegant Silk Sari',
+      slug: 'elegant-silk-sari',
+      description: 'Beautiful silk sari with traditional embroidery',
+      shortDescription: 'Traditional silk sari',
+      price: 89.99,
+      comparePrice: 120.99,
+      sku: 'SAR-001',
+      quantity: 15,
+      image: '/sari.webp',
+      images: ['/sari.webp', '/sari.webp'],
+      category: {
+        id: '1',
+        name: 'Sari',
+        slug: 'sari'
+      },
+      averageRating: 4.8,
+      reviewCount: 24,
+      variants: [],
+      brand: {
+        id: '1',
+        name: 'Traditional Wear'
+      },
+      attributes: [],
+      tags: ['silk', 'traditional', 'wedding']
+    },
+    {
+      id: '2',
+      name: 'Designer Lehenga',
+      slug: 'designer-lehenga',
+      description: 'Stunning designer lehenga for special occasions',
+      shortDescription: 'Designer lehenga',
+      price: 149.99,
+      comparePrice: 199.99,
+      sku: 'LEH-002',
+      quantity: 8,
+      image: '/lehenga.webp',
+      images: ['/lehenga.webp', '/lehenga.webp'],
+      category: {
+        id: '2',
+        name: 'Lehenga',
+        slug: 'lehenga'
+      },
+      averageRating: 4.9,
+      reviewCount: 18,
+      variants: [],
+      brand: {
+        id: '2',
+        name: 'Royal Collections'
+      },
+      attributes: [],
+      tags: ['lehenga', 'bridal', 'designer']
+    },
+    {
+      id: '3',
+      name: 'Cocktail Gown',
+      slug: 'cocktail-gown',
+      description: 'Elegant cocktail gown for evening parties',
+      shortDescription: 'Evening cocktail gown',
+      price: 79.99,
+      comparePrice: 99.99,
+      sku: 'GOW-003',
+      quantity: 12,
+      image: '/dress3.jpg',
+      images: ['/dress3.jpg', '/dress3-alt.jpg'],
+      category: {
+        id: '3',
+        name: 'Gown',
+        slug: 'gown'
+      },
+      averageRating: 4.6,
+      reviewCount: 32,
+      variants: [],
+      brand: {
+        id: '3',
+        name: 'Modern Fashion'
+      },
+      attributes: [],
+      tags: ['gown', 'cocktail', 'evening']
+    },
+    {
+      id: '4',
+      name: 'Cultural Traditional Dress',
+      slug: 'cultural-traditional-dress',
+      description: 'Authentic cultural dress representing heritage',
+      shortDescription: 'Cultural heritage dress',
+      price: 69.99,
+      comparePrice: 89.99,
+      sku: 'CUL-004',
+      quantity: 20,
+      image: '/dress4.jpg',
+      images: ['/dress4.jpg', '/dress4-alt.jpg'],
+      category: {
+        id: '4',
+        name: 'Cultural',
+        slug: 'cultural'
+      },
+      averageRating: 4.7,
+      reviewCount: 15,
+      variants: [],
+      brand: {
+        id: '4',
+        name: 'Heritage Wear'
+      },
+      attributes: [],
+      tags: ['cultural', 'traditional', 'heritage']
+    },
+    {
+      id: '5',
+      name: 'Anarkali Suit',
+      slug: 'anarkali-suit',
+      description: 'Classic Anarkali suit with intricate work',
+      shortDescription: 'Anarkali ethnic suit',
+      price: 99.99,
+      comparePrice: 129.99,
+      sku: 'ANA-005',
+      quantity: 10,
+      image: '/kurta.webp',
+      images: ['/dress5.jpg', '/dress5-alt.jpg'],
+      category: {
+        id: '1',
+        name: 'Sari',
+        slug: 'sari'
+      },
+      averageRating: 4.5,
+      reviewCount: 22,
+      variants: [],
+      brand: {
+        id: '1',
+        name: 'Traditional Wear'
+      },
+      attributes: [],
+      tags: ['anarkali', 'suit', 'ethnic']
+    },
+    {
+      id: '6',
+      name: 'Banarasi Silk Saree',
+      slug: 'banarasi-silk-saree',
+      description: 'Luxurious Banarasi silk saree with gold zari',
+      shortDescription: 'Banarasi silk saree',
+      price: 129.99,
+      comparePrice: 159.99,
+      sku: 'SAR-006',
+      quantity: 5,
+      image: '/saree2.webp',
+      images: ['/saree2.webp', '/saree2-alt.webp'],
+      category: {
+        id: '1',
+        name: 'Sari',
+        slug: 'sari'
+      },
+      averageRating: 4.9,
+      reviewCount: 31,
+      variants: [],
+      brand: {
+        id: '5',
+        name: 'Banarasi Weaves'
+      },
+      attributes: [],
+      tags: ['silk', 'banarasi', 'luxury']
+    }
   ];
 
-  // Fetch dress products and promotional banner
   useEffect(() => {
-    const fetchDressProducts = async () => {
-      try {
-        setLoading(true);
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/products?category=dress&isActive=true&limit=20`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch dress products');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.data.products) {
-          setProducts(data.data.products);
-          setFilteredProducts(data.data.products);
-        }
-      } catch (error) {
-        console.error('Error fetching dress products:', error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchPromotionalBanner = async () => {
-      try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/media?linkTo=dress&active=true`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data && data.data.mediaItems && data.data.mediaItems.length > 0) {
-            setPromotionalBanner(data.data.mediaItems[0]);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch promotional banner:', error);
-      }
-    };
-
-    fetchDressProducts();
-    fetchPromotionalBanner();
+    // Simulate API call
+    setTimeout(() => {
+      setProducts(hardcodedProducts);
+      setFilteredProducts(hardcodedProducts);
+      setLoading(false);
+    }, 500);
   }, []);
 
-  // Filter products based on active filter
-  useEffect(() => {
-    if (activeFilter === 'All') {
-      setFilteredProducts(products);
-    } else {
-      const filtered = products.filter(product => {
-        const productName = product.name.toLowerCase();
-        const productTags = product.tags?.map((tag: string) => tag.toLowerCase()) || [];
-        const productDescription = product.description?.toLowerCase() || '';
-        
-        switch (activeFilter) {
-          case 'Sari':
-            return productName.includes('sari') || 
-                   productTags.some((tag: string) => tag.includes('sari')) ||
-                   productDescription.includes('sari');
-          case 'Lehenga':
-            return productName.includes('lehenga') || 
-                   productTags.some((tag: string) => tag.includes('lehenga')) ||
-                   productDescription.includes('lehenga');
-          case 'Gown':
-            return productName.includes('gown') || 
-                   productTags.some((tag: string) => tag.includes('gown')) ||
-                   productDescription.includes('gown');
-          case 'Cultural':
-            return productName.includes('cultural') || 
-                   productTags.some((tag: string) => tag.includes('cultural')) ||
-                   productDescription.includes('cultural') ||
-                   productName.includes('traditional');
-          default:
-            return true;
-        }
-      });
-      setFilteredProducts(filtered);
-    }
-  }, [activeFilter, products]);
-
-  // Format price
-  const formatPrice = (price: number) => {
+  // Format price helper
+  const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -154,23 +233,13 @@ const Dress = () => {
 
   // Add to cart
   const addToCart = (product: Product, quantity: number = 1) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
-    } else {
-      setCart([...cart, {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        image: product.images?.[0] || product.image || ''
-      }]);
-    }
+    // Add to global cart context
+    addToGlobalCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0] || product.image || ''
+    }, quantity);
   };
 
   // Update quantity
@@ -184,6 +253,12 @@ const Dress = () => {
   // Handle product click
   const handleProductClick = (product: Product) => {
     router.push(`/products/${product.category.slug}/${product.slug}`);
+  };
+
+  // Handle add to cart
+  const handleAddToCart = (product: Product) => {
+    const quantity = quantities[product.id] || 1;
+    addToCart(product, quantity);
   };
 
   if (loading) {
@@ -209,16 +284,16 @@ const Dress = () => {
   return (
     <div className="py-16 bg-white mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {/* Left Side - Promotional Banner */}
-          <div className="relative">
+          <div className="relative md:col-span-1">
             <Link 
               href={promotionalBanner?.internalLink || '/products/dress'} 
               className="block group"
             >
-              <div className="relative h-[500px] lg:h-[600px] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50">
-                {promotionalBanner?.mediaUrl ? (
+              <div className="relative h-[700px] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50">
+                {/* {promotionalBanner?.mediaUrl ? (
                   <img
                     src={promotionalBanner.mediaUrl}
                     alt="Dress Collection"
@@ -226,16 +301,16 @@ const Dress = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100" />
-                )}
+                )} */}
                 
                 {/* Overlay Content */}
-                <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-8 lg:p-10">
+                <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-8">
                   {/* Top Text */}
                   <div className="text-left">
                     <p className="text-sm md:text-base font-medium text-purple-900 mb-2 custom-font">
                       Minis, midis & maxis
                     </p>
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 leading-tight custom-font">
+                    <h2 className="text-2xl md:text-3xl font-bold text-purple-900 leading-tight custom-font">
                       Chic fall
                       <br />
                       dresses
@@ -248,14 +323,14 @@ const Dress = () => {
                     {filteredProducts.length > 0 && (
                       <div className="text-left">
                         <p className="text-sm text-purple-900 font-medium mb-1 custom-font">From</p>
-                        <p className="text-3xl md:text-4xl font-bold text-purple-900 custom-font">
+                        <p className="text-2xl md:text-3xl font-bold text-purple-900 custom-font">
                           ${getLowestPrice().toFixed(0)}
                         </p>
                       </div>
                     )}
 
                     {/* Shop All Button */}
-                    <button className="px-6 py-3 bg-white border-2 border-purple-900 rounded-full text-purple-900 font-semibold hover:bg-purple-900 hover:text-white transition-colors duration-300 custom-font text-sm md:text-base">
+                    <button className="px-4 py-2 bg-white border-2 border-purple-900 rounded-full text-purple-900 font-semibold hover:bg-purple-900 hover:text-white transition-colors duration-300 custom-font text-sm">
                       Shop all
                     </button>
                   </div>
@@ -264,8 +339,8 @@ const Dress = () => {
             </Link>
           </div>
 
-          {/* Right Side - Product Showcase */}
-          <div className="flex flex-col">
+          {/* Middle and Right Side - Product Showcase */}
+          <div className="md:col-span-2 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 custom-font">
@@ -287,7 +362,7 @@ const Dress = () => {
               </div>
             ) : (
               <div className="flex-1 overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6">
-                <div className="flex gap-4">
+                <div className="flex gap-2">
                   {filteredProducts.slice(0, 8).map((product, index) => (
                     <motion.div
                       key={product.id}
@@ -295,12 +370,12 @@ const Dress = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                       whileHover={{ y: -2 }}
-                      className="group cursor-pointer flex-shrink-0 w-[280px] md:w-[320px]"
+                      className="group cursor-pointer flex-shrink-0 w-[450px] md:w-[450px] lg:w-[500px]"
                       onClick={() => handleProductClick(product)}
                     >
-                      <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300">
+                      <div className="bg-white rounded-sm overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300">
                         {/* Image Container */}
-                        <div className="relative h-[350px] md:h-[400px] bg-white overflow-hidden">
+                        <div className="relative h-[350px] md:h-[450px] lg:h-[500px] bg-white overflow-hidden">
                           {/* Heart Icon */}
                           <button
                             onClick={(e) => {
@@ -338,12 +413,12 @@ const Dress = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="p-4 bg-white custom-font">
+                        <div className="p-6 bg-white custom-font">
                           {/* Price */}
                           <div className="mb-2">
                             {product.comparePrice && Number(product.comparePrice) > Number(product.price) ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-lg font-semibold text-green-600">
+                                <span className="text-2xl font-extrabold text-[#EB6426]">
                                   Now ${new Intl.NumberFormat('en-US', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
@@ -367,10 +442,22 @@ const Dress = () => {
                           </div>
 
                           {/* Product Name/Brand */}
-                          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                          <h3 className="text-lg font-medium text-black line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
                             {product.brand?.name ? `${product.brand.name} ` : ''}
                             {product.name}
                           </h3>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(product);
+                            }}
+                            disabled={product.quantity <= 0}
+                            className="mt-3 bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-400 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center w-full"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-1" />
+                            <span>Add to Cart</span>
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -405,4 +492,3 @@ const Dress = () => {
 };
 
 export default Dress;
-

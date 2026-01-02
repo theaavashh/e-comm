@@ -47,7 +47,24 @@ const useCategories = () => {
       const data: CategoryResponse = await response.json();
         
       if (data.success && data.data.categories) {
-        setCategories(data.data.categories);
+        // Debug: Log the category data to see image URLs
+        console.log('Category data:', data.data.categories);
+        
+        // Update image URLs to use the correct API base URL if they're pointing to port 5000
+        const updatedCategories = data.data.categories.map(category => {
+          if (category.image && category.image.includes('localhost:5000')) {
+            // Replace port 5000 with the correct API port
+            const correctedImageUrl = category.image.replace('localhost:5000', `localhost:${new URL(API_BASE_URL).port}`);
+            console.log(`Corrected image URL from ${category.image} to ${correctedImageUrl}`);
+            return {
+              ...category,
+              image: correctedImageUrl
+            };
+          }
+          return category;
+        });
+        
+        setCategories(updatedCategories);
       } else {
         throw new Error('Invalid response format');
       }
@@ -132,9 +149,9 @@ const EmptyState = () => (
 const CategoryCard = ({ category }: { category: Category }) => (
   <Link
     href={`/products/${category.slug}`}
-    className="w-64 hover:bg-[#F0F2F5] transition-all duration-500 ease-in-out cursor-pointer overflow-hidden group"
+    className="w-64 bg-[#F0F2F5] transition-all duration-500 ease-in-out cursor-pointer overflow-hidden group"
   >
-    <div className="w-full flex flex-row items-center bg-white hover:bg-gray-50 transition-all duration-500 ease-in-out rounded-lg p-4">
+    <div className="w-full flex flex-row items-center bg-[#F1F2F2] transition-all duration-500 ease-in-out rounded-lg p-4">
       {/* Image Section - Left Side */}
       <div className="flex items-center justify-center">
         {category.image ? (
@@ -151,7 +168,7 @@ const CategoryCard = ({ category }: { category: Category }) => (
           </div>
         ) : (
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-gray-600 text-xl font-bold">
+            <span className="text-gray-600 text-xl font-bold font-mono">
               {category.name.charAt(0)}
             </span>
           </div>
@@ -225,19 +242,19 @@ export default function CategorySection() {
       <div className="mb-6 md:mb-8 mx-4 sm:mx-8 md:mx-12 lg:mx-20 mt-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 md:gap-0">
           <h2 className="custom-font">
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black font-bold">Popular Categories For You</span>
+            <span className="text-2xl sm:text-3xl md:text-4xl text-black font-inter">Shop More By Category</span>
           </h2>
-          <p className="text-gray-600 font-medium text-lg md:text-lg lg:text-xl">Discover our curated collection</p>
+          <p className="text-gray-600 font-medium text-lg md:text-lg lg:text-xl font-mono">Discover our curated collection</p>
         </div>
       </div>
       
       {/* Categories Horizontal Scroll with Arrows */}
-      <div className="relative">
+      <div className="relative mx-4 sm:mx-8 md:mx-16">
         {/* Left Arrow */}
         {showLeftArrow && (
           <button
             onClick={scrollLeft}
-            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 bg-[#F0F2F5] rounded-full p-1.5 md:p-2 shadow-lg hover:bg-gray-50 transition-colors"
+            className="absolute left-2 md:-left-8 top-10 -translate-y-1/2 z-10  p-1.5  transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-4 h-4 md:w-6 md:h-6 text-gray-700" />
@@ -248,7 +265,7 @@ export default function CategorySection() {
         {showRightArrow && (
           <button
             onClick={scrollRight}
-            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 bg-[#F0F2F5] rounded-full p-1.5 md:p-2 shadow-lg hover:bg-gray-50 transition-colors"
+            className="absolute right-2 md:-right-8 top-10 -translate-y-1/2 z-10  p-1.5 md:p-2 transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-4 h-4 md:w-6 md:h-6 text-gray-700" />
@@ -262,7 +279,7 @@ export default function CategorySection() {
           style={{
             WebkitOverflowScrolling: 'touch',
           }}>
-          <div className="flex space-x-4 sm:space-x-6 pb-4 ml-4 sm:ml-6 md:ml-10" style={{ minWidth: 'max-content' }}>
+          <div className="flex space-x-4  sm:space-x-6 pb-4 ml-2 sm:ml-4 md:ml-10" style={{ minWidth: 'max-content' }}>
             {categories.map((category) => (
               <div key={category.id} className="snap-start flex-shrink-0">
                 <CategoryCard category={category} />

@@ -20,57 +20,73 @@ interface SliderImage {
 
 export default function Slider() {
   const [sliders, setSliders] = useState<SliderImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch sliders from API
   useEffect(() => {
     const fetchSliders = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        console.log('Fetching sliders from:', `${apiUrl}/api/v1/sliders`);
-        const response = await fetch(`${apiUrl}/api/v1/sliders`);
+        setLoading(true);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch sliders');
+        }
+        
         const data = await response.json();
         
-        console.log('Slider API response:', data);
-        
-        if (data.success && data.data) {
-          // Handle both response formats: data.data.sliders or data.data
-          const slidersData = data.data.sliders || data.data;
-          console.log('Sliders data:', slidersData);
-          
-          // Filter only active sliders and sort by order
-          const activeSliders = slidersData
+        if (data.success) {
+          // Filter active sliders and sort by order
+          const activeSliders = (data.data.sliders || [])
             .filter((slider: SliderImage) => slider.isActive)
             .sort((a: SliderImage, b: SliderImage) => a.order - b.order);
           
-          console.log('Active sliders:', activeSliders);
           setSliders(activeSliders);
         } else {
-          console.log('No slider data found or API error');
+          throw new Error(data.message || 'Failed to fetch sliders');
         }
-      } catch (error) {
-        console.error('Error fetching sliders:', error);
-        // Set empty array on error so component doesn't disappear
-        setSliders([]);
+      } catch (err) {
+        console.error('Error fetching sliders:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchSliders();
   }, []);
 
-  if (isLoading) {
+  // Show loading state while fetching data
+  if (loading) {
     return (
-      <div className="w-full h-full overflow-hidden shadow-lg bg-black">
-        {/* Skeleton Loader */}
-        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] animate-[shimmer_2s_infinite]"></div>
+      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
   }
 
+  // Show error state if there was an error
+  if (error) {
+    console.error('Slider error:', error);
+    return (
+      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <p>Failed to load slider</p>
+          <p className="text-sm text-gray-300 mt-2">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no active sliders
   if (sliders.length === 0) {
-    return null;
+    return (
+      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <p>No active sliders available</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -95,6 +111,23 @@ export default function Slider() {
         loop={true}
         speed={1500}
         className="w-full h-full"
+        breakpoints={{
+          // when window width is >= 640px
+          640: {
+            slidesPerView: 1,
+            spaceBetween: 0,
+          },
+          // when window width is >= 768px
+          768: {
+            slidesPerView: 1,
+            spaceBetween: 0,
+          },
+          // when window width is >= 1024px
+          1024: {
+            slidesPerView: 1,
+            spaceBetween: 0,
+          },
+        }}
       >
         {sliders.map((slider) => (
           <SwiperSlide key={slider.id} className="w-full h-full">
@@ -102,26 +135,21 @@ export default function Slider() {
               <img
                 src={slider.imageUrl}
                 alt={`Slider ${slider.id}`}
-                className="w-full h-full object-cover"
-                onLoad={() => console.log('Image loaded:', slider.imageUrl)}
-                onError={(e) => {
-                  console.error('Image failed to load:', slider.imageUrl);
-                  console.error('Error details:', e);
-                }}
+                className="w-full h-full object-cover bg-center bg-no-repeat"
               />
             </Link>
           </SwiperSlide>
         ))}
         
-        {/* Custom Navigation Buttons */}
-        <div className="swiper-button-prev-custom absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-200 cursor-pointer z-10">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Custom Navigation Buttons - Hidden on mobile, visible on tablet and above */}
+        <div className="swiper-button-prev-custom absolute left- top-1/2 transform -translate-y-1/2  text-black bg-white p-2 md:p-3 rounded-full hover:bg-opacity-70 transition-all duration-200 cursor-pointer z-10 hidden sm:block">
+          <svg className="w-6 h-6 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </div>
         
-        <div className="swiper-button-next-custom absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-200 cursor-pointer z-10">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="swiper-button-next-custom absolute right-4 top-1/2 transform -translate-y-1/2  text-white p-2 md:p-3 rounded-full hover:bg-opacity-70 transition-all duration-200 cursor-pointer z-10 hidden sm:block">
+          <svg className="w-6 h-6 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
@@ -134,12 +162,20 @@ export default function Slider() {
         }
         
         .swiper-pagination-bullet-custom {
-          width: 12px !important;
-          height: 12px !important;
+          width: 10px !important;
+          height: 10px !important;
           background: rgba(255, 255, 255, 0.5) !important;
           opacity: 1 !important;
-          margin: 0 4px !important;
+          margin: 0 3px !important;
           transition: all 0.3s ease !important;
+        }
+        
+        @media (min-width: 768px) {
+          .swiper-pagination-bullet-custom {
+            width: 12px !important;
+            height: 12px !important;
+            margin: 0 4px !important;
+          }
         }
         
         .swiper-pagination-bullet-active-custom {

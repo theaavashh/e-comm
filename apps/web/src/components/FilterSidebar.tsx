@@ -146,11 +146,11 @@ export default function FilterSidebar({
               max="10000"
               value={priceRange[1]}
               onChange={(e) => handlePriceRangeChange(parseInt(e.target.value))}
-              className="w-full"
+              className="w-full [&::-webkit-slider-thumb]:bg-[#EB6426] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-track]:bg-gray-200 [&::-webkit-slider-track]:rounded-full [&::-moz-range-thumb]:bg-[#EB6426] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-track]:bg-gray-200 [&::-moz-range-track]:rounded-full"
             />
             <div className="flex justify-between text-sm text-black">
-              <span className="text-black">NPR {priceRange[0].toLocaleString()}</span>
-              <span className="text-black">NPR {priceRange[1].toLocaleString()}</span>
+              <span className="text-black">$ {priceRange[0].toLocaleString()}</span>
+              <span className="text-black">$ {priceRange[1].toLocaleString()}</span>
             </div>
             <div className="flex space-x-2">
               <input
@@ -212,7 +212,7 @@ export default function FilterSidebar({
                       className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}
                     />
                   ))}
-                  <span className="ml-1 text-sm text-gray-700">& up</span>
+                  
                 </div>
               </label>
             ))}
@@ -247,8 +247,8 @@ export default function FilterSidebar({
               )}
               {(priceRange[0] > 0 || priceRange[1] < 10000) && (
                 <div className="flex items-center justify-between bg-blue-50 px-2 py-1 rounded">
-                  <span className="text-sm text-blue-800">
-                    NPR {priceRange[0]} - NPR {priceRange[1]}
+                  <span className="text-sm text-black">
+                    ${priceRange[0]} - $ {priceRange[1]}
                   </span>
                   <button
                     onClick={() => onPriceRangeChange([0, 10000])}

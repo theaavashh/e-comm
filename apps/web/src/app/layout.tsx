@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Urbanist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BottomNav from "@/components/BottomNav";
-import GlobalHeader from "@/components/GlobalHeader";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
+import ConditionalHeader from "@/components/ConditionalHeader";
 
-const urbanist = Urbanist({
-  variable: "--font-urbanist",
+
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -37,11 +39,13 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${urbanist.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${poppins.variable} antialiased`}
       >
         <Providers>
-          <GlobalHeader />
+          <ConditionalHeader />
           <div className="min-h-screen flex flex-col">
+
+
             <main className="flex-1 pb-20 md:pb-0">
               {children}
             </main>

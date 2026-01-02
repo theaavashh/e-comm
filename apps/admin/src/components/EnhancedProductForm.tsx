@@ -1,43 +1,88 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Upload, Eye, EyeOff, AlertCircle, Link, Search, Hash, Globe, Image as ImageIcon, Target, ExternalLink, FileText, DollarSign, Package, Camera, Truck, Settings, Percent, Calculator, ShoppingCart, Minus, X, Star, Flame, Gift, Sparkles, Award, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
-import Image from 'next/image';
-import RichTextEditor from '@/components/RichTextEditor';
-import { productSchema, ProductFormData } from '@/schemas/productSchema';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  Package,
+  Tag,
+  Upload,
+  Trash2,
+  X,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Palette,
+  Ruler,
+  DollarSign,
+} from "lucide-react";
 
 interface Category {
   id: string;
   name: string;
   parentId?: string;
-  children?: Array<{ 
-    id: string; 
-    name: string; 
-    parentId?: string;
-    _count?: { products: number };
-  }>;
-  _count?: { products: number };
-}
-
-interface Brand {
-  id: string;
-  name: string;
-  logo?: string;
-  website?: string;
-  createdAt: string;
-  updatedAt: string;
+  children?: Category[];
   _count?: {
     products: number;
   };
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
+interface VariantOption {
+  id: string;
+  name: string;
+  value: string;
+  price?: number; // Variant-specific price
+  comparePrice?: number; // Variant-specific compare price
+  weight?: number; // Variant-specific weight
+  additionalCost?: number;
+  stock?: number;
+  colorCode?: string; // For color variants
+  colorImage?: string; // For color image variants
+  // Dimension-specific fields
+  height?: number;
+  width?: number;
+  length?: number;
+  dimensionUnit?: string;
+}
+
+interface Variant {
+  id: string;
+  name: string; // e.g., "Color", "Size", "Dimensions"
+  options: VariantOption[];
+}
+
+interface EnhancedProductFormState {
+  name: string;
+  sku: string;
+  categoryId: string;
+  subCategoryId: string;
+  brandId: string;
+  description: string;
+  tags: string[];
+  variants: Variant[];
+  currencyPrices: {
+    country: string;
+    price: number;
+    comparePrice?: number;
+    minDeliveryDays: number;
+    maxDeliveryDays: number;
+    isActive: boolean;
+  }[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords: string[];
+  slug?: string;
+}
+
 interface EnhancedProductFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ProductFormData) => Promise<void>;
+  onSubmit: (data: any) => void;
   initialData?: any;
   isLoading?: boolean;
   categories: Category[];
@@ -51,2237 +96,1099 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   initialData,
   isLoading = false,
   categories,
-  brands
+  brands,
 }) => {
-  const [activeTab, setActiveTab] = useState('basic');
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [ogImagePreview, setOgImagePreview] = useState<string>('');
-  const [canonicalUrlPreview, setCanonicalUrlPreview] = useState<string>('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const handleNextTab = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex < tabs.length - 1) {
-      setActiveTab(tabs[currentIndex + 1].id);
-    }
-  };
-
-  const handlePreviousTab = () => {
-    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
-    if (currentIndex > 0) {
-      setActiveTab(tabs[currentIndex - 1].id);
-    }
-  };
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-    watch,
-    setValue,
-    getValues,
-    trigger
-  } = useForm<any>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: '',
-      slug: '',
-      description: '',
-      shortDescription: '',
-      price: 0,
-      comparePrice: undefined,
-      costPrice: undefined,
-      discountPrice: undefined,
-      discountPercentage: undefined,
-      margin: undefined,
-      minOrderQuantity: undefined,
-      maxOrderQuantity: undefined,
-      sku: '',
-      categoryId: '',
-      subCategoryId: '',
-      brandId: '',
-      tags: [],
-      images: [],
-      isActive: true,
-      stock: 0,
-      weight: undefined,
-      dimensions: undefined,
-      seo: {
-        title: '',
-        description: '',
-        keywords: [],
-        ogTitle: '',
-        ogDescription: '',
-        ogImage: '',
-        canonicalUrl: '',
-        focusKeyword: '',
-      },
-      isFeatured: false,
-      isDigital: false,
-      requiresShipping: true,
-      trackQuantity: true,
-      allowBackorder: false,
-      minQuantity: undefined,
-      maxQuantity: undefined,
-      isTodaysBestDeal: false,
-      isOnSale: false,
-      isFestivalOffer: false,
-      isNewLaunch: false,
-      isBestSeller: false,
-      variants: [],
-      currencyPrices: [],
-      customFields: [],
-      // Shipping fields
-      shippingCountry: undefined,
-      deliveryCharge: 0,
-      minDeliveryDays: 3,
-      maxDeliveryDays: 7,
-      freeShippingThreshold: 0,
-      shippingWeight: 0,
-      isFragile: false,
-      isHazardous: false,
-    }
+  const [activeTab, setActiveTab] = useState("basic");
+  const [formData, setFormData] = useState<EnhancedProductFormState>({
+    name: initialData?.name || "",
+    sku: initialData?.sku || "",
+    categoryId: initialData?.categoryId || "",
+    subCategoryId: initialData?.subCategoryId || "",
+    brandId: initialData?.brandId || "",
+    description: initialData?.description || "",
+    tags: initialData?.tags || [],
+    variants: initialData?.variants || [],
+    currencyPrices: initialData?.currencyPrices || [],
+    seoTitle: initialData?.seoTitle || initialData?.name || "",
+    seoDescription: initialData?.seoDescription || initialData?.description || "",
+    seoKeywords: initialData?.seoKeywords || [],
+    slug: initialData?.slug || "",
   });
 
-  // Watch categoryId to clear subCategoryId when category changes
-  const watchedCategoryId = watch('categoryId');
+  const [newTag, setNewTag] = useState("");
+  const [newSeoKeyword, setNewSeoKeyword] = useState("");
+  const [filteredBrands, setFilteredBrands] = useState<Brand[]>(brands);
   
+  // State for managing variants
+  const [newVariant, setNewVariant] = useState({
+    name: "",
+    options: [{ id: Date.now().toString(), name: "", value: "", price: 0, comparePrice: 0, weight: 0, additionalCost: 0, stock: 0, colorCode: "", colorImage: "", height: 0, width: 0, length: 0, dimensionUnit: "cm" }],
+  });
+  
+  const [selectedVariantType, setSelectedVariantType] = useState("custom");
+
   useEffect(() => {
-    if (watchedCategoryId) {
-      // Clear sub-category when main category changes
-      setValue('subCategoryId', '');
+    setFormData({
+      name: initialData?.name || "",
+      sku: initialData?.sku || "",
+      categoryId: initialData?.categoryId || "",
+      subCategoryId: initialData?.subCategoryId || "",
+      brandId: initialData?.brandId || "",
+      description: initialData?.description || "",
+      tags: initialData?.tags || [],
+      variants: initialData?.variants || [],
+      currencyPrices: initialData?.currencyPrices || [],
+      seoTitle: initialData?.seoTitle || initialData?.name || "",
+      seoDescription: initialData?.seoDescription || initialData?.description || "",
+      seoKeywords: initialData?.seoKeywords || [],
+      slug: initialData?.slug || "",
+    });
+  }, [initialData]);
+
+  // Filter subcategories based on selected category
+  const selectedCategory = categories.find(cat => cat.id === formData.categoryId);
+  const subCategories = selectedCategory?.children || [];
+
+  // Filter brands based on search
+  useEffect(() => {
+    if (formData.name) {
+      const filtered = brands.filter(brand => 
+        brand.name.toLowerCase().includes(formData.name.toLowerCase())
+      );
+      setFilteredBrands(filtered);
+    } else {
+      setFilteredBrands(brands);
     }
-  }, [watchedCategoryId, setValue]);
+  }, [formData.name, brands]);
 
-  const { fields: tagFields, append: appendTag, remove: removeTag } = useFieldArray({
-    control,
-    name: 'tags' as const
-  });
+  const handleInputChange = (field: keyof EnhancedProductFormState, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
-  const { fields: keywordFields, append: appendKeyword, remove: removeKeyword } = useFieldArray({
-    control,
-    name: 'seo.keywords' as const
-  });
+  const handleArrayChange = (
+    field: keyof EnhancedProductFormState,
+    value: string,
+    action: "add" | "remove",
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]:
+        action === "add"
+          ? [...(prev[field] as string[]), value]
+          : (prev[field] as string[]).filter(
+              (item) => item !== value,
+            ),
+    }));
+  };
 
-  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
-    control,
-    name: 'variants' as const
-  });
+  // Variant management functions
+  const addVariantOption = (variantIndex: number) => {
+    if (variantIndex === -1) {
+      // Adding option to the new variant form (not yet added to formData)
+      setNewVariant(prev => ({
+        ...prev,
+        options: [
+          ...prev.options,
+          { id: Date.now().toString(), name: "", value: "", price: 0, comparePrice: 0, weight: 0, additionalCost: 0, stock: 0, colorCode: "", colorImage: "", height: 0, width: 0, length: 0, dimensionUnit: "cm" }
+        ]
+      }));
+    } else {
+      // Adding option to an existing variant in formData
+      const updatedVariants = [...formData.variants];
+      updatedVariants[variantIndex].options.push({
+        id: Date.now().toString(),
+        name: "",
+        value: "",
+        price: 0,
+        comparePrice: 0,
+        weight: 0,
+        additionalCost: 0,
+        stock: 0,
+        colorCode: "",
+        colorImage: "",
+        height: 0,
+        width: 0,
+        length: 0,
+        dimensionUnit: "cm",
+      });
+      handleInputChange("variants", updatedVariants);
+    }
+  };
 
-  const { fields: currencyPriceFields, append: appendCurrencyPrice, remove: removeCurrencyPrice } = useFieldArray({
-    control,
-    name: 'currencyPrices' as const
-  });
-
-  const { fields: customFieldFields, append: appendCustomField, remove: removeCustomField } = useFieldArray({
-    control,
-    name: 'customFields' as const
-  });
-
-  const watchedImages = watch('images') || [];
-  const watchedTags = watch('tags') || [];
-  const watchedKeywords = watch('seo.keywords') || [];
-
-  // Reset form when modal opens/closes or initialData changes
-  useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        reset(initialData);
-        setPreviewImages(initialData.images || []);
-        setOgImagePreview(initialData.seo?.ogImage || '');
-        setCanonicalUrlPreview(initialData.seo?.canonicalUrl || '');
-      } else {
-        reset();
-        setPreviewImages([]);
-        setOgImagePreview('');
-        setCanonicalUrlPreview('');
+  const removeVariantOption = (variantIndex: number, optionIndex: number) => {
+    if (variantIndex === -1) {
+      // Removing option from the new variant form
+      if (newVariant.options.length > 1) {
+        const updatedOptions = [...newVariant.options];
+        updatedOptions.splice(optionIndex, 1);
+        setNewVariant({...newVariant, options: updatedOptions});
+      }
+    } else {
+      // Removing option from an existing variant in formData
+      const updatedVariants = [...formData.variants];
+      if (updatedVariants[variantIndex].options.length > 1) {
+        updatedVariants[variantIndex].options.splice(optionIndex, 1);
+        handleInputChange("variants", updatedVariants);
       }
     }
-  }, [isOpen, initialData, reset]);
+  };
 
-  // Auto-generate slug from name
-  const watchedName = watch('name');
-  useEffect(() => {
-    if (watchedName && !initialData) {
-      const slug = watchedName
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim();
-      setValue('slug', slug);
+  const updateVariantOption = (
+    variantIndex: number,
+    optionIndex: number,
+    field: string,
+    value: string | number
+  ) => {
+    if (variantIndex === -1) {
+      // Updating option in the new variant form
+      const updatedOptions = [...newVariant.options];
+      updatedOptions[optionIndex] = {
+        ...updatedOptions[optionIndex],
+        [field]: value,
+      };
+      setNewVariant({...newVariant, options: updatedOptions});
+    } else {
+      // Updating option in an existing variant in formData
+      const updatedVariants = [...formData.variants];
+      updatedVariants[variantIndex].options[optionIndex] = {
+        ...updatedVariants[variantIndex].options[optionIndex],
+        [field]: value,
+      };
+      handleInputChange("variants", updatedVariants);
     }
-  }, [watchedName, setValue, initialData]);
+  };
 
-  // Custom submit handler that only validates essential fields
-  const handleCustomSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const updateColorOption = (
+    variantIndex: number,
+    optionIndex: number,
+    colorField: 'colorCode' | 'colorImage',
+    value: string
+  ) => {
+    if (variantIndex === -1) {
+      // Updating color option in the new variant form
+      const updatedOptions = [...newVariant.options];
+      updatedOptions[optionIndex] = {
+        ...updatedOptions[optionIndex],
+        [colorField]: value,
+      };
+      setNewVariant({...newVariant, options: updatedOptions});
+    } else {
+      // Updating color option in an existing variant in formData
+      const updatedVariants = [...formData.variants];
+      updatedVariants[variantIndex].options[optionIndex] = {
+        ...updatedVariants[variantIndex].options[optionIndex],
+        [colorField]: value,
+      };
+      handleInputChange("variants", updatedVariants);
+    }
+  };
+
+  const addVariant = () => {
+    if (newVariant.name.trim() === "") return;
     
-    console.log('Form submission attempted');
-    
-    // Convert string values to numbers for validation and remove unsupported fields
-    const formData = getValues();
-    console.log('Raw form data:', formData);
-    
-    // Create minimal data with only essential fields
-    const processedData = {
-      name: formData.name,
-      price: formData.price ? Number(formData.price) : 0,
-      categoryId: formData.categoryId,
-      // Add only fields that have actual values (not empty strings or undefined)
-      ...(formData.description && formData.description.trim() && { description: formData.description }),
-      ...(formData.shortDescription && formData.shortDescription.trim() && { shortDescription: formData.shortDescription }),
-      ...(formData.sku && formData.sku.trim() && { sku: formData.sku }),
-      ...(formData.subCategoryId && formData.subCategoryId.trim() && { subCategoryId: formData.subCategoryId }),
-      ...(formData.brandId && formData.brandId.trim() && { brandId: formData.brandId }),
-      ...(formData.images && formData.images.length > 0 && { images: formData.images }),
-      ...(formData.tags && formData.tags.length > 0 && { tags: formData.tags }),
-      // Add pricing fields
-      ...(formData.comparePrice && formData.comparePrice > 0 && { comparePrice: Number(formData.comparePrice) }),
-      ...(formData.costPrice && formData.costPrice > 0 && { costPrice: Number(formData.costPrice) }),
-      ...(formData.margin && formData.margin > 0 && { margin: Number(formData.margin) }),
-      // Set defaults for required fields
-      quantity: formData.stock ? Number(formData.stock) : 0,
-      trackQuantity: formData.trackQuantity !== undefined ? formData.trackQuantity : true,
-      manageStock: formData.manageStock !== undefined ? formData.manageStock : true,
-      allowBackorder: formData.allowBackorder !== undefined ? formData.allowBackorder : false,
-      lowStockThreshold: formData.lowStockThreshold ? Number(formData.lowStockThreshold) : 5,
-      isActive: formData.isActive !== undefined ? formData.isActive : true,
-      isDigital: formData.isDigital !== undefined ? formData.isDigital : false,
-      isFeatured: formData.isFeatured !== undefined ? formData.isFeatured : false,
-      isNew: formData.isNew !== undefined ? formData.isNew : false,
-      isOnSale: formData.isOnSale !== undefined ? formData.isOnSale : false,
-      isBestSeller: formData.isBestSeller !== undefined ? formData.isBestSeller : false,
-      visibility: formData.visibility || 'VISIBLE',
-      requiresShipping: formData.requiresShipping !== undefined ? formData.requiresShipping : true,
-      freeShipping: formData.freeShipping !== undefined ? formData.freeShipping : false,
-      taxable: formData.taxable !== undefined ? formData.taxable : true,
-      // Arrays with defaults
-      videos: formData.videos || [],
-      seoKeywords: formData.seoKeywords || [],
-      // Include SEO object if present
-      ...(formData.seo && Object.keys(formData.seo).length > 0 && { 
-        seo: {
-          ...(formData.seo.ogTitle && { ogTitle: formData.seo.ogTitle }),
-          ...(formData.seo.ogDescription && { ogDescription: formData.seo.ogDescription }),
-          ...(formData.seo.ogImage && { ogImage: formData.seo.ogImage }),
-          ...(formData.seo.canonicalUrl && { canonicalUrl: formData.seo.canonicalUrl }),
-          ...(formData.seo.focusKeyword && { focusKeyword: formData.seo.focusKeyword }),
-        }
-      }),
-      // Include currencyPrices if present
-      ...(formData.currencyPrices && formData.currencyPrices.length > 0 && { 
-        currencyPrices: formData.currencyPrices.map((cp: any) => ({
-          country: cp.country,
-          price: Number(cp.price) || 0,
-          ...(cp.comparePrice && Number(cp.comparePrice) > 0 && { comparePrice: Number(cp.comparePrice) }),
-          minDeliveryDays: Number(cp.minDeliveryDays) || 1,
-          maxDeliveryDays: Number(cp.maxDeliveryDays) || 1,
-          isActive: cp.isActive !== undefined ? cp.isActive : true,
-        }))
-      }),
-      ...(formData.customFields && formData.customFields.length > 0 && {
-        customFields: formData.customFields.map((f: any) => ({
-          key: (f.key || '').trim(),
-          label: (f.label || '').trim(),
-          content: f.content || '',
-          isVisible: f.isVisible !== false,
-        })).filter((f: any) => f.key && f.label),
-      }),
+    const variantToAdd = {
+      id: Date.now().toString(),
+      name: newVariant.name,
+      options: newVariant.options,
     };
     
-    // Filter out empty strings and convert them to undefined
-    const cleanedData = Object.fromEntries(
-      Object.entries(processedData)
-        .filter(([key, value]) => value !== '') // Remove empty strings entirely
-        .map(([key, value]) => [key, value])
-    );
-    
-    console.log('Processed data being sent to API:', cleanedData);
-    
-    // Update form values with converted numbers
-    Object.keys(processedData).forEach(key => {
-      if (processedData[key] !== formData[key]) {
-        setValue(key, processedData[key]);
-      }
-    });
-    
-    // Only validate essential fields
-    const essentialFields = ['name', 'price', 'categoryId'];
-    const isValid = await trigger(essentialFields);
-    
-    console.log('Validation result:', isValid);
-    console.log('Form errors:', errors);
-    console.log('Processed form data:', cleanedData);
-    
-    if (isValid) {
-      console.log('Submitting cleaned form data:', cleanedData);
-      await onSubmit(cleanedData as any);
-    } else {
-      console.log('Validation failed, switching to Basic Info tab');
-      // Switch to Basic Info tab if validation fails
-      setActiveTab('basic');
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newImages: string[] = [];
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        newImages.push(result);
-        if (newImages.length === files.length) {
-          const currentImages = getValues('images');
-          setValue('images', [...currentImages, ...newImages]);
-          setPreviewImages([...currentImages, ...newImages]);
-        }
-      };
-      reader.readAsDataURL(file);
+    handleInputChange("variants", [...formData.variants, variantToAdd]);
+    setNewVariant({
+      name: "",
+      options: [{ id: Date.now().toString(), name: "", value: "", price: 0, comparePrice: 0, weight: 0, additionalCost: 0, stock: 0, colorCode: "", colorImage: "", height: 0, width: 0, length: 0, dimensionUnit: "cm" }],
     });
   };
 
-  const removeImage = (index: number) => {
-    const currentImages = getValues('images');
-    const newImages = currentImages.filter((_: any, i: any) => i !== index);
-    setValue('images', newImages);
-    setPreviewImages(newImages);
+  const removeVariant = (variantIndex: number) => {
+    const updatedVariants = [...formData.variants];
+    updatedVariants.splice(variantIndex, 1);
+    handleInputChange("variants", updatedVariants);
   };
 
-  const handleOgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setOgImagePreview(result);
-        setValue('seo.ogImage', result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const updateVariantName = (variantIndex: number, name: string) => {
+    const updatedVariants = [...formData.variants];
+    updatedVariants[variantIndex].name = name;
+    handleInputChange("variants", updatedVariants);
   };
 
-  const removeOgImage = () => {
-    setOgImagePreview('');
-    setValue('seo.ogImage', '');
-  };
-
-  const handleCanonicalUrlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setCanonicalUrlPreview(result);
-        setValue('seo.canonicalUrl', result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeCanonicalUrl = () => {
-    setCanonicalUrlPreview('');
-    setValue('seo.canonicalUrl', '');
-  };
-
-  const addTag = () => {
-    appendTag('');
-  };
-
-  const addKeyword = () => {
-    appendKeyword('');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   const tabs = [
-    { id: 'basic', label: 'Basic Info', icon: FileText },
-    { id: 'pricing', label: 'Pricing', icon: DollarSign },
-    { id: 'inventory', label: 'Inventory', icon: Package },
-    { id: 'media', label: 'Media', icon: Camera },
-    { id: 'seo', label: 'SEO', icon: Search },
-    { id: 'advanced', label: 'Advanced', icon: Settings },
+    { id: "basic", label: "Basic Info", icon: Package },
+    { id: "variants", label: "Variants", icon: Palette },
+    { id: "seo", label: "SEO", icon: Search },
+    { id: "pricing", label: "Multi-Currency Pricing", icon: DollarSign },
   ];
-
-  const mainCategories = useMemo(() => 
-    categories.filter((cat: any) => !cat.parentId), 
-    [categories]
-  );
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "spring", duration: 0.5 }}
+          className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+          initial={{ scale: 0.9, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
-            <div>
-              <h2 className="text-2xl font-bold text-black custom-font">
-                {initialData ? 'Edit Product' : 'Add New Product'}
-              </h2>
-              <p className="text-sm text-black mt-1 custom-font">
-                {initialData ? 'Update product information' : 'Create a new product for your store'}
-              </p>
-            </div>
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {initialData ? "Edit Product" : "Add New Product"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 bg-white">
-            <div className="flex overflow-x-auto">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors custom-font ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-black bg-blue-50'
-                        : 'border-transparent text-black hover:text-black hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 mr-2" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 overflow-x-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Form Content */}
-          <form onSubmit={handleCustomSubmit} className="flex-1 overflow-y-auto">
-            <div className="p-6 max-h-[60vh] overflow-y-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {/* Basic Info Tab */}
-                  {activeTab === 'basic' && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            Product Name *
-                          </label>
-                          <Controller
-                            name="name"
-                            control={control}
-                            render={({ field }) => (
-                              <input
-                                {...field}
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                placeholder="Enter product name"
-                              />
-                            )}
-                          />
-                          {errors.name && (
-                            <p className="text-red-500 text-sm mt-1 custom-font">{String(errors.name.message)}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            SKU *
-                          </label>
-                          <Controller
-                            name="sku"
-                            control={control}
-                            render={({ field }) => (
-                              <input
-                                {...field}
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                placeholder="Enter SKU"
-                              />
-                            )}
-                          />
-                          {errors.sku && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.sku.message)}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2 custom-font">
-                          Short Description *
-                        </label>
-                        <Controller
-                          name="shortDescription"
-                          control={control}
-                          render={({ field }) => (
-                            <textarea
-                              {...field}
-                              rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                              placeholder="Brief product description"
-                            />
-                          )}
-                        />
-                        {errors.shortDescription && (
-                          <p className="text-red-500 text-sm mt-1">{String(errors.shortDescription.message)}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2 custom-font">
-                          Full Description *
-                        </label>
-                        <Controller
-                          name="description"
-                          control={control}
-                          render={({ field }) => (
-                            <RichTextEditor
-                              value={field.value || ''}
-                              onChange={field.onChange}
-                              placeholder="Detailed product description"
-                              height={400}
-                              className="rounded-lg border border-gray-300"
-                            />
-                          )}
-                        />
-                        {errors.description && (
-                          <p className="text-red-500 text-sm mt-1">{String(errors.description.message)}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            Category *
-                          </label>
-                          <Controller
-                            name="categoryId"
-                            control={control}
-                            render={({ field }) => (
-                              <select
-                                {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                              >
-                                <option value="">Select Category</option>
-                                {mainCategories.map(category => (
-                                  <optgroup key={category.id} label={category.name}>
-                                    <option value={category.id}>
-                                      {category.name} {category._count && `(${category._count.products} products)`}
-                                    </option>
-                                    {category.children?.map((subcategory) => (
-                                      <option key={subcategory.id} value={subcategory.id}>
-                                        └─ {subcategory.name} {subcategory._count && `(${subcategory._count.products} products)`}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                ))}
-                              </select>
-                            )}
-                          />
-                          {errors.categoryId && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.categoryId.message)}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2">
-                            Sub-Category
-                          </label>
-                          <Controller
-                            name="subCategoryId"
-                            control={control}
-                            render={({ field }) => {
-                              const selectedCategoryId = watch('categoryId');
-                              const subCategories = selectedCategoryId 
-                                ? categories.find(cat => cat.id === selectedCategoryId)?.children || []
-                                : [];
-                              
-                              return (
-                                <select
-                                  {...field}
-                                  disabled={!selectedCategoryId}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                >
-                                  <option value="">
-                                    {selectedCategoryId ? 'Select Sub-Category' : 'Select a category first'}
-                                  </option>
-                                  {subCategories.map((subCategory) => (
-                                    <option key={subCategory.id} value={subCategory.id}>
-                                      {subCategory.name} {subCategory._count && `(${subCategory._count.products} products)`}
-                                    </option>
-                                  ))}
-                                </select>
-                              );
-                            }}
-                          />
-                          {errors.subCategoryId && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.subCategoryId.message)}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            Brand
-                          </label>
-                          <Controller
-                            name="brandId"
-                            control={control}
-                            render={({ field }) => (
-                              <select
-                                {...field}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                              >
-                                <option value="">Select Brand</option>
-                                {brands
-                                  .sort((a, b) => a.name.localeCompare(b.name))
-                                  .map((brand) => (
-                                    <option key={brand.id} value={brand.id}>
-                                      {brand.name} {brand.website && `(${brand.website})`}
-                                    </option>
-                                  ))}
-                              </select>
-                            )}
-                          />
-                          {errors.brandId && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.brandId.message)}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2">
-                          Tags
-                        </label>
-                        <div className="space-y-2">
-                          {tagFields.map((field, index) => (
-                            <div key={field.id} className="flex gap-2">
-                              <Controller
-                                name={`tags.${index}`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="text"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black"
-                                    placeholder="Enter tag"
-                                  />
-                                )}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeTag(index)}
-                                className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={addTag}
-                            className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Plus className="w-5 h-5 mr-1" />
-                            Add Tag
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Custom Sections (moved to Step 1 - Basic Info) */}
-                      <div className="border-t pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-medium text-black custom-font">Custom Sections</h3>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: '', label: '', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              Add Section
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'ingredients', label: 'Ingredients', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              + Ingredients
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'disclaimer', label: 'Disclaimer', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              + Disclaimer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'materialsCare', label: 'Materials & Care', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              + Materials & Care
-                            </button>
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+            <div className="p-6">
+              {/* Basic Information Tab */}
+              {activeTab === "basic" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        placeholder="Enter product name"
+                      />
                     </div>
-                        </div>
-
-                        {customFieldFields.length === 0 ? (
-                          <p className="text-sm text-black custom-font">No custom sections added yet.</p>
-                        ) : (
-                          <div className="space-y-4">
-                            {customFieldFields.map((field, index) => (
-                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4 className="text-sm font-medium text-black custom-font">Section {index + 1}</h4>
-                                  <button type="button" onClick={() => removeCustomField(index)} className="text-red-600 hover:text-red-700 p-1">
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Key</label>
-                                    <Controller
-                                      name={`customFields.${index}.key`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="e.g., ingredients, disclaimer, materialsCare" />
-                                      )}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Label</label>
-                                    <Controller
-                                      name={`customFields.${index}.label`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="Display title" />
-                                      )}
-                                    />
-                                  </div>
-                                  <div className="flex items-center mt-6">
-                                    <Controller
-                                      name={`customFields.${index}.isVisible`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <label className="flex items-center">
-                                          <input {...field} type="checkbox" checked={field.value ?? true} className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-                                          <span className="ml-2 text-sm text-black custom-font">Visible</span>
-                                        </label>
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="mt-3">
-                                  <label className="block text-sm font-medium text-black mb-1 custom-font">Content</label>
-                                  <Controller
-                                    name={`customFields.${index}.content`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <RichTextEditor value={field.value || ''} onChange={field.onChange} placeholder="Enter section content" height={200} className="rounded-lg border border-gray-300" />
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Code (SKU) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.sku}
+                        onChange={(e) => handleInputChange("sku", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        placeholder="Enter SKU"
+                      />
                     </div>
-                  )}
+                  </div>
 
-                  {/* Pricing Tab */}
-                  {activeTab === 'pricing' && (
-                    <div className="space-y-6">
-                      {/* Multi-Currency Pricing */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="flex items-center text-lg font-medium text-black custom-font">
-                              <Globe className="w-6 h-6 mr-2 text-blue-600" />
-                              International Pricing
-                        </h3>
-                            <p className="text-sm text-black mt-1 custom-font">
-                              Set different prices and delivery days for different countries
-                            </p>
-                          </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Description *
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleInputChange("description", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      placeholder="Detailed product description"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category *
+                      </label>
+                      <select
+                        required
+                        value={formData.categoryId}
+                        onChange={(e) =>
+                          handleInputChange("categoryId", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}{" "}
+                            {category._count &&
+                              `(${category._count.products} products)`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sub-Category
+                      </label>
+                      <select
+                        value={formData.subCategoryId}
+                        onChange={(e) =>
+                          handleInputChange("subCategoryId", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        disabled={!formData.categoryId}
+                      >
+                        <option value="">Select Sub-Category</option>
+                        {subCategories.map((subcategory) => (
+                          <option key={subcategory.id} value={subcategory.id}>
+                            {subcategory.name}{" "}
+                            {subcategory._count &&
+                              `(${subcategory._count.products} products)`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Brand
+                      </label>
+                      <select
+                        value={formData.brandId}
+                        onChange={(e) =>
+                          handleInputChange("brandId", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      >
+                        <option value="">Select Brand</option>
+                        {filteredBrands.map((brand) => (
+                          <option key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tags
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formData.tags.map((tag: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                        >
+                          {tag}
                           <button
                             type="button"
-                            onClick={() => appendCurrencyPrice({ 
-                              country: '', 
-                              price: 0, 
-                              comparePrice: 0, 
-                              minDeliveryDays: 1,
-                              maxDeliveryDays: 1,
-                              isActive: true 
-                            })}
-                            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                            onClick={() =>
+                              handleArrayChange("tags", tag, "remove")
+                            }
+                            className="ml-2 text-blue-600 hover:text-blue-800"
                           >
-                            <Plus className="w-5 h-5 mr-1" />
-                            Add Country Price
+                            <X className="w-3 h-3" />
                           </button>
-                        </div>
-                        
-                        {currencyPriceFields.length > 0 ? (
-                          <div className="space-y-4">
-                            {currencyPriceFields.map((field, index) => (
-                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h4 className="text-sm font-medium text-black custom-font">Country Pricing {index + 1}</h4>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeCurrencyPrice(index)}
-                                    className="text-red-600 hover:text-red-700 p-1"
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                          <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Country *
-                            </label>
-                            <Controller
-                                      name={`currencyPrices.${index}.country`}
-                              control={control}
-                              render={({ field }) => (
-                                        <select
-                                  {...field}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                        >
-                                          <option value="">Select Country</option>
-                                          <option value="Australia">Australia</option>
-                                          <option value="USA">United States</option>
-                                          <option value="UK">United Kingdom</option>
-                                          <option value="Canada">Canada</option>
-                                          <option value="India">India</option>
-                                          <option value="China">China</option>
-                                          <option value="Japan">Japan</option>
-                                          <option value="Singapore">Singapore</option>
-                                          <option value="UAE">UAE</option>
-                                          <option value="Europe">Europe</option>
-                                          <option value="Nepal">Nepal</option>
-                                          <option value="Bangladesh">Bangladesh</option>
-                                          <option value="Pakistan">Pakistan</option>
-                                          <option value="Sri Lanka">Sri Lanka</option>
-                                        </select>
-                                      )}
-                                    />
-                                  </div>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        placeholder="Enter tag"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (newTag.trim()) {
+                              handleArrayChange("tags", newTag.trim(), "add");
+                              setNewTag("");
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newTag.trim()) {
+                            handleArrayChange("tags", newTag.trim(), "add");
+                            setNewTag("");
+                          }
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Price *
-                                    </label>
-                                    <Controller
-                                      name={`currencyPrices.${index}.price`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                          value={field.value ?? ''}
-                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Compare Price
-                            </label>
-                            <Controller
-                                      name={`currencyPrices.${index}.comparePrice`}
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                          value={field.value ?? ''}
-                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                      </div>
-
-                          <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Min Delivery Days *
-                            </label>
-                            <Controller
-                                      name={`currencyPrices.${index}.minDeliveryDays`}
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                          min="1"
-                                          value={field.value ?? ''}
-                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="e.g., 3"
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Max Delivery Days *
-                            </label>
-                            <Controller
-                                      name={`currencyPrices.${index}.maxDeliveryDays`}
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                          min="1"
-                                          value={field.value ?? ''}
-                                          onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="e.g., 7"
-                                />
-                              )}
-                            />
-                        </div>
-                      </div>
-
-                                <div className="mt-3 flex items-center">
-                            <Controller
-                                    name={`currencyPrices.${index}.isActive`}
-                              control={control}
-                              render={({ field }) => (
-                                      <label className="flex items-center">
-                                <input
-                                  {...field}
-                                          type="checkbox"
-                                          checked={field.value}
-                                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <span className="ml-2 text-sm text-black custom-font">Active country pricing</span>
-                                      </label>
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-black bg-gray-50 rounded-lg">
-                            <Globe className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p className="text-sm custom-font">No international pricing added yet</p>
-                            <p className="text-xs text-black custom-font">Add prices and delivery days for different countries</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Color & Size Variants (for Clothing) */}
-                      <div className="border-t pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="flex items-center text-lg font-medium text-black custom-font">
-                              <Package className="w-6 h-6 mr-2 text-blue-600" />
-                              Color & Size Variants
-                            </h3>
-                            <p className="text-sm text-black mt-1 custom-font">
-                              Add color and size options for clothing products
-                            </p>
-                          </div>
-                          </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* Color Variants */}
-                          <div>
-                            <label className="block text-sm font-medium text-black mb-2 custom-font">
-                              Colors *
-                            </label>
-                            <div className="space-y-2">
-                              {variantFields
-                                .filter((_, idx) => watch(`variants.${idx}.name`) === 'Color')
-                                .map((field, idx) => {
-                                  const actualIndex = variantFields.findIndex((f, i) => watch(`variants.${i}.name`) === 'Color' && idx === variantFields.slice(0, i + 1).filter((_, j) => watch(`variants.${j}.name`) === 'Color').length - 1);
-                                  if (actualIndex === -1) return null;
-                                  return (
-                                    <div key={field.id} className="flex items-center gap-2">
-                            <Controller
-                                        name={`variants.${actualIndex}.value`}
-                              control={control}
-                                        render={({ field: colorField }) => (
-                                <input
-                                            {...colorField}
-                                            type="text"
-                                            placeholder="Color name (e.g., Red, Blue)"
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font"
-                                />
-                              )}
-                            />
-                                      <input
-                                        type="color"
-                                        className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
-                                        onChange={(e) => {
-                                          const colorName = watch(`variants.${actualIndex}.value`) || e.target.value;
-                                          setValue(`variants.${actualIndex}.value`, colorName);
-                                        }}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => removeVariant(actualIndex)}
-                                        className="text-red-600 hover:text-red-700 p-1"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              <button
-                                type="button"
-                                onClick={() => appendVariant({ 
-                                  name: 'Color', 
-                                  value: '', 
-                                  price: 0, 
-                                  comparePrice: 0, 
-                                  costPrice: 0, 
-                                  sku: '',
-                                  weight: 0,
-                                  isActive: true 
-                                })}
-                                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors custom-font"
-                              >
-                                <Plus className="w-4 h-4 inline mr-1" />
-                                Add Color
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Size Variants */}
-                          <div>
-                            <label className="block text-sm font-medium text-black mb-2 custom-font">
-                              Sizes *
-                            </label>
-                            <div className="space-y-2">
-                              {variantFields
-                                .filter((_, idx) => watch(`variants.${idx}.name`) === 'Size')
-                                .map((field, idx) => {
-                                  const actualIndex = variantFields.findIndex((f, i) => watch(`variants.${i}.name`) === 'Size' && idx === variantFields.slice(0, i + 1).filter((_, j) => watch(`variants.${j}.name`) === 'Size').length - 1);
-                                  if (actualIndex === -1) return null;
-                                  return (
-                                    <div key={field.id} className="flex items-center gap-2">
-                                      <Controller
-                                        name={`variants.${actualIndex}.value`}
-                                        control={control}
-                                        render={({ field: sizeField }) => (
-                                          <select
-                                            {...sizeField}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font"
-                                          >
-                                            <option value="">Select Size</option>
-                                            <option value="XS">XS - Extra Small</option>
-                                            <option value="S">S - Small</option>
-                                            <option value="M">M - Medium</option>
-                                            <option value="L">L - Large</option>
-                                            <option value="XL">XL - Extra Large</option>
-                                            <option value="XXL">XXL - Extra Extra Large</option>
-                                            <option value="XXXL">XXXL - Extra Extra Extra Large</option>
-                                          </select>
-                                        )}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => removeVariant(actualIndex)}
-                                        className="text-red-600 hover:text-red-700 p-1"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              <button
-                                type="button"
-                                onClick={() => appendVariant({ 
-                                  name: 'Size', 
-                                  value: '', 
-                                  price: 0, 
-                                  comparePrice: 0, 
-                                  costPrice: 0, 
-                                  sku: '',
-                                  weight: 0,
-                                  isActive: true 
-                                })}
-                                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors custom-font"
-                              >
-                                <Plus className="w-4 h-4 inline mr-1" />
-                                Add Size
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Color & Size Combinations with Pricing */}
-                        {(variantFields.some((_, idx) => watch(`variants.${idx}.name`) === 'Color') && 
-                          variantFields.some((_, idx) => watch(`variants.${idx}.name`) === 'Size')) && (
-                          <div className="mt-6">
-                            <h4 className="text-sm font-medium text-black mb-3 custom-font">
-                              Color & Size Combinations
-                            </h4>
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <p className="text-sm text-blue-800 custom-font">
-                                Price combinations will be created automatically. Each color-size combination can have its own price, SKU, and stock.
-                            </p>
-                          </div>
-                        </div>
-                        )}
-                      </div>
-
-                      {/* Generic Variant Pricing */}
-                      <div className="border-t pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="flex items-center text-lg font-medium text-black custom-font">
-                            <Package className="w-6 h-6 mr-2 text-blue-600" />
-                            Generic Variant Pricing
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={() => appendVariant({ 
-                              name: '', 
-                              price: 0, 
-                              comparePrice: 0, 
-                              costPrice: 0, 
-                              sku: '',
-                              weight: 0,
-                              isActive: true 
-                            })}
-                            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                          >
-                            <Plus className="w-5 h-5 mr-1" />
-                            Add Variant
-                          </button>
-                        </div>
-                        
-                        {variantFields.length > 0 ? (
-                          <div className="space-y-4">
-                            {variantFields.map((field, index) => (
-                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h4 className="text-sm font-medium text-black custom-font">Variant {index + 1}</h4>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeVariant(index)}
-                                    className="text-red-600 hover:text-red-700 p-1"
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Variant Name *
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.name`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="e.g., 500gm, 1kg, 2kg"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Price (NPR) *
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.price`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="0.00"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Compare Price (NPR)
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.comparePrice`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="0.00"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Cost Price (NPR)
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.costPrice`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="0.00"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      SKU
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.sku`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="Variant SKU"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                  
-                                  <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">
-                                      Weight (kg)
-                                    </label>
-                                    <Controller
-                                      name={`variants.${index}.weight`}
-                                      control={control}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                          placeholder="0.00"
-                                        />
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                                
-                                <div className="mt-3 flex items-center">
-                                  <Controller
-                                    name={`variants.${index}.isActive`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <label className="flex items-center">
-                                        <input
-                                          {...field}
-                                          type="checkbox"
-                                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <span className="ml-2 text-sm text-black custom-font">Active variant</span>
-                                      </label>
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-black">
-                            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p className="text-sm custom-font">No variants added yet</p>
-                            <p className="text-xs text-black custom-font">Add variants to offer different sizes or quantities</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Order Quantity Limits */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
-                          <ShoppingCart className="w-6 h-6 mr-2 text-blue-600" />
-                          Order Quantity Limits
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <Minus className="w-5 h-5 mr-2 text-blue-600" />
-                              Minimum Order Quantity
-                            </label>
-                            <Controller
-                              name="minOrderQuantity"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={field.value ?? ''}
-                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                  placeholder="1"
-                                />
-                              )}
-                            />
-                            {errors.minOrderQuantity && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.minOrderQuantity.message)}</p>
-                            )}
-                            <p className="text-xs text-black mt-1 custom-font">
-                              Minimum quantity customers must order
-                            </p>
-                          </div>
-
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <Plus className="w-5 h-5 mr-2 text-blue-600" />
-                              Maximum Order Quantity
-                            </label>
-                            <Controller
-                              name="maxOrderQuantity"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={field.value ?? ''}
-                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black placeholder:text-black custom-font"
-                                  placeholder="999"
-                                />
-                              )}
-                            />
-                            {errors.maxOrderQuantity && (
-                              <p className="text-red-500 text-sm mt-1">{String(errors.maxOrderQuantity.message)}</p>
-                            )}
-                            <p className="text-xs text-black mt-1 custom-font">
-                              Maximum quantity customers can order
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                          </div>
-                  )}
-
-                  {/* Inventory Tab */}
-                  {activeTab === 'inventory' && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Variants Tab */}
+              {activeTab === "variants" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Variants</h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Create variants for your product such as color, size, or custom options
+                    </p>
+                    
+                    {/* Add New Variant */}
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+                      <h4 className="text-md font-medium text-gray-900 mb-3">Add New Variant Type</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            Stock Quantity *
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Variant Type Name
                           </label>
-                          <Controller
-                            name="stock"
-                            control={control}
-                            render={({ field }) => (
-                              <input
-                                type="number"
-                                min="0"
-                                value={field.value ?? ''}
-                                onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="0"
-                              />
-                            )}
+                          <input
+                            type="text"
+                            value={newVariant.name}
+                            onChange={(e) => setNewVariant({...newVariant, name: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                            placeholder="Enter variant type name (e.g., Color, Size, Dimensions)"
                           />
-                          {errors.stock && (
-                            <p className="text-red-500 text-sm mt-1 custom-font">{String(errors.stock.message)}</p>
-                          )}
                         </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-black mb-2 custom-font">
-                            Weight (kg)
-                          </label>
-                          <Controller
-                            name="weight"
-                            control={control}
-                            render={({ field }) => (
+                      </div>
+                      
+                      {/* Variant Options */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Variant Options
+                        </label>
+                        {newVariant.options.map((option, optionIndex) => (
+                          <div key={option.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <div>
+                              <input
+                                type="text"
+                                value={option.name}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].name = e.target.value;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="e.g., Red, Large, 16GB"
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="text"
+                                value={option.value}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].value = e.target.value;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="e.g., #FF0000, 100cm, 16GB RAM"
+                              />
+                            </div>
+                            <div>
                               <input
                                 type="number"
                                 step="0.01"
-                                min="0"
-                                value={field.value ?? ''}
-                                onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="0.00"
+                                value={option.price}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].price = parseFloat(e.target.value) || 0;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="Variant price (optional)"
                               />
-                            )}
-                          />
-                          {errors.weight && (
-                            <p className="text-red-500 text-sm mt-1">{String(errors.weight.message)}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-lg font-medium text-black mb-4 custom-font">Dimensions (cm)</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-black mb-2 custom-font">
-                              Length
-                            </label>
-                            <Controller
-                              name="dimensions.length"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={field.value ?? ''}
-                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-black mb-2 custom-font">
-                              Width
-                            </label>
-                            <Controller
-                              name="dimensions.width"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={field.value ?? ''}
-                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-black mb-2 custom-font">
-                              Height
-                            </label>
-                            <Controller
-                              name="dimensions.height"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={field.value ?? ''}
-                                  onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                  placeholder="0.00"
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Media Tab */}
-                  {activeTab === 'media' && (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2 custom-font">
-                          Product Images *
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                          {previewImages.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              {previewImages.map((image, index) => (
-                                <div key={index} className="relative group">
-                                  <Image
-                                    src={image}
-                                    alt={`Preview ${index + 1}`}
-                                    width={150}
-                                    height={150}
-                                    className="w-full h-32 object-cover rounded-lg"
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={option.comparePrice}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].comparePrice = parseFloat(e.target.value) || 0;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="Compare price (optional)"
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={option.weight}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].weight = parseFloat(e.target.value) || 0;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="Weight in kg (optional)"
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                value={option.additionalCost}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].additionalCost = parseFloat(e.target.value) || 0;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="Additional cost"
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="number"
+                                value={option.stock}
+                                onChange={(e) => {
+                                  const updatedOptions = [...newVariant.options];
+                                  updatedOptions[optionIndex].stock = parseInt(e.target.value) || 0;
+                                  setNewVariant({...newVariant, options: updatedOptions});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                placeholder="Stock"
+                              />
+                            </div>
+                            <div className="flex items-center">
+                              {newVariant.name.toLowerCase() === 'color' ? (
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="color"
+                                    value={option.colorCode || '#ffffff'}
+                                    onChange={(e) => updateColorOption(-1, optionIndex, 'colorCode', e.target.value)}
+                                    className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
                                   />
                                   <button
                                     type="button"
-                                    onClick={() => removeImage(index)}
-                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => removeVariantOption(-1, optionIndex)}
+                                    className="p-2 text-red-600 hover:text-red-800"
+                                    disabled={newVariant.options.length <= 1}
                                   >
-                                    <X className="w-5 h-5" />
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
-                              ))}
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariantOption(-1, optionIndex)}
+                                  className="p-2 text-red-600 hover:text-red-800"
+                                  disabled={newVariant.options.length <= 1}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
-                          ) : (
-                            <div className="space-y-4">
-                              <Upload className="w-12 h-12 text-gray-400 mx-auto" />
-                              <p className="text-black custom-font">Upload product images</p>
-                            </div>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            id="image-upload"
-                          />
-                          <label
-                            htmlFor="image-upload"
-                            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font"
-                          >
-                            Choose Images
-                          </label>
-                        </div>
-                        {errors.images && (
-                          <p className="text-red-500 text-sm mt-1">{String(errors.images.message)}</p>
-                        )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addVariantOption(-1)} // -1 indicates we're adding to new variant
+                          className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Add Option
+                        </button>
                       </div>
+                      
+                      <button
+                        type="button"
+                        onClick={addVariant}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        disabled={!newVariant.name.trim()}
+                      >
+                        <Plus className="w-4 h-4 mr-1 inline" />
+                        Add Variant Type
+                      </button>
+                      {!newVariant.name.trim() && (
+                        <p className="text-xs text-gray-500 mt-1">Enter a variant type name to enable this button</p>
+                      )}
                     </div>
-                  )}
-
-                  {/* SEO Tab */}
-                  {activeTab === 'seo' && (
-                    <div className="space-y-6">
-                      {/* Slug Field */}
-                      <div>
-                        <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                          <Link className="w-5 h-5 mr-2 text-blue-600" />
-                          URL Slug *
-                        </label>
-                        <Controller
-                          name="slug"
-                          control={control}
-                          render={({ field }) => (
-                            <div>
-                              <input
-                                {...field}
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="product-url-slug"
-                              />
-                              <p className="text-xs text-black mt-1 custom-font">
-                                URL-friendly version of the product name. Only lowercase letters, numbers, and hyphens allowed.
-                              </p>
-                            </div>
-                          )}
-                        />
-                        {errors.slug && (
-                          <p className="text-red-500 text-sm mt-1">{String(errors.slug.message)}</p>
-                        )}
-                      </div>
-
-                      {/* SEO Title */}
-                      <div>
-                        <label className="flex items-center text-sm font-medium text-black mb-2">
-                          <Search className="w-5 h-5 mr-2 text-blue-600" />
-                          SEO Title
-                        </label>
-                        <Controller
-                          name="seo.title"
-                          control={control}
-                          render={({ field }) => (
-                            <div>
-                              <input
-                                {...field}
-                                type="text"
-                                maxLength={60}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="SEO optimized title"
-                              />
-                              <p className="text-xs text-black mt-1 custom-font">
-                                {field.value?.length || 0}/60 characters. Recommended: 50-60 characters for optimal search results display.
-                              </p>
-                            </div>
-                          )}
-                        />
-                        {(errors.seo as any)?.title && (
-                          <p className="text-red-500 text-sm mt-1">{String((errors.seo as any)?.title?.message)}</p>
-                        )}
-                      </div>
-
-                      {/* SEO Description */}
-                      <div>
-                        <label className="flex items-center text-sm font-medium text-black mb-2">
-                          <Hash className="w-5 h-5 mr-2 text-blue-600" />
-                          Meta Description
-                        </label>
-                        <Controller
-                          name="seo.description"
-                          control={control}
-                          render={({ field }) => (
-                            <div>
-                              <textarea
-                                {...field}
-                                rows={3}
-                                maxLength={160}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="SEO optimized description that appears in search results"
-                              />
-                              <p className="text-xs text-black mt-1 custom-font">
-                                {field.value?.length || 0}/160 characters. Recommended: 150-160 characters for optimal search results display.
-                              </p>
-                            </div>
-                          )}
-                        />
-                        {(errors.seo as any)?.description && (
-                          <p className="text-red-500 text-sm mt-1">{String((errors.seo as any)?.description?.message)}</p>
-                        )}
-                      </div>
-
-                      {/* SEO Keywords */}
-                      <div>
-                        <label className="flex items-center text-sm font-medium text-black mb-2">
-                          <Hash className="w-5 h-5 mr-2 text-blue-600" />
-                          Meta Keywords
-                        </label>
-                        <div className="space-y-2">
-                          {keywordFields.map((field, index) => (
-                            <div key={field.id} className="flex gap-2">
-                              <Controller
-                                name={`seo.keywords.${index}`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="text"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                    placeholder="Enter keyword"
-                                  />
-                                )}
-                              />
+                    
+                    {/* Existing Variants */}
+                    {formData.variants.length > 0 ? (
+                      <div className="space-y-4">
+                        {formData.variants.map((variant: Variant, variantIndex: number) => (
+                          <div key={variant.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="text-md font-medium text-gray-900">
+                                {variant.name}
+                              </h4>
                               <button
                                 type="button"
-                                onClick={() => removeKeyword(index)}
-                                className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                onClick={() => removeVariant(variantIndex)}
+                                className="text-red-600 hover:text-red-800"
                               >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={addKeyword}
-                            className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors custom-font"
-                          >
-                            <Plus className="w-5 h-5 mr-1" />
-                            Add Keyword
-                          </button>
-                          <p className="text-xs text-black custom-font">
-                            Add relevant keywords that describe your product. Maximum 10 keywords recommended.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Open Graph Fields */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
-                          <Globe className="w-5 h-5 mr-2 text-blue-600" />
-                          Open Graph (Social Media)
-                        </h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <Search className="w-5 h-5 mr-2 text-blue-600" />
-                              OG Title
-                            </label>
-                            <Controller
-                              name="seo.ogTitle"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="text"
-                                  maxLength={60}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                  placeholder="Title for social media sharing"
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <ImageIcon className="w-5 h-5 mr-2 text-blue-600" />
-                              OG Image
-                            </label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                              {ogImagePreview ? (
-                                <div className="relative group">
-                                  <Image
-                                    src={ogImagePreview}
-                                    alt="OG Image Preview"
-                                    width={300}
-                                    height={300}
-                                    className="w-full h-48 object-cover rounded-lg"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={removeOgImage}
-                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="text-center py-6">
-                                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                                  <p className="text-black custom-font text-sm mb-2">Upload OG Image</p>
-                                  <p className="text-xs text-black custom-font">Recommended: 1200x630px</p>
-                                </div>
-                              )}
+                            
+                            <div className="mb-3">
                               <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleOgImageUpload}
-                                className="hidden"
-                                id="og-image-upload"
+                                type="text"
+                                value={variant.name}
+                                onChange={(e) => updateVariantName(variantIndex, e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 mb-3"
+                                placeholder="Variant type name"
                               />
-                              <label
-                                htmlFor="og-image-upload"
-                                className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font text-sm"
-                              >
-                                {ogImagePreview ? 'Change Image' : 'Choose Image'}
-                              </label>
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                            <Hash className="w-5 h-5 mr-2 text-blue-600" />
-                            OG Description
-                          </label>
-                          <Controller
-                            name="seo.ogDescription"
-                            control={control}
-                            render={({ field }) => (
-                              <textarea
-                                {...field}
-                                rows={2}
-                                maxLength={160}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                placeholder="Description for social media sharing"
-                              />
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Additional SEO Fields */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-black mb-4 custom-font">
-                          <Target className="w-6 h-6 mr-2 text-blue-600" />
-                          Additional SEO
-                        </h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <ExternalLink className="w-5 h-5 mr-2 text-blue-600" />
-                              Canonical URL
-                            </label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                              {canonicalUrlPreview ? (
-                                <div className="relative group">
-                                  <Image
-                                    src={canonicalUrlPreview}
-                                    alt="Canonical URL Preview"
-                                    width={300}
-                                    height={300}
-                                    className="w-full h-48 object-cover rounded-lg"
+                            
+                            {variant.options.map((option: VariantOption, optionIndex: number) => (
+                              <div key={option.id} className="grid grid-cols-1 md:grid-cols-7 gap-3 mb-3">
+                                <div className="md:col-span-2">
+                                  <input
+                                    type="text"
+                                    value={option.name}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "name", e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="e.g., Red, Large, 16GB"
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={removeCanonicalUrl}
-                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
-                          </div>
-                              ) : (
-                                <div className="text-center py-6">
-                                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                                  <p className="text-black custom-font text-sm mb-2">Upload Canonical URL Image</p>
-                                  <p className="text-xs text-black custom-font">Recommended: 1200x630px</p>
-                    </div>
-                  )}
-                                <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleCanonicalUrlUpload}
-                                className="hidden"
-                                id="canonical-url-upload"
-                              />
-                              <label
-                                htmlFor="canonical-url-upload"
-                                className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors custom-font text-sm"
-                              >
-                                {canonicalUrlPreview ? 'Change Image' : 'Choose Image'}
-                            </label>
-                        </div>
-                          </div>
-
-                          <div>
-                            <label className="flex items-center text-sm font-medium text-black mb-2 custom-font">
-                              <Target className="w-5 h-5 mr-2 text-blue-600" />
-                              Focus Keyword
-                            </label>
-                            <Controller
-                              name="seo.focusKeyword"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  {...field}
-                                  type="text"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
-                                  placeholder="Primary keyword for this product"
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-
-                  {/* Status and Advanced Options */}
-                  {activeTab === 'advanced' && (
-                    <div className="space-y-6">
-                      {/* Custom Sections */}
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-medium text-black custom-font">Custom Sections</h3>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'ingredients', label: 'Ingredients', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              Add Ingredients
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'disclaimer', label: 'Disclaimer', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              Add Disclaimer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => appendCustomField({ key: 'materialsCare', label: 'Materials & Care', content: '', isVisible: true })}
-                              className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors custom-font"
-                            >
-                              Add Materials & Care
-                            </button>
-                        </div>
-                      </div>
-
-                        {customFieldFields.length === 0 ? (
-                          <p className="text-sm text-black custom-font">No custom sections added yet.</p>
-                        ) : (
-                          <div className="space-y-4">
-                            {customFieldFields.map((field, index) => (
-                              <div key={field.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4 className="text-sm font-medium text-black custom-font">Section {index + 1}</h4>
-                                  <button type="button" onClick={() => removeCustomField(index)} className="text-red-600 hover:text-red-700 p-1">
-                                    <X className="w-5 h-5" />
-                                  </button>
-                          </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Key</label>
-                            <Controller
-                                      name={`customFields.${index}.key`}
-                              control={control}
-                              render={({ field }) => (
-                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="ingredients | disclaimer | materialsCare" />
-                                      )}
-                                    />
-                          </div>
-                            <div>
-                                    <label className="block text-sm font-medium text-black mb-1 custom-font">Label</label>
-                              <Controller
-                                      name={`customFields.${index}.label`}
-                                control={control}
-                                render={({ field }) => (
-                                        <input {...field} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none text-black custom-font" placeholder="Display title" />
-                                      )}
-                                    />
-                            </div>
-                                  <div className="flex items-center mt-6">
-                              <Controller
-                                      name={`customFields.${index}.isVisible`}
-                                control={control}
-                                render={({ field }) => (
-                                        <label className="flex items-center">
-                                          <input {...field} type="checkbox" checked={field.value ?? true} className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-                                          <span className="ml-2 text-sm text-black custom-font">Visible</span>
-                                        </label>
-                                      )}
-                                    />
-                            </div>
-                          </div>
-
-                                <div className="mt-3">
-                                  <label className="block text-sm font-medium text-black mb-1 custom-font">Content</label>
-                            <Controller
-                                    name={`customFields.${index}.content`}
-                              control={control}
-                              render={({ field }) => (
-                                      <RichTextEditor value={field.value || ''} onChange={field.onChange} placeholder="Enter section content" height={200} className="rounded-lg border border-gray-300" />
-                              )}
-                            />
-                          </div>
-                        </div>
+                                </div>
+                                <div>
+                                  <input
+                                    type="text"
+                                    value={option.value}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "value", e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="e.g., #FF0000, 100cm, 16GB RAM"
+                                  />
+                                </div>
+                                <div>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={option.price}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "price", parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="Variant price (optional)"
+                                  />
+                                </div>
+                                <div>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={option.comparePrice}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "comparePrice", parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="Compare price (optional)"
+                                  />
+                                </div>
+                                <div>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={option.weight}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "weight", parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="Weight in kg (optional)"
+                                  />
+                                </div>
+                                <div>
+                                  <input
+                                    type="number"
+                                    value={option.additionalCost}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "additionalCost", parseFloat(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="Cost"
+                                  />
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="number"
+                                    value={option.stock}
+                                    onChange={(e) => updateVariantOption(variantIndex, optionIndex, "stock", parseInt(e.target.value) || 0)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                    placeholder="Stock"
+                                  />
+                                  {variant.name.toLowerCase() === 'color' ? (
+                                    <div className="flex items-center space-x-2 ml-2">
+                                      <input
+                                        type="color"
+                                        value={option.colorCode || '#ffffff'}
+                                        onChange={(e) => updateColorOption(variantIndex, optionIndex, 'colorCode', e.target.value)}
+                                        className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeVariantOption(variantIndex, optionIndex)}
+                                        className="p-2 text-red-600 hover:text-red-800"
+                                        disabled={variant.options.length <= 1}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeVariantOption(variantIndex, optionIndex)}
+                                      className="ml-2 p-2 text-red-600 hover:text-red-800"
+                                      disabled={variant.options.length <= 1}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             ))}
-                    </div>
-                  )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2 custom-font">
-                          Status *
-                        </label>
-                        <Controller
-                          name="status"
-                          control={control}
-                          render={({ field }) => (
-                            <select
-                              {...field}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-black custom-font"
+                            
+                            <button
+                              type="button"
+                              onClick={() => addVariantOption(variantIndex)}
+                              className="flex items-center text-sm text-blue-600 hover:text-blue-800"
                             >
-                              <option value="draft">Draft</option>
-                              <option value="active">Active</option>
-                              <option value="archived">Archived</option>
-                            </select>
-                          )}
-                        />
-                        {errors.status && (
-                          <p className="text-red-500 text-sm mt-1">{String(errors.status.message)}</p>
-                        )}
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Option
+                            </button>
+                          </div>
+                        ))}
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-black custom-font">Product Options</h3>
-                          <div className="space-y-3">
-                            <Controller
-                              name="isActive"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-black custom-font">Active</span>
-                                </label>
-                              )}
-                            />
-                            <Controller
-                              name="isFeatured"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-black custom-font">Featured</span>
-                                </label>
-                              )}
-                            />
-                            <Controller
-                              name="isDigital"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-black custom-font">Digital Product</span>
-                                </label>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h3 className="text-lg font-medium text-black custom-font">Inventory Options</h3>
-                          <div className="space-y-3">
-                            <Controller
-                              name="trackQuantity"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-black custom-font">Track Quantity</span>
-                                </label>
-                              )}
-                            />
-                            <Controller
-                              name="allowBackorder"
-                              control={control}
-                              render={({ field }) => (
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-black custom-font">Allow Backorder</span>
-                                </label>
-                              )}
-                            />
-                          </div>
-                        </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
+                        <Palette className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <p>No variants added yet</p>
+                        <p className="text-sm">Add variants like color, size, or custom options above</p>
                       </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* SEO Tab */}
+              {activeTab === "seo" && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      SEO Title *
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={60}
+                      value={formData.seoTitle}
+                      onChange={(e) =>
+                        handleInputChange("seoTitle", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      placeholder="SEO optimized title (max 60 characters)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.seoTitle?.length || 0}/60 characters. Recommended: 50-60
+                      characters
+                    </p>
+                  </div>
 
-                      {/* Promotional Flags */}
-                      <div className="border-t pt-6">
-                        <h3 className="flex items-center text-lg font-medium text-black mb-4">
-                          <Star className="w-5 h-5 mr-2 text-blue-600" />
-                          Promotional Flags
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <div className="flex items-center">
-                              <Controller
-                                name="isTodaysBestDeal"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Flame className="w-4 h-4 mr-2 text-orange-500" />
-                                Today's Best Deal
-                              </label>
-                            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Meta Description *
+                    </label>
+                    <textarea
+                      maxLength={160}
+                      rows={3}
+                      value={formData.seoDescription}
+                      onChange={(e) =>
+                        handleInputChange("seoDescription", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      placeholder="SEO optimized description (max 160 characters)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.seoDescription?.length || 0}/160 characters.
+                      Recommended: 150-160 characters
+                    </p>
+                  </div>
 
-                            <div className="flex items-center">
-                              <Controller
-                                name="isOnSale"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Percent className="w-4 h-4 mr-2 text-red-500" />
-                                On Sale
-                              </label>
-                            </div>
-
-                            <div className="flex items-center">
-                              <Controller
-                                name="isFestivalOffer"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Gift className="w-4 h-4 mr-2 text-purple-500" />
-                                Festival Offer
-                              </label>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="flex items-center">
-                              <Controller
-                                name="isNewLaunch"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Sparkles className="w-4 h-4 mr-2 text-green-500" />
-                                New Launch
-                              </label>
-                            </div>
-
-                            <div className="flex items-center">
-                              <Controller
-                                name="isBestSeller"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Award className="w-4 h-4 mr-2 text-yellow-500" />
-                                Best Seller
-                              </label>
-                            </div>
-
-                            <div className="flex items-center">
-                              <Controller
-                                name="isFeatured"
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                  />
-                                )}
-                              />
-                              <label className="flex items-center ml-3 text-sm font-medium text-black custom-font">
-                                <Star className="w-4 h-4 mr-2 text-blue-500" />
-                                Featured Product
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-black mt-3 custom-font">
-                          Select appropriate promotional flags to highlight your product in different sections of the store.
-                        </p>
-                      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      SEO Keywords
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formData.seoKeywords.map(
+                        (keyword: string, index: number) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"
+                          >
+                            {keyword}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleArrayChange(
+                                  "seoKeywords",
+                                  keyword,
+                                  "remove",
+                                )
+                              }
+                              className="ml-2 text-green-600 hover:text-green-800"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ),
+                      )}
                     </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newSeoKeyword}
+                        onChange={(e) => setNewSeoKeyword(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        placeholder="Enter keyword"
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (newSeoKeyword.trim()) {
+                              handleArrayChange(
+                                "seoKeywords",
+                                newSeoKeyword.trim(),
+                                "add",
+                              );
+                              setNewSeoKeyword("");
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newSeoKeyword.trim()) {
+                            handleArrayChange(
+                              "seoKeywords",
+                              newSeoKeyword.trim(),
+                              "add",
+                            );
+                            setNewSeoKeyword("");
+                          }
+                        }}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Separate keywords with commas
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      URL Slug *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "")}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
+                      placeholder="product-url-slug"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      URL-friendly version of the product name
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Multi-Currency Pricing Tab */}
+              {activeTab === "pricing" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Multi-Currency Pricing</h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Set different prices for different countries/regions
+                    </p>
+                    
+                    {/* Currency Prices */}
+                    <div className="space-y-4">
+                      {formData.currencyPrices.map((price, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-4 p-4 border border-gray-200 rounded-lg">
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Country
+                            </label>
+                            <input
+                              type="text"
+                              value={price.country}
+                              onChange={(e) => {
+                                const updatedPrices = [...formData.currencyPrices];
+                                updatedPrices[index].country = e.target.value;
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                              placeholder="e.g., USA, Australia"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Price
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={price.price}
+                              onChange={(e) => {
+                                const updatedPrices = [...formData.currencyPrices];
+                                updatedPrices[index].price = parseFloat(e.target.value) || 0;
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                              placeholder="Price"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Compare Price
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={price.comparePrice || ""}
+                              onChange={(e) => {
+                                const updatedPrices = [...formData.currencyPrices];
+                                updatedPrices[index].comparePrice = e.target.value ? parseFloat(e.target.value) : undefined;
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                              placeholder="Compare"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Min Days
+                            </label>
+                            <input
+                              type="number"
+                              value={price.minDeliveryDays}
+                              onChange={(e) => {
+                                const updatedPrices = [...formData.currencyPrices];
+                                updatedPrices[index].minDeliveryDays = parseInt(e.target.value) || 1;
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                              placeholder="Min days"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Max Days
+                            </label>
+                            <input
+                              type="number"
+                              value={price.maxDeliveryDays}
+                              onChange={(e) => {
+                                const updatedPrices = [...formData.currencyPrices];
+                                updatedPrices[index].maxDeliveryDays = parseInt(e.target.value) || 7;
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                              placeholder="Max days"
+                            />
+                          </div>
+                          <div className="flex items-center">
+                            <label className="flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={price.isActive}
+                                onChange={(e) => {
+                                  const updatedPrices = [...formData.currencyPrices];
+                                  updatedPrices[index].isActive = e.target.checked;
+                                  handleInputChange("currencyPrices", updatedPrices);
+                                }}
+                                className="sr-only"
+                              />
+                              <div className={`relative w-11 h-6 rounded-full transition-colors ${price.isActive ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${price.isActive ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                              </div>
+                              <span className="ml-2 text-sm text-gray-700">Active</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedPrices = formData.currencyPrices.filter((_, i) => i !== index);
+                                handleInputChange("currencyPrices", updatedPrices);
+                              }}
+                              className="ml-2 w-full px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPrice = {
+                          country: "",
+                          price: 0,
+                          comparePrice: undefined,
+                          minDeliveryDays: 1,
+                          maxDeliveryDays: 7,
+                          isActive: true,
+                        };
+                        handleInputChange("currencyPrices", [...formData.currencyPrices, newPrice]);
+                      }}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Currency Price
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-              <div className="flex items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center text-sm text-black hover:text-black"
-                >
-                  {showAdvanced ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
-                  {showAdvanced ? 'Hide' : 'Show'} Advanced
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex items-center text-sm text-black hover:text-black"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Close
-                </button>
-              </div>
-              <div className="flex space-x-3">
-                {activeTab !== 'basic' && (
-                  <button
-                    type="button"
-                    onClick={handlePreviousTab}
-                    className="px-4 py-2 border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors flex items-center custom-font"
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </button>
-                )}
-                {activeTab !== 'advanced' && (
-                  <button
-                    type="button"
-                    onClick={handleNextTab}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center custom-font"
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                )}
-                {/* Create/Update Product button - available on all tabs */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting || isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center custom-font"
-                >
-                  {isSubmitting || isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {initialData ? 'Updating...' : 'Creating...'}
-                    </>
-                  ) : (
-                    initialData ? 'Update Product' : 'Create Product'
-                  )}
-                </button>
-              </div>
+            <div className="flex justify-end space-x-4 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {isLoading
+                  ? "Saving..."
+                  : initialData
+                  ? "Update Product"
+                  : "Create Product"}
+              </button>
             </div>
           </form>
         </motion.div>
@@ -2291,4 +1198,3 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 };
 
 export default EnhancedProductForm;
-

@@ -100,15 +100,15 @@ export default function CategoryListingPage() {
   const categoryMap = useMemo(() => ({ [String(category)]: String(category) }), [category]);
 
   return (
-    <div className="min-h-screen bg-[#EBEDEB] custom-font">
+    <div className="min-h-screen font-inter mx-16">
       <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumbs */}
-      <div className="text-sm text-gray-500 mt-4">
-        <a href="/" className="hover:text-gray-700">Home</a>
+      <div className="text-lg text-black mt-4">
+        <a href="/" className="text-black hover:text-gray-700">Home</a>
         <span className="mx-2">/</span>
-        <a href="/categories" className="hover:text-gray-700">Categories</a>
+        <a href="/categories" className="text-black hover:text-gray-700">Categories</a>
         <span className="mx-2">/</span>
-        <span className="capitalize text-gray-700">{String(category)}</span>
+        <span className="capitalize text-black">{String(category)}</span>
       </div>
 
       <div className="flex gap-6 mt-4">
@@ -134,7 +134,7 @@ export default function CategoryListingPage() {
         />
 
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 font-inter text-black">
             <h2 className="text-2xl font-bold text-gray-900 capitalize">{String(category)}</h2>
             <div className="flex items-center gap-3">
               <select

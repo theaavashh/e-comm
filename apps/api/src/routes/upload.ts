@@ -5,6 +5,7 @@ import fs from 'fs';
 import { AppError } from '@/middleware/errorHandler';
 import { logger } from '@/utils/logger';
 import { asyncHandler } from '@/middleware/errorHandler';
+import { env } from '@/config/env';
 
 const router = Router();
 
@@ -66,9 +67,18 @@ const upload = multer({
   },
 });
 
-// Helper function to get file URL
+// Helper function to get file path (relative path to store in DB)
+const getFilePath = (filename: string, folder: string): string => {
+  return `/uploads/${folder}/${filename}`;
+};
+
+// Helper function to get file URL (for API responses)
 const getFileUrl = (req: Request, filename: string, folder: string): string => {
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  // Use configured port instead of relying on request host
+  const host = req.get('host') || `localhost:${env.PORT}`;
+  // Extract hostname and port
+  const [hostname] = host.split(':');
+  const baseUrl = `${req.protocol}://${hostname}:${env.PORT}`;
   return `${baseUrl}/uploads/${folder}/${filename}`;
 };
 
@@ -80,11 +90,13 @@ export const uploadCategoryImage = async (req: Request, res: Response) => {
     }
 
     const fileUrl = getFileUrl(req, req.file.filename, 'categories');
+    const filePath = getFilePath(req.file.filename, 'categories');
 
     logger.info('Category image uploaded successfully', {
       originalName: req.file.originalname,
       size: req.file.size,
       url: fileUrl,
+      path: filePath,
       filename: req.file.filename,
     });
 
@@ -93,6 +105,7 @@ export const uploadCategoryImage = async (req: Request, res: Response) => {
       message: 'Image uploaded successfully',
       data: {
         url: fileUrl,
+        path: filePath,  // This is what should be stored in DB
         originalName: req.file.originalname,
         size: req.file.size,
         filename: req.file.filename,
@@ -115,11 +128,13 @@ export const uploadBrandImage = async (req: Request, res: Response) => {
     }
 
     const fileUrl = getFileUrl(req, req.file.filename, 'brands');
+    const filePath = getFilePath(req.file.filename, 'brands');
 
     logger.info('Brand image uploaded successfully', {
       originalName: req.file.originalname,
       size: req.file.size,
       url: fileUrl,
+      path: filePath,
       filename: req.file.filename,
     });
 
@@ -128,6 +143,7 @@ export const uploadBrandImage = async (req: Request, res: Response) => {
       message: 'Image uploaded successfully',
       data: {
         url: fileUrl,
+        path: filePath,  // This is what should be stored in DB
         originalName: req.file.originalname,
         size: req.file.size,
         filename: req.file.filename,
@@ -150,11 +166,13 @@ export const uploadSliderImage = async (req: Request, res: Response) => {
     }
 
     const fileUrl = getFileUrl(req, req.file.filename, 'sliders');
+    const filePath = getFilePath(req.file.filename, 'sliders');
 
     logger.info('Slider image uploaded successfully', {
       originalName: req.file.originalname,
       size: req.file.size,
       url: fileUrl,
+      path: filePath,
       filename: req.file.filename,
     });
 
@@ -163,6 +181,7 @@ export const uploadSliderImage = async (req: Request, res: Response) => {
       message: 'Slider image uploaded successfully',
       data: {
         url: fileUrl,
+        path: filePath,  // This is what should be stored in DB
         originalName: req.file.originalname,
         size: req.file.size,
         filename: req.file.filename,
@@ -186,12 +205,14 @@ export const uploadMediaFile = async (req: Request, res: Response) => {
 
     const isVideo = req.file.mimetype.startsWith('video/');
     const fileUrl = getFileUrl(req, req.file.filename, 'media');
+    const filePath = getFilePath(req.file.filename, 'media');
 
     logger.info('Media file uploaded successfully', {
       originalName: req.file.originalname,
       size: req.file.size,
       type: isVideo ? 'video' : 'image',
       url: fileUrl,
+      path: filePath,
       filename: req.file.filename,
     });
 
@@ -200,6 +221,7 @@ export const uploadMediaFile = async (req: Request, res: Response) => {
       message: 'Media file uploaded successfully',
       data: {
         url: fileUrl,
+        path: filePath,  // This is what should be stored in DB
         originalName: req.file.originalname,
         size: req.file.size,
         type: isVideo ? 'video' : 'image',
@@ -215,10 +237,49 @@ export const uploadMediaFile = async (req: Request, res: Response) => {
   }
 };
 
+// Upload product image
+export const uploadProductImage = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      throw new AppError('No image file provided', 400);
+    }
+
+    const fileUrl = getFileUrl(req, req.file.filename, 'products');
+    const filePath = getFilePath(req.file.filename, 'products');
+
+    logger.info('Product image uploaded successfully', {
+      originalName: req.file.originalname,
+      size: req.file.size,
+      url: fileUrl,
+      path: filePath,
+      filename: req.file.filename,
+    });
+
+    res.json({
+      success: true,
+      message: 'Product image uploaded successfully',
+      data: {
+        url: fileUrl,
+        path: filePath,  // This is what should be stored in DB
+        originalName: req.file.originalname,
+        size: req.file.size,
+        filename: req.file.filename,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    logger.error('Upload product image error:', error);
+    throw new AppError('Failed to upload product image', 500);
+  }
+};
+
 // Routes
 router.post('/category', upload.single('image'), asyncHandler(uploadCategoryImage));
 router.post('/brand', upload.single('image'), asyncHandler(uploadBrandImage));
 router.post('/slider', upload.single('image'), asyncHandler(uploadSliderImage));
+router.post('/product', upload.single('image'), asyncHandler(uploadProductImage));
 router.post('/media', upload.single('file'), asyncHandler(uploadMediaFile));
 
 export default router;

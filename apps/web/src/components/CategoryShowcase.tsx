@@ -71,12 +71,28 @@ const categoryData: CategorySection[] = [
 
 export default function CategoryShowcase() {
   return (
-    <div className="bg-[#F0F2F5] py-16 w-full">
-      <div className="w-full px-6">
-        {/* First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+    <div className="bg-[#F0F2F5] py-16 w-full mx-4 sm:mx-6 md:mx-8">
+      <div className="w-full">
+        {/* Title Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h2 className="text-2xl md:text-3xl font-extrabold italic text-gray-900">
+            Top Categories <span className="font-extrabold not-italic">We Serve</span>
+          </h2>
+          <Link 
+            href="/categories" 
+            className="flex items-center text-sm md:text-base font-medium text-[#0077b6] hover:text-[#005f8f] transition-colors custom-font"
+          >
+            See More
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+        
+        {/* Horizontal Scrollable Container */}
+        <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
           {categoryData.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="bg-white p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
+            <div key={sectionIndex} className="flex-shrink-0 w-80 bg-white p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               {/* Section Header */}
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900 custom-font mb-1">
@@ -131,8 +147,6 @@ export default function CategoryShowcase() {
             </div>
           ))}
         </div>
-
-      
       </div>
     </div>
   );

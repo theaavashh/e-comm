@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import toast from "react-hot-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -13,32 +13,16 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Calendar,
-  Link,
-  Palette,
-  Type,
-  Settings,
+  Clock,
   Save,
   X,
   AlertCircle,
-  CheckCircle,
-  Clock,
-  ExternalLink
 } from "lucide-react";
 
 // Validation schema
 const bannerSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  text: z.string().min(1, 'Banner text is required'),
-  linkText: z.string().optional(),
-  linkUrl: z.string().url().optional().or(z.literal('')),
-  backgroundColor: z.string().optional(),
-  textColor: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
   isActive: z.boolean(),
-  priority: z.number().int(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
 });
 
 type BannerFormData = z.infer<typeof bannerSchema>;
@@ -46,16 +30,7 @@ type BannerFormData = z.infer<typeof bannerSchema>;
 interface Banner {
   id: string;
   title: string;
-  description?: string;
-  text: string;
-  linkText?: string;
-  linkUrl?: string;
-  backgroundColor?: string;
-  textColor?: string;
   isActive: boolean;
-  priority: number;
-  startDate?: string;
-  endDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,32 +49,40 @@ export default function TopBannerPage() {
     handleSubmit,
     reset,
     setValue,
-    watch,
-    formState: { errors }
+    formState: { errors },
   } = useForm<BannerFormData>({
     resolver: zodResolver(bannerSchema),
     defaultValues: {
+      title: "",
       isActive: true,
-      priority: 0,
-    }
+    },
   });
 
   // Fetch banners
   const fetchBanners = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/banners/admin`, {
-        credentials: 'include', // Send httpOnly cookie automatically
+      const url = `${API_BASE_URL}/banners/admin`;
+      console.log(`🔄 FRONTEND: Fetching banners from: ${url}`);
+      const response = await fetch(url, {
+        credentials: "include", // Send httpOnly cookie automatically
       });
+
+      console.log(`🔄 FRONTEND: Fetch response status: ${response.status}`);
 
       if (response.ok) {
         const data = await response.json();
+        console.log(
+          `🔄 FRONTEND: Fetched ${data.data.length} banners:`,
+          data.data,
+        );
         setBanners(data.data || []);
       } else {
-        toast.error('Failed to fetch banners');
+        console.log(`🔄 FRONTEND: Fetch failed: ${response.statusText}`);
+        toast.error("Failed to fetch banners");
       }
     } catch (error) {
-      console.error('Error fetching banners:', error);
-      toast.error('Failed to fetch banners');
+      console.error("Error fetching banners:", error);
+      toast.error("Failed to fetch banners");
     } finally {
       setIsLoading(false);
     }
@@ -113,33 +96,37 @@ export default function TopBannerPage() {
   const onSubmit = async (data: BannerFormData) => {
     setIsSubmitting(true);
     try {
-      const url = editingBanner 
+      const url = editingBanner
         ? `${API_BASE_URL}/banners/${editingBanner.id}`
         : `${API_BASE_URL}/banners`;
-      
-      const method = editingBanner ? 'PUT' : 'POST';
+
+      const method = editingBanner ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include', // Send httpOnly cookie automatically
+        credentials: "include", // Send httpOnly cookie automatically
         body: JSON.stringify(data),
       });
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(editingBanner ? 'Banner updated successfully' : 'Banner created successfully');
+        toast.success(
+          editingBanner
+            ? "Banner updated successfully"
+            : "Banner created successfully",
+        );
         await fetchBanners();
         handleCloseForm();
       } else {
         const error = await response.json();
-        toast.error(error.message || 'Failed to save banner');
+        toast.error(error.message || "Failed to save banner");
       }
     } catch (error) {
-      console.error('Error saving banner:', error);
-      toast.error('Failed to save banner');
+      console.error("Error saving banner:", error);
+      toast.error("Failed to save banner");
     } finally {
       setIsSubmitting(false);
     }
@@ -148,60 +135,73 @@ export default function TopBannerPage() {
   // Handle edit
   const handleEdit = (banner: Banner) => {
     setEditingBanner(banner);
-    setValue('title', banner.title);
-    setValue('description', banner.description || '');
-    setValue('text', banner.text);
-    setValue('linkText', banner.linkText || '');
-    setValue('linkUrl', banner.linkUrl || '');
-    setValue('backgroundColor', banner.backgroundColor || '');
-    setValue('textColor', banner.textColor || '');
-    setValue('isActive', banner.isActive);
-    setValue('priority', banner.priority);
-    setValue('startDate', banner.startDate ? banner.startDate.split('T')[0] : '');
-    setValue('endDate', banner.endDate ? banner.endDate.split('T')[0] : '');
+    setValue("title", banner.title);
+    setValue("isActive", banner.isActive);
     setIsFormOpen(true);
   };
 
   // Handle delete
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return;
+    console.log(`🗑️ FRONTEND: DELETE called for banner ${id}`);
+    if (!confirm("Are you sure you want to delete this banner?")) {
+      console.log(`🗑️ FRONTEND: DELETE cancelled by user`);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/banners/${id}`, {
-        method: 'DELETE',
-        credentials: 'include', // Send httpOnly cookie automatically
+        method: "DELETE",
+        credentials: "include", // Send httpOnly cookie automatically
       });
 
+      console.log(`🗑️ FRONTEND: DELETE response status: ${response.status}`);
+
       if (response.ok) {
-        toast.success('Banner deleted successfully');
+        toast.success("Banner deleted successfully");
         await fetchBanners();
       } else {
-        toast.error('Failed to delete banner');
+        toast.error("Failed to delete banner");
       }
     } catch (error) {
-      console.error('Error deleting banner:', error);
-      toast.error('Failed to delete banner');
+      console.error("Error deleting banner:", error);
+      toast.error("Failed to delete banner");
     }
   };
 
   // Handle toggle status
   const handleToggleStatus = async (id: string) => {
+    console.log(`🔄 FRONTEND: Toggle called for banner ${id}`);
+    console.log(`🔄 FRONTEND: About to make PATCH request`);
     try {
-      const response = await fetch(`${API_BASE_URL}/banners/${id}/toggle`, {
-        method: 'PATCH',
-        credentials: 'include', // Send httpOnly cookie automatically
+      const url = `${API_BASE_URL}/banners/${id}/toggle`;
+      console.log(`🔄 FRONTEND: Making PATCH request to: ${url}`);
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        credentials: "include", // Send httpOnly cookie automatically
       });
+
+      console.log(`🔄 FRONTEND: Request made. Method: PATCH, URL: ${url}`);
+      console.log(
+        `🔄 FRONTEND: Response status: ${response.status} ${response.statusText}`,
+      );
 
       if (response.ok) {
         const result = await response.json();
+        console.log(`🔄 FRONTEND: Toggle response:`, result);
         toast.success(result.message);
+        console.log(
+          `🔄 FRONTEND: About to call fetchBanners() to refresh list`,
+        );
         await fetchBanners();
+        console.log(`🔄 FRONTEND: fetchBanners() completed`);
       } else {
-        toast.error('Failed to toggle banner status');
+        console.log(`🔄 FRONTEND: Toggle failed: ${response.statusText}`);
+        toast.error("Failed to toggle banner status");
       }
     } catch (error) {
-      console.error('Error toggling banner status:', error);
-      toast.error('Failed to toggle banner status');
+      console.error("🔄 FRONTEND: Error in toggle:", error);
+      toast.error("Failed to toggle banner status");
     }
   };
 
@@ -209,17 +209,21 @@ export default function TopBannerPage() {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingBanner(null);
-    reset();
+    reset({
+      title: "",
+      isActive: true,
+    });
   };
 
   // Handle new banner
   const handleNewBanner = () => {
     setEditingBanner(null);
-    reset();
+    reset({
+      title: "",
+      isActive: true,
+    });
     setIsFormOpen(true);
   };
-
-  const watchedValues = watch();
 
   return (
     <DashboardLayout title="Top Banner Management" showBackButton={true}>
@@ -227,8 +231,12 @@ export default function TopBannerPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Top Banner Management</h1>
-            <p className="text-gray-600">Manage promotional banners that appear at the top of your website</p>
+            <h1 className="text-2xl font-bold font-poppins text-gray-900">
+              Top Banner Management
+            </h1>
+            <p className="text-gray-600">
+              Manage promotional banners that appear at the top of your website
+            </p>
           </div>
           <button
             onClick={handleNewBanner}
@@ -249,8 +257,12 @@ export default function TopBannerPage() {
             {banners.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                 <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No banners found</h3>
-                <p className="text-gray-500 mb-4">Create your first promotional banner to get started.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No banners found
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Create your first promotional banner to get started.
+                </p>
                 <button
                   onClick={handleNewBanner}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -270,63 +282,27 @@ export default function TopBannerPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{banner.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            banner.isActive 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {banner.isActive ? 'Active' : 'Inactive'}
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {banner.title}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              banner.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {banner.isActive ? "Active" : "Inactive"}
                           </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                            Priority: {banner.priority}
-                          </span>
-                        </div>
-                        
-                        {banner.description && (
-                          <p className="text-gray-600 mb-3">{banner.description}</p>
-                        )}
-
-                        {/* Banner Preview */}
-                        <div 
-                          className="p-4 rounded-lg border-2 border-dashed border-gray-200 mb-4"
-                          style={{
-                            backgroundColor: banner.backgroundColor || '#ffffff',
-                            color: banner.textColor || '#000000'
-                          }}
-                        >
-                          <div className="text-center">
-                            <p className="text-sm font-medium">{banner.text}</p>
-                            {banner.linkText && (
-                              <a 
-                                href={banner.linkUrl || '#'} 
-                                className="inline-block mt-2 text-sm underline hover:no-underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {banner.linkText}
-                                <ExternalLink className="w-3 h-3 inline ml-1" />
-                              </a>
-                            )}
-                          </div>
                         </div>
 
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          {banner.startDate && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>Starts: {new Date(banner.startDate).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                          {banner.endDate && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>Ends: {new Date(banner.endDate).toLocaleDateString()}</span>
-                            </div>
-                          )}
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            <span>Updated: {new Date(banner.updatedAt).toLocaleDateString()}</span>
+                            <span>
+                              Updated:{" "}
+                              {new Date(banner.updatedAt).toLocaleDateString()}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -335,13 +311,17 @@ export default function TopBannerPage() {
                         <button
                           onClick={() => handleToggleStatus(banner.id)}
                           className={`p-2 rounded-lg ${
-                            banner.isActive 
-                              ? 'text-orange-600 hover:bg-orange-50' 
-                              : 'text-green-600 hover:bg-green-50'
+                            banner.isActive
+                              ? "text-orange-600 hover:bg-orange-50"
+                              : "text-green-600 hover:bg-green-50"
                           }`}
-                          title={banner.isActive ? 'Deactivate' : 'Activate'}
+                          title={banner.isActive ? "Deactivate" : "Activate"}
                         >
-                          {banner.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {banner.isActive ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                         <button
                           onClick={() => handleEdit(banner)}
@@ -373,7 +353,7 @@ export default function TopBannerPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -384,7 +364,7 @@ export default function TopBannerPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">
-                      {editingBanner ? 'Edit Banner' : 'Create New Banner'}
+                      {editingBanner ? "Edit Banner" : "Create New Banner"}
                     </h2>
                     <button
                       type="button"
@@ -397,198 +377,37 @@ export default function TopBannerPage() {
 
                   <div className="space-y-6">
                     {/* Basic Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Title *
-                        </label>
-                        <input
-                          {...register('title')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Banner title"
-                        />
-                        {errors.title && (
-                          <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Priority
-                        </label>
-                        <input
-                          {...register('priority', { valueAsNumber: true })}
-                          type="number"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="0"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Higher numbers appear first</p>
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Description
-                      </label>
-                      <textarea
-                        {...register('description')}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Optional description"
-                      />
-                    </div>
-
-                    {/* Banner Content */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Banner Text *
+                        Title *
                       </label>
                       <input
-                        {...register('text')}
+                        {...register("title")}
                         type="text"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Free Delivery on orders over NPR.10000. Don't miss discount."
+                        placeholder="Banner title"
                       />
-                      {errors.text && (
-                        <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>
+                      {errors.title && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.title.message}
+                        </p>
                       )}
-                    </div>
-
-                    {/* Link Configuration */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Link Text
-                        </label>
-                        <input
-                          {...register('linkText')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="e.g., Shop now"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Link URL
-                        </label>
-                        <input
-                          {...register('linkUrl')}
-                          type="url"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="https://example.com"
-                        />
-                        {errors.linkUrl && (
-                          <p className="text-red-500 text-sm mt-1">{errors.linkUrl.message}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Styling */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Background Color
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            {...register('backgroundColor')}
-                            type="color"
-                            className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
-                          />
-                          <input
-                            {...register('backgroundColor')}
-                            type="text"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="#ffffff"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Text Color
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            {...register('textColor')}
-                            type="color"
-                            className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
-                          />
-                          <input
-                            {...register('textColor')}
-                            type="text"
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="#000000"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Schedule */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Start Date
-                        </label>
-                        <input
-                          {...register('startDate')}
-                          type="date"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          End Date
-                        </label>
-                        <input
-                          {...register('endDate')}
-                          type="date"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
                     </div>
 
                     {/* Status */}
                     <div className="flex items-center">
                       <input
-                        {...register('isActive')}
+                        {...register("isActive")}
                         type="checkbox"
                         id="isActive"
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                      <label
+                        htmlFor="isActive"
+                        className="ml-2 block text-sm text-gray-700"
+                      >
                         Active (visible on website)
                       </label>
-                    </div>
-
-                    {/* Preview */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Preview
-                      </label>
-                      <div 
-                        className="p-4 rounded-lg border-2 border-dashed border-gray-200"
-                        style={{
-                          backgroundColor: watchedValues.backgroundColor || '#ffffff',
-                          color: watchedValues.textColor || '#000000'
-                        }}
-                      >
-                        <div className="text-center">
-                          <p className="text-sm font-medium">{watchedValues.text || 'Banner text will appear here'}</p>
-                          {watchedValues.linkText && (
-                            <a 
-                              href={watchedValues.linkUrl || '#'} 
-                              className="inline-block mt-2 text-sm underline hover:no-underline"
-                            >
-                              {watchedValues.linkText}
-                              <ExternalLink className="w-3 h-3 inline ml-1" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -611,7 +430,11 @@ export default function TopBannerPage() {
                       ) : (
                         <Save className="w-4 h-4" />
                       )}
-                      {isSubmitting ? 'Saving...' : editingBanner ? 'Update Banner' : 'Create Banner'}
+                      {isSubmitting
+                        ? "Saving..."
+                        : editingBanner
+                          ? "Update Banner"
+                          : "Create Banner"}
                     </button>
                   </div>
                 </form>
@@ -623,5 +446,3 @@ export default function TopBannerPage() {
     </DashboardLayout>
   );
 }
-
-

@@ -20,6 +20,7 @@
     "db:seed-products": "tsx src/scripts/seedSampleProducts.ts",
     "db:update-brand-logos": "tsx src/scripts/updateBrandLogos.ts",
     "db:clear-config": "tsx src/scripts/clearConfiguration.ts",
+    "db:fix-category-urls": "tsx scripts/fixCategoryImageUrls.ts",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"
   },
