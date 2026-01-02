@@ -200,6 +200,8 @@ export default function ProductsPage() {
         sku:
           productData.sku ||
           `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        asin: productData.asin ||
+          `ASIN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         trackQuantity: productData.trackQuantity !== false,
         manageStock: productData.manageStock !== false,
         requiresShipping: productData.requiresShipping !== false,
@@ -232,6 +234,7 @@ export default function ProductsPage() {
                     weight: option.weight !== undefined ? Number(option.weight) : undefined,
                     additionalCost: option.additionalCost !== undefined ? Number(option.additionalCost) : 0,
                     stock: option.stock !== undefined ? Number(option.stock) : 0,
+                    asin: option.asin !== undefined ? option.asin : undefined,
                   }))
                 : [],
             }))
@@ -291,6 +294,8 @@ export default function ProductsPage() {
         sku:
           productData.sku ||
           `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        asin: productData.asin ||
+          `ASIN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         categoryId: productData.categoryId || "",
         // Ensure currencyPrices has at least one entry for API requirement
         currencyPrices:
@@ -317,10 +322,43 @@ export default function ProductsPage() {
         manageStock: productData.manageStock !== false,
         requiresShipping: productData.requiresShipping !== false,
         taxable: productData.taxable !== false,
+        // Include weight and dimensions if present
+        ...(productData.weight &&
+          productData.weight > 0 && { weight: Number(productData.weight) }),
+        ...(productData.weightUnit &&
+          productData.weightUnit.trim() && {
+            weightUnit: productData.weightUnit,
+          }),
+        ...(productData.dimensions && {
+          dimensions: {
+            length: productData.dimensions.length || 0,
+            width: productData.dimensions.width || 0,
+            height: productData.dimensions.height || 0,
+            unit: productData.dimensions.unit || "cm",
+          },
+        }),
+        // Transform variants to ensure proper structure with new fields
+        variants: productData.variants && productData.variants.length > 0
+          ? productData.variants.map((variant: any) => ({
+              ...variant,
+              options: variant.options && variant.options.length > 0
+                ? variant.options.map((option: any) => ({
+                    ...option,
+                    // Ensure numeric fields are properly converted
+                    price: option.price !== undefined ? Number(option.price) : undefined,
+                    comparePrice: option.comparePrice !== undefined ? Number(option.comparePrice) : undefined,
+                    weight: option.weight !== undefined ? Number(option.weight) : undefined,
+                    additionalCost: option.additionalCost !== undefined ? Number(option.additionalCost) : 0,
+                    stock: option.stock !== undefined ? Number(option.stock) : 0,
+                    asin: option.asin !== undefined ? option.asin : undefined,
+                  }))
+                : [],
+            }))
+          : [],
         // Remove fields not expected by API
         currency: undefined,
         symbol: undefined,
-      };
+      }
 
       const response = await fetch(
         `${API_BASE_URL}/api/v1/products/${productId}`,

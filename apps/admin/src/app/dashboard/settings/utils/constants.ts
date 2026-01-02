@@ -9,6 +9,7 @@ export const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "notifications", label: "Notifications", icon: "Bell" },
   { key: "security", label: "Security", icon: "Shield" },
   { key: "inventory", label: "Inventory", icon: "Package" },
+  { key: "variant-management", label: "Variant Management", icon: "Package" },
   { key: "seo", label: "SEO", icon: "Search" },
   { key: "analytics", label: "Analytics", icon: "Search" },
 ];

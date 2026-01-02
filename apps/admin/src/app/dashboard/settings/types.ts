@@ -43,6 +43,15 @@ export interface SiteSettings {
   autoReorder: boolean;
   trackInventory: boolean;
 
+  // Variant Management Settings
+  defaultVariantImageWidth?: number;
+  defaultVariantImageHeight?: number;
+  variantAutoGeneration?: boolean;
+  allowVariantCombinations?: boolean;
+  showOutOfStockVariants?: boolean;
+  variantFallbackEnabled?: boolean;
+  variantAttributeTypes?: string;
+
   // SEO Settings
   seoTitle: string;
   seoDescription: string;
@@ -86,6 +95,7 @@ export type TabKey =
   | "notifications"
   | "security"
   | "inventory"
+  | "variant-management"
   | "seo"
   | "analytics";
 

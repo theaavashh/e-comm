@@ -174,7 +174,8 @@ const NAVIGATION_ITEMS: NavItem[] = [
     icon: Settings,
     children: [
       { id: "site-settings", label: "Site Settings", icon: Settings },
-      { id: "configuration", label: "Configuration", icon: Database }
+      { id: "configuration", label: "Configuration", icon: Database },
+      { id: "variant-management", label: "Variant Management", icon: Package }
     ]
   }
 ];
@@ -286,6 +287,9 @@ export default function DashboardLayout({
           break;
         case 'configuration':
           router.push('/dashboard/settings/configuration');
+          break;
+        case 'variant-management':
+          router.push('/dashboard/settings/variant-management');
           break;
         case 'top-banner':
           router.push('/dashboard?tab=top-banner');

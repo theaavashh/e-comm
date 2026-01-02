@@ -89,7 +89,7 @@ model Product {
   comparePrice      Decimal?               @db.Decimal(10, 2)
   costPrice         Decimal?               @db.Decimal(10, 2)
   margin            Decimal?               @db.Decimal(5, 2)
-  sku               String?                @unique
+  sku               String?                @unique // Parent product SKU (ASIN-like)
   barcode           String?
   upc               String?
   ean               String?
@@ -168,23 +168,24 @@ model ProductCurrencyPrice {
 model ProductVariant {
   id           String   @id @default(cuid())
   productId    String
-  name         String
-  value        String
+  name         String   // Name of the variant (e.g. "Color", "Size", etc.)
+  value        String   // Value of the variant (e.g. "Red", "Large", etc.)
   price        Decimal? @db.Decimal(10, 2)
   comparePrice Decimal? @db.Decimal(10, 2)
-  sku          String?  @unique
-  barcode      String?
+  sku          String?  @unique // Specific SKU for this variant
+  barcode      String?  // Barcode for this variant
   quantity     Int      @default(0)
   weight       Decimal? @db.Decimal(8, 2)
   height       Decimal? @db.Decimal(8, 2)
   width        Decimal? @db.Decimal(8, 2)
   length       Decimal? @db.Decimal(8, 2)
   dimensions   Json?    // For storing structured dimension data like "size: XL, dimensions: {height: 30, width: 25, length: null}"
-  image        String?
+  image        String?  // Image specific to this variant
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  asin         String?  @unique // ASIN for this specific variant
 
   @@map("product_variants")
 }
