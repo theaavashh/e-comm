@@ -376,9 +376,9 @@ export default function Homepage() {
 
       {/* Hero Section - Column Layout */}
             <div>
-        <div className="w-[95vw] mx-auto">
+        <div className="w-[100vw] md:w-[95vw] mx-auto">
           {/* Top Section - Slider */}
-          <div className="h-48 sm:h-64 md:h-80 lg:h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden mx-2 sm:mx-4 md:mx-6 my-4 md:my-6 rounded-lg">
+          <div className="h-48 sm:h-64 md:h-80 lg:h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden mx-6 sm:mx-4 md:mx-6 my-4 md:my-6 rounded-lg">
             <Slider />
           </div>
               </div>
@@ -407,6 +407,8 @@ export default function Homepage() {
       <CategoryShowcase />
       
       <Foods />
+
+      <Carpet />
 
       {/* Promotional Banner Section */}
       {promotionalBanners.length > 0 ? (
@@ -483,11 +485,11 @@ export default function Homepage() {
 
       
       {/* Bento Grid Section */}
-      <div className="py-2 pt-5">
+      {/* <div className="py-2 pt-5">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Large Featured Image - Spans 2 columns and 2 rows */}
-            <div className="md:col-span-2 md:row-span-2 rounded-md  overflow-hidden  relative group min-h-[400px] md:min-h-[800px]">
+            {/* <div className="md:col-span-2 md:row-span-2 rounded-md  overflow-hidden  relative group min-h-[400px] md:min-h-[800px]">
               <Image
                 src="/grid1.jpeg"
                 alt="Featured Collection"
@@ -498,9 +500,9 @@ export default function Homepage() {
              
              
             </div>
-            
+             */}
             {/* Small Card 1 */}
-            <div className="rounded-md overflow-hidden relative group min-h-[600px]">
+            {/* <div className="rounded-md overflow-hidden relative group min-h-[600px]">
               <Image
                 src="/grid2.jpeg"
                 alt="New Arrivals"
@@ -509,11 +511,11 @@ export default function Homepage() {
               />
              
               
-            </div>
+            </div> */}
             
             {/* Small Card 2 */}
-            <div className="rounded-md overflow-hidden shadow-lg relative group min-h-[200px]">
-              <Image
+            {/* <div className="rounded-md overflow-hidden shadow-lg relative group min-h-[200px]"> */}
+              {/* <Image
                 src="/grid3.jpeg"
                 alt="Special Offers"
                 fill
@@ -521,10 +523,10 @@ export default function Homepage() {
               />
               
               
-            </div>
+            </div> */}
 
             {/* Medium Card - Spans 2 columns */}
-            <div className="md:col-span-2 rounded-md overflow-hidden shadow-lg relative group min-h-[400px]">
+            {/* <div className="md:col-span-2 rounded-md overflow-hidden shadow-lg relative group min-h-[400px]">
               <Image
                 src="/banner.jpg"
                 alt="Seasonal Collection"
@@ -536,8 +538,8 @@ export default function Homepage() {
             
             </div>
           </div>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */} 
 
       {/* Signup Discount Modal */}
       <SignupModal />

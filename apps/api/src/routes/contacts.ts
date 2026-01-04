@@ -1,49 +1,45 @@
 import { Router } from "express";
 import {
-  getOrders,
-  getOrder,
-  updateOrderStatus,
-  getOrderStats,
-  getRecentOrders,
-} from "@/controllers/orderController";
+  getRecentContacts,
+  getContacts,
+  updateContactStatus,
+  getContactStats,
+} from "@/controllers/contactController";
 import { authenticateToken, authorize } from "@/middleware/auth";
 import { asyncHandler } from "@/middleware/errorHandler";
 
 const router = Router();
 
-// Get recent orders for dashboard
+// Get recent contacts for dashboard
 router.get(
   "/recent",
   authenticateToken,
   authorize("ADMIN"),
-  asyncHandler(getRecentOrders),
+  asyncHandler(getRecentContacts),
 );
 
-// Get order statistics
+// Get contact statistics
 router.get(
   "/stats",
   authenticateToken,
   authorize("ADMIN"),
-  asyncHandler(getOrderStats),
+  asyncHandler(getContactStats),
 );
 
-// Get all orders with filters and pagination
-router.get("/", authenticateToken, authorize("ADMIN"), asyncHandler(getOrders));
-
-// Get single order by ID
+// Get all contacts with filters and pagination
 router.get(
-  "/:id",
+  "/",
   authenticateToken,
   authorize("ADMIN"),
-  asyncHandler(getOrder),
+  asyncHandler(getContacts),
 );
 
-// Update order status
+// Update contact status
 router.patch(
   "/:id/status",
   authenticateToken,
   authorize("ADMIN"),
-  asyncHandler(updateOrderStatus),
+  asyncHandler(updateContactStatus),
 );
 
 export default router;

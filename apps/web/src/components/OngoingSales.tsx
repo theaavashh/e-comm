@@ -115,16 +115,16 @@ export default function OngoingSales() {
     <div className="pt-8 px-1 md:px-16">
     
       
-      <div className="max-w-7xl mx-auto pl-5 pr-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12">
+      <div className="max-w-8xl mx-auto pl-3 pr-3">
+        <div className="flex flex-row items-center justify-between mb-5 mx-3">
           <div className="mb-4 sm:mb-0">
-            <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 font-inter mb-2"> Shop all Deals & More</h2>
+            <h2 className="text-xl md:text-4xl font-medium text-gray-900 font-mono mb-2"> Shop all Deals & More</h2>
             <p className="text-md md:text-xl text-gray-900 font-inter">Upto 30% OFF on all products</p>
           </div>
           <div>
             <Link 
               href="/products" 
-              className="inline-flex items-center underline text-lg text-[#622A1F] hover:text-[#EB6426] transition-colors font-inter font-semibold group"
+              className="inline-flex items-center underline text-md text-[#622A1F] hover:text-[#EB6426] transition-colors font-inter font-semibold group"
             >
               <span>View More</span>
              
@@ -306,9 +306,7 @@ export default function OngoingSales() {
         ) : null}
       </div>
 
-        <div className="max-w-7xl mx-auto px-6 mt-5">
-          <ScratchOffBanner />
-        </div>
+      
     </div>
   );
 }

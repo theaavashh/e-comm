@@ -89,7 +89,7 @@ model Product {
   comparePrice      Decimal?               @db.Decimal(10, 2)
   costPrice         Decimal?               @db.Decimal(10, 2)
   margin            Decimal?               @db.Decimal(5, 2)
-  sku               String?                @unique // Parent product SKU (ASIN-like)
+  sku               String?                @unique
   barcode           String?
   upc               String?
   ean               String?
@@ -168,24 +168,24 @@ model ProductCurrencyPrice {
 model ProductVariant {
   id           String   @id @default(cuid())
   productId    String
-  name         String   // Name of the variant (e.g. "Color", "Size", etc.)
-  value        String   // Value of the variant (e.g. "Red", "Large", etc.)
+  name         String
+  value        String
   price        Decimal? @db.Decimal(10, 2)
   comparePrice Decimal? @db.Decimal(10, 2)
-  sku          String?  @unique // Specific SKU for this variant
-  barcode      String?  // Barcode for this variant
+  sku          String?  @unique
+  barcode      String?
   quantity     Int      @default(0)
   weight       Decimal? @db.Decimal(8, 2)
-  height       Decimal? @db.Decimal(8, 2)
-  width        Decimal? @db.Decimal(8, 2)
-  length       Decimal? @db.Decimal(8, 2)
-  dimensions   Json?    // For storing structured dimension data like "size: XL, dimensions: {height: 30, width: 25, length: null}"
-  image        String?  // Image specific to this variant
+  image        String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  dimensions   Json?
+  height       Decimal? @db.Decimal(8, 2)
+  length       Decimal? @db.Decimal(8, 2)
+  width        Decimal? @db.Decimal(8, 2)
+  asin         String?  @unique
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  asin         String?  @unique // ASIN for this specific variant
 
   @@map("product_variants")
 }
@@ -390,6 +390,59 @@ model Slider {
   @@map("sliders")
 }
 
+model ActivityLog {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  action      String
+  description String
+  entityId    String?
+  entityType  String?
+  metadata    Json?
+  userId      String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  @@map("activity_logs")
+}
+
+model ContactMessage {
+  id         String          @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  subject    String
+  message    String
+  status     MessageStatus   @default(UNREAD)
+  priority   MessagePriority @default(NORMAL)
+  metadata   Json?
+  adminReply String?
+  repliedBy  String?
+  repliedAt  DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@map("contact_messages")
+}
+
+enum ActivityType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ORDER_CREATED
+  ORDER_UPDATED
+  ORDER_CANCELLED
+  PRODUCT_CREATED
+  PRODUCT_UPDATED
+  PRODUCT_DELETED
+  USER_REGISTERED
+  USER_UPDATED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+}
+
 enum UserRole {
   ADMIN
   CUSTOMER
@@ -455,4 +508,25 @@ enum AttributeType {
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ContactStatus {
+  PENDING
+  READ
+  RESPONDED
+  CLOSED
 }

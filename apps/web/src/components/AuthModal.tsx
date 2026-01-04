@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   console.log('AuthModal isOpen:', isOpen);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [signUpStep, setSignUpStep] = useState(1); // Multi-step for sign up: 1 - Basic Info, 2 - Email Verification, 3 - Password
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,17 +68,32 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEmailSignUp = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+    if (signUpStep === 1) {
+      // Validate step 1 inputs before moving to step 2
+      if (!formData.name || !formData.phone || !formData.email) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      setSignUpStep(2);
       return;
     }
     
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
+    if (signUpStep === 3) {
+      // Final step - validate password and submit
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
     }
     
     setIsLoading(true);
@@ -85,101 +101,90 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
       
-      // First, send verification email
-      const emailResponse = await fetch(`${API_BASE_URL}/api/v1/auth/send-verification-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-        }),
-      });
-      
-      if (!emailResponse.ok) {
-        const error = await emailResponse.json();
-        toast.error(error.message || 'Failed to send verification email');
-        return;
+      if (signUpStep === 2) {
+        // Send verification email
+        const emailResponse = await fetch(`${API_BASE_URL}/api/v1/auth/send-verification-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+          }),
+        });
+        
+        if (!emailResponse.ok) {
+          const error = await emailResponse.json();
+          toast.error(error.message || 'Failed to send verification email');
+          setIsLoading(false);
+          return;
+        }
+        
+        toast.success('Verification code sent to your email!');
+        setSignUpStep(3); // Move to password step after successful email send
+        setIsLoading(false);
+      } else if (signUpStep === 3) {
+        // Final registration
+        // Verify email with code first
+        const verifyResponse = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            code: verificationCode,
+          }),
+        });
+        
+        if (!verifyResponse.ok) {
+          const error = await verifyResponse.json();
+          toast.error(error.message || 'Invalid verification code');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Email verified, now register
+        const registerResponse = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            username: formData.name.toLowerCase().replace(/\s+/g, '_'),
+            password: formData.password,
+            firstName: formData.name.split(' ')[0] || formData.name,
+            lastName: formData.name.split(' ').slice(1).join(' ') || '',
+            phone: formData.phone,
+          }),
+        });
+        
+        if (registerResponse.ok) {
+          const data = await registerResponse.json();
+          if (data.success && data.data.accessToken) {
+            // Store tokens
+            localStorage.setItem('accessToken', data.data.accessToken);
+            if (data.data.refreshToken) {
+              localStorage.setItem('refreshToken', data.data.refreshToken);
+            }
+            toast.success('Account created successfully! You are now logged in.');
+            onClose();
+            window.location.reload();
+          }
+        } else {
+          const error = await registerResponse.json();
+          toast.error(error.message || 'Failed to create account');
+        }
+        setIsLoading(false);
       }
-      
-      toast.success('Verification code sent to your email!');
-      setShowVerificationStep(true);
-      setIsLoading(false);
     } catch (error) {
-      toast.error('Failed to send verification email');
+      toast.error('Failed to process request');
       setIsLoading(false);
     }
   };
 
-  const handleVerificationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!verificationCode || verificationCode.length !== 6) {
-      toast.error('Please enter a valid 6-digit verification code');
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-      
-      // Verify email with code
-      const verifyResponse = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          code: verificationCode,
-        }),
-      });
-      
-      if (!verifyResponse.ok) {
-        const error = await verifyResponse.json();
-        toast.error(error.message || 'Invalid verification code');
-        return;
-      }
-      
-      // Email verified, now register
-      const registerResponse = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          username: formData.name.toLowerCase().replace(/\s+/g, '_'),
-          password: formData.password,
-          firstName: formData.name.split(' ')[0] || formData.name,
-          lastName: formData.name.split(' ').slice(1).join(' ') || '',
-          phone: formData.phone,
-        }),
-      });
-      
-      if (registerResponse.ok) {
-        const data = await registerResponse.json();
-        if (data.success && data.data.accessToken) {
-          // Store tokens
-          localStorage.setItem('accessToken', data.data.accessToken);
-          if (data.data.refreshToken) {
-            localStorage.setItem('refreshToken', data.data.refreshToken);
-          }
-          toast.success('Account created successfully! You are now logged in.');
-          onClose();
-          window.location.reload();
-        }
-      } else {
-        const error = await registerResponse.json();
-        toast.error(error.message || 'Failed to create account');
-      }
-    } catch (error) {
-      toast.error('Failed to create account');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -236,31 +241,33 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-[#F0F2F5] rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
+              className="bg-[#F0F2F5] rounded-xl max-w-md w-full mx-4 relative ml-auto flex flex-col h-[70vh] max-h-[80vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-green-600" />
-                </div>
-                <h2 className="text-2xl font-bold custom-font text-gray-900 mb-2">Welcome back!</h2>
-                <p className="text-gray-600 custom-font mb-6">
-                  You are signed in as <span className="font-medium">{session.user?.email}</span>
-                </p>
-                
+              <div className="p-8 flex-grow overflow-y-auto">
                 <button
-                  onClick={handleSignOut}
-                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-medium custom-font hover:bg-red-700 transition-colors"
+                  onClick={onClose}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Sign Out
+                  <X className="w-6 h-6" />
                 </button>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold custom-font text-gray-900 mb-2">Welcome back!</h2>
+                  <p className="text-gray-600 custom-font mb-6">
+                    You are signed in as <span className="font-medium">{session.user?.email}</span>
+                  </p>
+                  
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-medium custom-font hover:bg-red-700 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -284,9 +291,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="bg-[#F0F2F5] rounded-xl p-8 max-w-md w-full mx-4 relative ml-auto"
+              className="bg-[#F0F2F5] rounded-xl max-w-md w-full mx-4 relative ml-auto flex flex-col h-[70vh] max-h-[80vh]"
               onClick={(e) => e.stopPropagation()}
             >
+            <div className="p-8 flex-grow overflow-y-auto max-h-full">
+            
             <button
               onClick={onClose}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -344,8 +353,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
 
             {/* Email Form */}
-            {showVerificationStep && isSignUp ? (
-              <form onSubmit={handleVerificationSubmit}>
+            {signUpStep === 2 && isSignUp ? (
+              <form onSubmit={(e) => { e.preventDefault(); handleEmailSignUp(); }}>
                 <div className="mb-6 text-center">
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-8 h-8 text-blue-600" />
@@ -398,9 +407,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </button>
               </form>
             ) : (
-              <form onSubmit={isSignUp ? handleEmailSignUp : handleEmailSignIn}>
-              {isSignUp && (
-                <>
+              <form onSubmit={isSignUp ? (e) => { e.preventDefault(); handleEmailSignUp(); } : handleEmailSignIn}>
+              {isSignUp && signUpStep === 1 && (
+                <div className="space-y-4">
                   <div className="mb-4">
                     <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
                       Full Name
@@ -412,7 +421,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        required={isSignUp}
+                        required
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                         placeholder="Enter your full name"
                       />
@@ -432,34 +441,206 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        required={isSignUp}
+                        required
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                         placeholder="Enter your phone number"
                       />
                     </div>
                   </div>
-                </>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between mt-6">
+                    <div></div> {/* Empty div for spacing */}
+                    <button
+                      type="button"
+                      onClick={handleEmailSignUp}
+                      disabled={!formData.name || !formData.phone || !formData.email || isLoading}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium custom-font hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2 inline" />
+                          Validating...
+                        </>
+                      ) : 'Continue'}
+                    </button>
+                  </div>
+                </div>
               )}
 
-              <div className="mb-4">
-                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                    placeholder="Enter your email"
-                  />
-                </div>
-              </div>
+              {isSignUp && signUpStep === 2 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Mail className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 custom-font">Check Your Email</h3>
+                    <p className="text-gray-600 custom-font text-sm">
+                      We sent a verification code to <br />
+                      <span className="font-medium text-gray-900">{formData.email}</span>
+                    </p>
+                  </div>
 
-              <div className="mb-4">
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Verification Code
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        required
+                        maxLength={6}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black text-center text-2xl tracking-widest"
+                        placeholder="000000"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      Didn't receive the code? Check your spam folder or{' '}
+                      <button
+                        type="button"
+                        onClick={handleEmailSignUp}
+                        className="text-blue-600 hover:underline"
+                      >
+                        resend
+                      </button>
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpStep(1)}
+                      className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium custom-font hover:bg-gray-50 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEmailSignUp}
+                      disabled={verificationCode.length !== 6 || isLoading}
+                      className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium custom-font hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin mr-2 inline" />
+                          Verifying...
+                        </>
+                      ) : 'Continue'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isSignUp && signUpStep === 3 && (
+                <div className="space-y-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        placeholder="Create a password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Use at least 6 characters</p>
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        placeholder="Confirm your password"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpStep(2)}
+                      className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium custom-font hover:bg-gray-50 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading || formData.password !== formData.confirmPassword || formData.password.length < 6}
+                      className="flex-1 px-4 py-3 text-white rounded-xl font-medium custom-font hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                      style={{ backgroundColor: '#0077b6' }}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      ) : (
+                        'Create Account'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isSignUp && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
                   <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
                     Password
                   </label>
@@ -484,39 +665,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </div>
               </div>
 
-              {isSignUp && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium custom-font text-gray-700 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      required={isSignUp}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                      placeholder="Confirm your password"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {!isSignUp && (
-                <div className="mb-6 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForgotPassword(true);
-                    }}
-                    className="text-sm text-blue-600 hover:underline custom-font"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              )}
+              <div className="mb-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(true);
+                  }}
+                  className="text-sm text-blue-600 hover:underline custom-font"
+                >
+                  Forgot Password?
+                </button>
+              </div>
 
               <button
                 type="submit"
@@ -527,9 +686,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
+                  'Sign In'
                 )}
               </button>
+              </>
+              )}
             </form>
             )}
 
@@ -541,8 +702,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     onClick={() => {
                       setIsSignUp(!isSignUp);
                       setFormData({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
-                      setShowVerificationStep(false);
                       setVerificationCode('');
+                      setSignUpStep(1); // Reset to first step when switching
                     }}
                     className="ml-2 font-medium custom-font"
                     style={{ color: '#0077b6' }}
@@ -552,6 +713,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </p>
               </div>
             )}
+            </div>
           </motion.div>
         </motion.div>
       )}

@@ -22,6 +22,16 @@ export const productSchema = z.object({
     .max(5000, "Description must be less than 5000 characters")
     .optional(),
 
+  shortDescription: z
+    .string()
+    .max(500, "Short description must be less than 500 characters")
+    .optional(),
+
+  productCode: z
+    .string()
+    .max(100, "Product code must be less than 100 characters")
+    .optional(),
+
   price: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -68,43 +78,6 @@ export const productSchema = z.object({
     )
     .optional(),
 
-  discountPrice: z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
-      const num = typeof val === "string" ? parseFloat(val) : val;
-      if (isNaN(num)) throw new Error("Discount price must be a valid number");
-      return num;
-    })
-    .refine(
-      (val) => val === undefined || val >= 0,
-      "Discount price must be a positive number",
-    )
-    .refine(
-      (val) => val === undefined || val <= 999999.99,
-      "Discount price must be less than 999,999.99",
-    )
-    .optional(),
-
-  discountPercentage: z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      if (val === "" || val === null || val === undefined) return undefined;
-      const num = typeof val === "string" ? parseFloat(val) : val;
-      if (isNaN(num))
-        throw new Error("Discount percentage must be a valid number");
-      return num;
-    })
-    .refine(
-      (val) => val === undefined || val >= 0,
-      "Discount percentage must be a positive number",
-    )
-    .refine(
-      (val) => val === undefined || val <= 100,
-      "Discount percentage cannot exceed 100%",
-    )
-    .optional(),
-
   margin: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -123,20 +96,6 @@ export const productSchema = z.object({
     )
     .optional(),
 
-  minOrderQuantity: z
-    .number()
-    .int("Minimum order quantity must be a whole number")
-    .min(1, "Minimum order quantity must be at least 1")
-    .max(999, "Minimum order quantity must be less than 999")
-    .optional(),
-
-  maxOrderQuantity: z
-    .number()
-    .int("Maximum order quantity must be a whole number")
-    .min(1, "Maximum order quantity must be at least 1")
-    .max(999, "Maximum order quantity must be less than 999")
-    .optional(),
-
   sku: z
     .string()
     .min(3, "SKU must be at least 3 characters")
@@ -147,17 +106,62 @@ export const productSchema = z.object({
     )
     .optional(),
 
+  barcode: z
+    .string()
+    .max(50, "Barcode must be less than 50 characters")
+    .optional(),
+
+  upc: z.string().max(50, "UPC must be less than 50 characters").optional(),
+
+  ean: z.string().max(50, "EAN must be less than 50 characters").optional(),
+
+  isbn: z.string().max(50, "ISBN must be less than 50 characters").optional(),
+
+  disclaimer: z
+    .string()
+    .max(1000, "Disclaimer must be less than 1000 characters")
+    .optional(),
+
+  ingredients: z
+    .string()
+    .max(2000, "Ingredients must be less than 2000 characters")
+    .optional(),
+
+  additionalDetails: z
+    .string()
+    .max(2000, "Additional details must be less than 2000 characters")
+    .optional(),
+
+  materialCare: z
+    .string()
+    .max(1000, "Material care must be less than 1000 characters")
+    .optional(),
+
+  showIngredients: z.boolean().default(false),
+  showDisclaimer: z.boolean().default(false),
+  showAdditionalDetails: z.boolean().default(false),
+  showMaterialCare: z.boolean().default(false),
+
   categoryId: z.string().min(1, "Category is required"),
-
   subCategoryId: z.string().optional(),
-
   brandId: z.string().optional(),
 
   tags: z.array(z.string()).max(20, "Maximum 20 tags allowed").default([]),
 
-  images: z.array(z.string()).max(10, "Maximum 10 images allowed").default([]),
+  isVariant: z.boolean().default(false),
+  variantAttributes: z.array(z.string()).default([]),
+  selectedSizes: z.array(z.string()).default([]),
+  selectedColors: z.array(z.string()).default([]),
+  selectedMaterials: z.array(z.string()).default([]),
 
-  stock: z
+  parentAsin: z
+    .string()
+    .max(50, "Parent ASIN must be less than 50 characters")
+    .optional(),
+
+  // Inventory
+  trackQuantity: z.boolean().default(true),
+  quantity: z
     .union([z.string(), z.number()])
     .transform((val) => {
       if (val === "" || val === null || val === undefined) return 0;
@@ -170,113 +174,104 @@ export const productSchema = z.object({
     .refine((val) => val <= 999999, "Stock must be less than 999,999")
     .default(0),
 
+  lowStockThreshold: z
+    .number()
+    .int("Low stock threshold must be a whole number")
+    .min(0, "Low stock threshold cannot be negative")
+    .max(999, "Low stock threshold must be less than 999")
+    .default(5),
+
+  allowBackorder: z.boolean().default(false),
+  manageStock: z.boolean().default(true),
+
+  // Physical properties
   weight: z
     .number()
     .min(0, "Weight must be a positive number")
     .max(9999.99, "Weight must be less than 9,999.99")
     .optional(),
 
-  // Clothing-specific fields
-  color: z
-    .string()
-    .min(1, "Color is required")
-    .max(50, "Color must be less than 50 characters")
-    .optional(),
-  size: z.enum(["XS", "S", "M", "L", "XL", "XXL", "3XL", "Custom"]).optional(),
+  weightUnit: z.enum(["kg", "g", "lb", "oz"]).default("kg"),
 
-  // Physical dimensions for custom sizing
-  height: z
-    .number()
-    .min(0, "Height must be a positive number")
-    .max(999.99, "Height must be less than 999.99")
-    .optional(),
-  width: z
-    .number()
-    .min(0, "Width must be a positive number")
-    .max(999.99, "Width must be less than 999.99")
-    .optional(),
-  length: z
-    .number()
-    .min(0, "Length must be a positive number")
-    .max(999.99, "Length must be less than 999.99")
-    .optional(),
-
-  // Weight field for variants
-  weight: z
-    .number()
-    .min(0, "Weight must be a positive number")
-    .max(9999.99, "Weight must be less than 9,999.99")
-    .optional(),
-  width: z
-    .number()
-    .min(0, "Width must be a positive number")
-    .max(999.99, "Width must be less than 999.99")
-    .optional(),
-  length: z
-    .number()
-    .min(0, "Length must be a positive number")
-    .max(999.99, "Length must be less than 999.99")
-    .optional(),
-
-  seo: z
+  dimensions: z
     .object({
-      title: z
-        .string()
-        .max(60, "SEO title must be less than 60 characters")
-        .optional(),
-      description: z
-        .string()
-        .max(160, "SEO description must be less than 160 characters")
-        .optional(),
-      keywords: z
-        .array(z.string())
-        .max(10, "Maximum 10 SEO keywords allowed")
-        .optional()
-        .default([]),
-      ogTitle: z
-        .string()
-        .max(60, "OG title must be less than 60 characters")
-        .optional(),
-      ogDescription: z
-        .string()
-        .max(160, "OG description must be less than 160 characters")
-        .optional(),
-      ogImage: z.string().url("OG image must be a valid URL").optional(),
-      canonicalUrl: z
-        .string()
-        .url("Canonical URL must be a valid URL")
-        .optional(),
-      focusKeyword: z
-        .string()
-        .max(50, "Focus keyword must be less than 50 characters")
-        .optional(),
+      length: z.number().min(0).optional(),
+      width: z.number().min(0).optional(),
+      height: z.number().min(0).optional(),
+      unit: z.string().default("cm"),
     })
     .optional(),
 
-  isActive: z.boolean().default(true),
-  isFeatured: z.boolean().default(false),
-  isDigital: z.boolean().default(false),
-  requiresShipping: z.boolean().default(true),
-  trackQuantity: z.boolean().default(true),
-  allowBackorder: z.boolean().default(false),
+  // Media
+  images: z.array(z.string()).max(10, "Maximum 10 images allowed").default([]),
+  videos: z.array(z.string()).max(5, "Maximum 5 videos allowed").default([]),
+  thumbnail: z.string().optional(),
 
-  // Promotional flags
-  isTodaysBestDeal: z.boolean().default(false),
-  isOnSale: z.boolean().default(false),
-  isFestivalOffer: z.boolean().default(false),
-  isNewLaunch: z.boolean().default(false),
-  isBestSeller: z.boolean().default(false),
-  minQuantity: z
-    .number()
-    .int("Minimum quantity must be a whole number")
-    .min(1, "Minimum quantity must be at least 1")
-    .max(999, "Minimum quantity must be less than 999")
+  // SEO fields
+  seoTitle: z
+    .string()
+    .max(60, "SEO title must be less than 60 characters")
     .optional(),
-  maxQuantity: z
-    .number()
-    .int("Maximum quantity must be a whole number")
-    .min(1, "Maximum quantity must be at least 1")
-    .max(999, "Maximum quantity must be less than 999")
+
+  seoDescription: z
+    .string()
+    .max(160, "SEO description must be less than 160 characters")
+    .optional(),
+
+  seoKeywords: z
+    .array(z.string())
+    .max(10, "Maximum 10 SEO keywords allowed")
+    .default([]),
+  metaTags: z.any().optional(),
+
+  canonicalUrl: z.string().url().optional(),
+  robotsIndex: z.boolean().default(true),
+  robotsFollow: z.boolean().default(true),
+
+  ogTitle: z
+    .string()
+    .max(60, "OG title must be less than 60 characters")
+    .optional(),
+
+  ogDescription: z
+    .string()
+    .max(160, "OG description must be less than 160 characters")
+    .optional(),
+
+  ogType: z.string().default("website"),
+  ogImage: z.string().url().optional(),
+
+  twitterCard: z.string().default("summary"),
+  twitterSite: z.string().optional(),
+
+  // Status flags
+  isActive: z.boolean().default(true),
+  isDigital: z.boolean().default(false),
+  isFeatured: z.boolean().default(false),
+  isNew: z.boolean().default(false),
+  isOnSale: z.boolean().default(false),
+  isBestSeller: z.boolean().default(false),
+  isSales: z.boolean().default(false),
+  isNewSeller: z.boolean().default(false),
+  isFestivalOffer: z.boolean().default(false),
+
+  visibility: z.enum(["VISIBLE", "HIDDEN", "DRAFT"]).default("VISIBLE"),
+  publishedAt: z.string().optional(),
+
+  // Shipping
+  requiresShipping: z.boolean().default(true),
+  shippingClass: z.string().optional(),
+  freeShipping: z.boolean().default(false),
+
+  // Tax
+  taxable: z.boolean().default(true),
+  taxClass: z.string().optional(),
+
+  // Additional
+  customFields: z.any().optional(),
+  notes: z
+    .string()
+    .max(1000, "Notes must be less than 1000 characters")
     .optional(),
 
   // Multi-currency pricing
@@ -318,6 +313,70 @@ export const productSchema = z.object({
           )
           .optional(),
         isActive: z.boolean().default(true),
+      }),
+    )
+    .default([]),
+
+  // Pricing tiers
+  pricingTiers: z
+    .array(
+      z.object({
+        minQuantity: z.number().min(1),
+        maxQuantity: z.number().optional(),
+        price: z.number().min(0),
+        discount: z.number().min(0).max(100).optional(),
+      }),
+    )
+    .default([]),
+
+  // Attributes
+  attributes: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        value: z.string().min(1),
+        type: z
+          .enum([
+            "TEXT",
+            "NUMBER",
+            "BOOLEAN",
+            "COLOR",
+            "IMAGE",
+            "SELECT",
+            "MULTI_SELECT",
+          ])
+          .default("TEXT"),
+        isRequired: z.boolean().default(false),
+        isFilterable: z.boolean().default(true),
+        sortOrder: z.number().default(0),
+      }),
+    )
+    .default([]),
+
+  // Variants
+  variants: z
+    .array(
+      z.object({
+        id: z.number().optional(),
+        variantName: z.string().optional(),
+        sku: z.string().optional(),
+        images: z.array(z.string()).default([]),
+        price: z
+          .object({
+            usd: z.number().optional(),
+            eur: z.number().optional(),
+            gbp: z.number().optional(),
+            inr: z.number().optional(),
+          })
+          .optional(),
+        dimensions: z
+          .object({
+            length: z.number().optional(),
+            width: z.number().optional(),
+            height: z.number().optional(),
+          })
+          .optional(),
+        childAsin: z.string().optional(),
       }),
     )
     .default([]),

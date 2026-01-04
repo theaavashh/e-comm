@@ -1261,13 +1261,7 @@ export default function ProductDetail({
         {!isZoomed && (
           <div className="lg:col-span-3 space-y-6">
             {/* Delivery Options */}
-            <div className="rounded-xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delivery Options
-                </h3>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
+            <div className=" border border-gray-200 p-6 ">
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
@@ -1282,6 +1276,12 @@ export default function ProductDetail({
                       CHANGE
                     </button>
                   </div>
+                  <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Delivery Options
+                </h3>
+                <Info className="w-4 h-4 text-gray-400" />
+              </div>
                 </div>
 
                 <div className="flex items-center gap-3">

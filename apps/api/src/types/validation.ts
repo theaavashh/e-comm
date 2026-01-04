@@ -73,12 +73,28 @@ const productBaseSchema = z.object({
   name: z.string().min(3, "Product name must be at least 3 characters"),
   // Full description is now required per UI
   description: z.string().min(1, "Full description is required"),
+  shortDescription: z.string().optional(),
+  productCode: z.string().optional(),
+  disclaimer: z.string().optional(),
+  ingredients: z.string().optional(),
+  additionalDetails: z.string().optional(),
+  materialCare: z.string().optional(),
+  showIngredients: z.coerce.boolean().default(false),
+  showDisclaimer: z.coerce.boolean().default(false),
+  showAdditionalDetails: z.coerce.boolean().default(false),
+  showMaterialCare: z.coerce.boolean().default(false),
+  isVariant: z.coerce.boolean().default(false),
+  variantAttributes: z.array(z.string()).default([]),
+  selectedSizes: z.array(z.string()).default([]),
+  selectedColors: z.array(z.string()).default([]),
+  selectedMaterials: z.array(z.string()).default([]),
+  parentAsin: z.string().optional(),
 
   // Pricing - base price is deprecated, use currencyPrices instead
   // price field is kept for backward compatibility but not used
   comparePrice: z.coerce
     .number()
-    .positive("Compare price must be positive")
+    .min(0, "Compare price must be non-negative")
     .optional(),
   costPrice: z.coerce
     .number()
@@ -140,6 +156,21 @@ const productBaseSchema = z.object({
     .optional(),
   seoKeywords: z.array(z.string()).default([]),
   metaTags: z.record(z.string()).optional(),
+  canonicalUrl: z.string().optional(),
+  robotsIndex: z.coerce.boolean().default(true),
+  robotsFollow: z.coerce.boolean().default(true),
+  ogTitle: z
+    .string()
+    .max(60, "OG title must be less than 60 characters")
+    .optional(),
+  ogDescription: z
+    .string()
+    .max(160, "OG description must be less than 160 characters")
+    .optional(),
+  ogType: z.string().default("website"),
+  ogImage: z.string().optional(), // Can be URL or base64 data URL
+  twitterCard: z.string().default("summary"),
+  twitterSite: z.string().optional(),
   seo: z
     .object({
       ogTitle: z
@@ -163,6 +194,9 @@ const productBaseSchema = z.object({
   isNew: z.coerce.boolean().default(false),
   isOnSale: z.coerce.boolean().default(false),
   isBestSeller: z.coerce.boolean().default(false),
+  isSales: z.coerce.boolean().default(false),
+  isNewSeller: z.coerce.boolean().default(false),
+  isFestivalOffer: z.coerce.boolean().default(false),
 
   // Visibility
   visibility: z
@@ -269,7 +303,7 @@ const productBaseSchema = z.object({
         price: z.coerce.number().positive("Price must be positive"),
         comparePrice: z.coerce
           .number()
-          .positive("Compare price must be positive")
+          .min(0, "Compare price must be non-negative")
           .optional(),
         minDeliveryDays: z.coerce
           .number()
@@ -294,7 +328,7 @@ export const createProductSchema = productBaseSchema
           price: z.coerce.number().positive("Price must be positive"),
           comparePrice: z.coerce
             .number()
-            .positive("Compare price must be positive")
+            .min(0, "Compare price must be non-negative")
             .optional(),
           minDeliveryDays: z.coerce
             .number()

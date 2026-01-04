@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import BottomNav from "@/components/BottomNav";
+import BottomNavWrapper from "@/components/BottomNavWrapper";
+import LiveChatWrapper from "@/components/LiveChatWrapper";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import ConditionalHeader from "@/components/ConditionalHeader";
@@ -49,9 +50,9 @@ export default function RootLayout({
             <main className="flex-1 pb-20 md:pb-0">
               {children}
             </main>
-            <Footer />
           </div>
-          <BottomNav />
+          <BottomNavWrapper />
+          <LiveChatWrapper />
           <CookieConsent />
         </Providers>
       </body>

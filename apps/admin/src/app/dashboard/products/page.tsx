@@ -182,7 +182,7 @@ export default function ProductsPage() {
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
                 price: cp.price,
-                comparePrice: cp.comparePrice,
+                comparePrice: cp.comparePrice !== undefined && cp.comparePrice !== null && cp.comparePrice !== '' ? cp.comparePrice : undefined,
                 minDeliveryDays: cp.minDeliveryDays || 1,
                 maxDeliveryDays: cp.maxDeliveryDays || 7,
                 isActive: cp.isActive !== false,
@@ -303,7 +303,7 @@ export default function ProductsPage() {
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
                 price: cp.price,
-                comparePrice: cp.comparePrice,
+                comparePrice: cp.comparePrice !== undefined && cp.comparePrice !== null && cp.comparePrice !== '' ? cp.comparePrice : undefined,
                 minDeliveryDays: cp.minDeliveryDays || 1,
                 maxDeliveryDays: cp.maxDeliveryDays || 7,
                 isActive: cp.isActive !== false,

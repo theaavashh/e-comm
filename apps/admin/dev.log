@@ -1,0 +1,22 @@
+
+> admin@0.1.0 dev /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/apps/admin
+> next dev --turbopack -p 4001
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /home/theaavashh/workplace/celebrate-multi/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /home/theaavashh/workplace/celebrate-multi/gharsamma-ecommerce/pnpm-lock.yaml
+
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::4001
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::4001)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 4001
+}
+[?25h

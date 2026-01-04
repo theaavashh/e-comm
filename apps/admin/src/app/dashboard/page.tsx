@@ -51,6 +51,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
 import GoogleAnalyticsReport from "@/components/GoogleAnalyticsReport";
 import FacebookPixelReport from "@/components/FacebookPixelReport";
+import VisitorsByCountryChart from "@/components/dashboard/VisitorsByCountryChart";
+import OrdersChart from "@/components/dashboard/OrdersChart";
 
 function DashboardContent() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -306,40 +308,22 @@ function DashboardContent() {
                   <div className="flex items-center space-x-2">
                     <Clock className="w-5 h-5 text-purple-600" />
                     <h3 className="text-lg font-semibold text-gray-900 custom-font">
-                      Visitorsss by Country
+                      Visitors by Country
                     </h3>
                   </div>
                   <span className="text-xs text-gray-500 custom-font">
                     Last 7 days
                   </span>
                 </div>
-                <div className="h-64 flex items-end justify-between space-x-2 px-4">
-                  {[
+                <VisitorsByCountryChart
+                  data={[
                     { country: "Nepal", value: 3200 },
                     { country: "India", value: 4500 },
                     { country: "USA", value: 2800 },
                     { country: "UK", value: 2100 },
                     { country: "AU", value: 1800 },
-                  ].map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col items-center flex-1 space-y-2"
-                    >
-                      <div className="w-full flex flex-col items-center">
-                        <div
-                          className="w-full bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-lg transition-all duration-300 hover:from-purple-700 hover:to-purple-500 shadow-md"
-                          style={{ height: `${(item.value / 5000) * 200}px` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-600 custom-font font-medium">
-                        {item.value}
-                      </span>
-                      <span className="text-xs text-gray-500 custom-font">
-                        {item.country}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                  ]}
+                />
               </div>
 
               {/* Orders Chart */}
@@ -355,24 +339,12 @@ function DashboardContent() {
                     Updated hourly
                   </span>
                 </div>
-                <div className="h-64 flex items-end justify-between space-x-1 px-4">
-                  {[
+                <OrdersChart
+                  data={[
                     120, 145, 130, 160, 140, 155, 170, 165, 180, 175, 190, 185,
                     200, 195,
-                  ].map((value, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col items-center flex-1"
-                    >
-                      <div className="w-full relative">
-                        <div
-                          className="w-full bg-gradient-to-t from-purple-600 via-purple-500 to-purple-400 rounded-t transition-all duration-300 hover:from-purple-700 hover:to-purple-600 shadow-sm"
-                          style={{ height: `${(value / 200) * 200}px` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  ]}
+                />
               </div>
             </div>
 
@@ -630,13 +602,13 @@ function DashboardContent() {
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-3xl font-medium font-poppins text-gray-900">
-                Top Banner Management
-              </h2>
-              <h3 className="text-xl font-normal font-inter text-gray-600 mt-1">
-                Easily manage and update your top banners
-              </h3>
+                  Top Banner Management
+                </h2>
+                <h3 className="text-xl font-normal font-inter text-gray-600 mt-1">
+                  Easily manage and update your top banners
+                </h3>
               </div>
-              
+
               <button
                 onClick={openModal}
                 className="bg-[#EB6426] text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"

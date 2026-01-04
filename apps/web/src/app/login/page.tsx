@@ -502,35 +502,26 @@ const callbackUrl = searchParams?.get('callbackUrl') || '/';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F0F2F5]">
-      {/* Top Banner with Logo and Help & Support */}
-      <div className="py-4 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-8xl mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <Image 
-              src="/gharsamma-logo.png" 
-              alt="Gharsamma Logo" 
-              width={120} 
-              height={40} 
-              className="object-contain"
-            />
-          </div>
-          <Link 
-            href="/support" 
-            className="flex items-center text-[#EB6426]"
-          >
-            <HelpCircle className="w-5 h-5 mr-2" />
-            <span className="font-bold ">Help & Support</span>
+      
+      <main className="flex-grow flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="flex justify-start w-full max-w-md">
+          <Link href="/" className="flex items-center text-gray-600 hover:text-gray-800 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-[#EB6426] mr-1 " />
           </Link>
         </div>
-      </div>
-
-      <div className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-6">
-        <Link href="/">Back to Home</Link>
-      </div>
-      
-      <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-6">
+        
+        <div className="flex justify-center">
+          <Image 
+            src="/gharsamma-logo.png" 
+            alt="Gharsamma Logo" 
+            width={120} 
+            height={40} 
+            className="object-contain"
+          />
+        </div>
+        
         {/* Signup/Login Form Section */}
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
           <div className="text-center">
             <h2 className="text-3xl font-bold custom-font text-gray-900 mb-2">
                Create Account

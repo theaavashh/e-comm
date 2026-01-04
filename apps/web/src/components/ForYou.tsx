@@ -294,7 +294,7 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
             >
               <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100">
                 {/* Image Container with ProductImageSlider */}
-                <div className="relative h-32 sm:h-36 md:h-48 lg:h-64 bg-white overflow-hidden">
+                <div className="relative h-52  md:h-64 bg-white overflow-hidden">
                   <ProductImageSlider images={product.images} />
                 </div>
 
