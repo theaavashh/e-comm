@@ -71,12 +71,12 @@ const categoryData: CategorySection[] = [
 
 export default function CategoryShowcase() {
   return (
-    <div className="bg-[#F0F2F5] py-16 w-full mx-4 sm:mx-6 md:mx-8">
+    <div className="bg-[#F0F2F5] w-full max-w-8xl mx-4 sm:mx-6 md:mx-12">
       <div className="w-full">
         {/* Title Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <h2 className="text-2xl md:text-3xl font-extrabold italic text-gray-900">
-            Top Categories <span className="font-extrabold not-italic">We Serve</span>
+          <h2 className="text-xl md:text-2xl font-semibold font-mono text-gray-900">
+            Top Categories <span className="font-bold font-inter not-italic">We Serve</span>
           </h2>
           <Link 
             href="/categories" 

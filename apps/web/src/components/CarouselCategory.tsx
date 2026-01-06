@@ -15,59 +15,47 @@ interface MediaItem {
   updatedAt: string;
 }
 
-interface MediaResponse {
-  success: boolean;
-  data: {
-    mediaItems: MediaItem[];
-  };
-}
-
 export default function CarouselCategory() {
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Hardcoded banner data
+  const hardcodedBanners: MediaItem[] = [
+    {
+      id: 'banner-1',
+      linkTo: 'category',
+      mediaType: 'IMAGE',
+      mediaUrl: '/banners.jpeg',
+      internalLink: '/products/foods',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'banner-2',
+      linkTo: 'category',
+      mediaType: 'IMAGE',
+      mediaUrl: '/banners.jpeg',
+      internalLink: '/products/dress',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'banner-3',
+      linkTo: 'category',
+      mediaType: 'IMAGE',
+      mediaUrl: '/banners.jpeg',
+      internalLink: '/products/statue',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+  ];
+
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Set hardcoded banners on component mount
   useEffect(() => {
-    const fetchActiveMediaItems = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/media?active=true`);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', response.status, errorText);
-          throw new Error(`Failed to fetch media items: ${response.status}`);
-        }
-        
-        const data: MediaResponse = await response.json();
-        console.log('Fetched media items:', data.data?.mediaItems);
-        
-        if (!data.success || !data.data?.mediaItems) {
-          console.warn('Invalid response structure:', data);
-          setMediaItems([]);
-          return;
-        }
-        
-        // Filter to only show media items that link to categories
-        const categoryMediaItems = (data.data.mediaItems || []).filter((item: MediaItem) => {
-          // Only show items that link to categories
-          return item.internalLink?.startsWith('/products/') || item.linkTo === 'category';
-        });
-        
-        setMediaItems(categoryMediaItems);
-      } catch (error) {
-        console.error('Error fetching media items:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load media items');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActiveMediaItems();
+    // No API call needed - using hardcoded banners
   }, []);
 
   // Handle scroll progress
@@ -81,23 +69,11 @@ export default function CarouselCategory() {
       const clientWidth = scrollContainer.clientWidth;
       const maxScroll = scrollWidth - clientWidth;
       
-      console.log('Scroll Event Fired!', {
-        scrollLeft,
-        scrollWidth,
-        clientWidth,
-        maxScroll,
-        mediaItemsLength: mediaItems.length,
-        hasOverflow: scrollWidth > clientWidth,
-        progress: maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0
-      });
-      
       if (maxScroll > 0) {
         const progress = (scrollLeft / maxScroll) * 100;
         const clampedProgress = Math.min(100, Math.max(0, progress));
-        console.log('Setting progress to:', clampedProgress);
         setScrollProgress(clampedProgress);
       } else {
-        console.log('No scrollable content - maxScroll is 0 or negative');
         setScrollProgress(0);
       }
     };
@@ -120,59 +96,18 @@ export default function CarouselCategory() {
       scrollContainer.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [mediaItems.length]);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="py-5">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Header Skeleton */}
-          <div className="mb-12 mx-20 mt-10">
-            <div className="animate-pulse">
-              <div className="h-12 bg-gray-200 rounded w-80 mb-4"></div>
-              <div className="h-6 bg-gray-200 rounded w-64"></div>
-            </div>
-          </div>
-          
-          {/* Media Items Skeleton */}
-          <div className="w-full overflow-x-auto">
-            <div className="flex space-x-6 pb-4 ml-10">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="w-80 h-64 bg-gray-200 rounded-lg animate-pulse flex-shrink-0"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center">
-            <p className="text-red-600">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (mediaItems.length === 0) {
-    console.log('No media items found');
-    return null;
-  }
 
   return (
-    <div className="py-3 ">
-      <div className="max-w-8xl mx-auto px-6">
+    <div className="py-1">
+      <div className="max-w-9xl mx-auto ">
       
         
         {/* All Media Items Row */}
         <div 
           ref={scrollContainerRef}
-          className="w-full h-[500px] md:h-[500px] lg:h-[500px] overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
+          className="w-full h-[500px] md:h-[500px] lg:h-[800px] overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth "
           style={{
             scrollBehavior: 'smooth',
             scrollbarWidth: 'none',
@@ -194,8 +129,8 @@ export default function CarouselCategory() {
             }
           }}
         >
-          <div className="flex space-x-6 pb-4 ml-5 gap-10 min-w-max h-full items-center">
-            {mediaItems.map((item) => {
+          <div className="flex space-x-6  ml-5 gap-5 min-w-max min-h-full items-center bg-red-500">
+            {hardcodedBanners.map((item: MediaItem) => {
               // Ensure only category links are used
               const linkHref = item.internalLink?.startsWith('/products/') 
                 ? item.internalLink 
@@ -207,17 +142,17 @@ export default function CarouselCategory() {
                 href={linkHref}
                 className="flex-shrink-0 cursor-pointer h-full max-h-full"
               >
-                <div className="relative w-[90vw] max-w-4xl h-full max-h-full bg-gray-100 hover:bg-[#F0F2F5] transition-all duration-500 ease-in-out rounded-lg overflow-hidden transform hover:scale-105">
+                <div className="relative w-[90vw] max-w-8xl h-full max-h-full transition-all duration-500 ease-in-out rounded-lg overflow-hidden transform ">
                   {item.mediaType === 'IMAGE' ? (
                         <Image
                       src={item.mediaUrl}
                       alt={item.linkTo.replace('-', ' ')}
-                      width={800}
-                      height={800}
-                      className="w-full h-full object-cover overflow-hidden"
+                      width={1200}
+                      height={1000}
+                      className="w-full h-[100vh] object-cover overflow-hidden"
                       loading="lazy"
                       quality={100}
-                      sizes="(max-width: 768px) 80vw, 700px"
+                      
                         />
                       ) : (
                         <video
@@ -235,20 +170,7 @@ export default function CarouselCategory() {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full flex justify-center mt-8">
-          <div className="w-[40vw] relative">
-            <div className="w-full h-2 bg-gray-200 rounded-full mx-3"></div>
-            <div 
-              className="absolute top-0 h-2 w-6 bg-[#0077b6] rounded-lg"
-              style={{ 
-                left: `${Math.min(100, Math.max(0, scrollProgress))}%`,
-                transform: 'translateX(-50%)',
-                transition: 'left 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-              }}
-            />
-          </div>
-        </div>
+        
       </div>
 
       {/* Custom CSS for hiding scrollbar */}

@@ -8,7 +8,6 @@ import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import ConditionalHeader from "@/components/ConditionalHeader";
 
-
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
@@ -23,7 +22,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "GharSamma - Traditional Nepali Products",
-  description: "Discover authentic Nepali handicrafts, puja samagri, musical instruments, herbs, and jewelry at GharSamma",
+  description:
+    "Discover authentic Nepali handicrafts, puja samagri, musical instruments, herbs, and jewelry at GharSamma",
+  icons: {
+    icon: "/gharsamma-logo.png",
+    shortcut: "/gharsamma-logo.png",
+    apple: "/gharsamma-logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -34,22 +39,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/gharsamma-logo.png" />
         <script
           src="https://cdn.paddle.com/paddle/paddle.js"
-          data-vendor={process.env.NEXT_PUBLIC_PADDLE_VENDOR_ID || 'your-vendor-id'}
+          data-vendor={
+            process.env.NEXT_PUBLIC_PADDLE_VENDOR_ID || "your-vendor-id"
+          }
         />
       </head>
-      <body
-        className={`${inter.variable} ${poppins.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${poppins.variable} antialiased`}>
         <Providers>
           <ConditionalHeader />
           <div className="min-h-screen flex flex-col">
-
-
-            <main className="flex-1 pb-20 md:pb-0">
-              {children}
-            </main>
+            <main className="flex-1 pb-20 md:pb-0">{children}</main>
           </div>
           <BottomNavWrapper />
           <LiveChatWrapper />

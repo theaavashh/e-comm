@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingCart, Star, Heart, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useCart } from '@/contexts/CartContext';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { ShoppingCart, Star, Heart, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -40,15 +40,76 @@ const Dress = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
-  const [activeFilter, setActiveFilter] = useState<string>('All');
+  const [activeFilter, setActiveFilter] = useState<string>("All");
   const [promotionalBanner, setPromotionalBanner] = useState<any>(null);
   const router = useRouter();
-  
+
   // Use global cart context
   const { cartItems: cart, addToCart: addToGlobalCart } = useCart();
 
-  // Hardcoded dress products
-  const hardcodedProducts: Product[] = [
+  // Fetch dress products from API
+  const fetchDressProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/products?category=dress&limit=100`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      const data = await response.json();
+      const apiProducts = data.success ? data.data.products : [];
+
+      // Transform API data to match our Product interface
+      const transformedProducts: Product[] = apiProducts.map(
+        (product: any) => ({
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          description: product.description || "",
+          shortDescription: product.shortDescription || "",
+          price: Number(product.price) || 0,
+          comparePrice: product.comparePrice
+            ? Number(product.comparePrice)
+            : undefined,
+          sku: product.sku || "",
+          quantity: product.quantity || 0,
+          image:
+            product.image || product.images?.[0] || "/placeholder-product.jpg",
+          images: product.images || [product.image].filter(Boolean),
+          category: product.category || {
+            id: "",
+            name: "Dress",
+            slug: "dress",
+          },
+          averageRating: product.averageRating || 0,
+          reviewCount: product.reviewCount || 0,
+          variants: product.variants || [],
+          brand: product.brand,
+          attributes: product.attributes || [],
+          tags: [],
+        }),
+      );
+
+      setProducts(transformedProducts);
+      setFilteredProducts(transformedProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProducts([]);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDressProducts();
+  }, []);
+
+  // For reference, here's what the hardcoded structure looked like:
+  /*
     {
       id: '1',
       name: 'Elegant Silk Sari',
@@ -212,21 +273,13 @@ const Dress = () => {
       tags: ['silk', 'banarasi', 'luxury']
     }
   ];
-
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProducts(hardcodedProducts);
-      setFilteredProducts(hardcodedProducts);
-      setLoading(false);
-    }, 500);
-  }, []);
+  */
 
   // Format price helper
   const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 2,
     }).format(price);
   };
@@ -234,19 +287,22 @@ const Dress = () => {
   // Add to cart
   const addToCart = (product: Product, quantity: number = 1) => {
     // Add to global cart context
-    addToGlobalCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images?.[0] || product.image || ''
-    }, quantity);
+    addToGlobalCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || product.image || "",
+      },
+      quantity,
+    );
   };
 
   // Update quantity
   const updateQuantity = (productId: string, quantity: number) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [productId]: quantity
+      [productId]: quantity,
     }));
   };
 
@@ -277,7 +333,7 @@ const Dress = () => {
   // Get lowest price from products
   const getLowestPrice = () => {
     if (filteredProducts.length === 0) return 0;
-    const prices = filteredProducts.map(p => Number(p.price));
+    const prices = filteredProducts.map((p) => Number(p.price));
     return Math.min(...prices);
   };
 
@@ -288,8 +344,8 @@ const Dress = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {/* Left Side - Promotional Banner */}
           <div className="relative md:col-span-1">
-            <Link 
-              href={promotionalBanner?.internalLink || '/products/dress'} 
+            <Link
+              href={promotionalBanner?.internalLink || "/products/dress"}
               className="block group"
             >
               <div className="relative h-[700px] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50">
@@ -302,7 +358,7 @@ const Dress = () => {
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100" />
                 )} */}
-                
+
                 {/* Overlay Content */}
                 <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-8">
                   {/* Top Text */}
@@ -322,7 +378,9 @@ const Dress = () => {
                     {/* Price Indicator */}
                     {filteredProducts.length > 0 && (
                       <div className="text-left">
-                        <p className="text-sm text-purple-900 font-medium mb-1 custom-font">From</p>
+                        <p className="text-sm text-purple-900 font-medium mb-1 custom-font">
+                          From
+                        </p>
                         <p className="text-2xl md:text-3xl font-bold text-purple-900 custom-font">
                           ${getLowestPrice().toFixed(0)}
                         </p>
@@ -358,7 +416,9 @@ const Dress = () => {
             {/* Products Carousel */}
             {filteredProducts.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No dress products available at the moment.</p>
+                <p className="text-gray-500 text-lg">
+                  No dress products available at the moment.
+                </p>
               </div>
             ) : (
               <div className="flex-1 overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6">
@@ -393,21 +453,32 @@ const Dress = () => {
                               alt={product.name}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                               onError={(e) => {
-                                console.error('Image failed to load for product:', product.name);
-                                e.currentTarget.style.display = 'none';
-                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (fallback) fallback.style.display = 'flex';
+                                console.error(
+                                  "Image failed to load for product:",
+                                  product.name,
+                                );
+                                e.currentTarget.style.display = "none";
+                                const fallback = e.currentTarget
+                                  .nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = "flex";
                               }}
                             />
                           ) : null}
-                          
+
                           {/* Fallback */}
-                          <div 
+                          <div
                             className="w-full h-full bg-gray-50 flex items-center justify-center"
-                            style={{ display: product.images && product.images.length > 0 ? 'none' : 'flex' }}
+                            style={{
+                              display:
+                                product.images && product.images.length > 0
+                                  ? "none"
+                                  : "flex",
+                            }}
                           >
                             <div className="text-center">
-                              <p className="text-sm text-gray-500">No Image Available</p>
+                              <p className="text-sm text-gray-500">
+                                No Image Available
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -416,16 +487,20 @@ const Dress = () => {
                         <div className="p-6 bg-white custom-font">
                           {/* Price */}
                           <div className="mb-2">
-                            {product.comparePrice && Number(product.comparePrice) > Number(product.price) ? (
+                            {product.comparePrice &&
+                            Number(product.comparePrice) >
+                              Number(product.price) ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-2xl font-extrabold text-[#EB6426]">
-                                  Now ${new Intl.NumberFormat('en-US', {
+                                  Now $
+                                  {new Intl.NumberFormat("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   }).format(product.price)}
                                 </span>
                                 <span className="text-sm text-gray-500 line-through">
-                                  ${new Intl.NumberFormat('en-US', {
+                                  $
+                                  {new Intl.NumberFormat("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   }).format(Number(product.comparePrice))}
@@ -433,7 +508,8 @@ const Dress = () => {
                               </div>
                             ) : (
                               <span className="text-lg font-semibold text-gray-900">
-                                ${new Intl.NumberFormat('en-US', {
+                                $
+                                {new Intl.NumberFormat("en-US", {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
                                 }).format(product.price)}
@@ -443,10 +519,12 @@ const Dress = () => {
 
                           {/* Product Name/Brand */}
                           <h3 className="text-lg font-medium text-black line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
-                            {product.brand?.name ? `${product.brand.name} ` : ''}
+                            {product.brand?.name
+                              ? `${product.brand.name} `
+                              : ""}
                             {product.name}
                           </h3>
-                          
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -481,7 +559,14 @@ const Dress = () => {
                 {cart.reduce((total, item) => total + item.quantity, 0)} items
               </span>
               <span className="text-sm text-gray-500">
-                ({formatPrice(cart.reduce((total, item) => total + (item.price * item.quantity), 0))})
+                (
+                {formatPrice(
+                  cart.reduce(
+                    (total, item) => total + item.price * item.quantity,
+                    0,
+                  ),
+                )}
+                )
               </span>
             </div>
           </motion.div>

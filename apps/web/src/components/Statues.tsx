@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocation } from '@/contexts/LocationContext';
-import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TbTruckDelivery } from 'react-icons/tb';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useLocation } from "@/contexts/LocationContext";
+import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { TbTruckDelivery } from "react-icons/tb";
+import { useCart } from "@/contexts/CartContext";
 
 interface ApiProduct {
   id: string;
@@ -30,45 +31,139 @@ export default function Statues() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { addToCart: addToGlobalCart } = useCart();
 
-  // Hardcoded carousel images
+  // Hardcoded carousel images using real statue images
   const carouselImages = [
-    { id: 1, image: '/carousel1.jpeg' },
-    { id: 2, image: '/carousel2.jpeg' },
-    { id: 3, image: '/carousel3.jpeg' },
-    { id: 4, image: '/carousel4.jpeg' },
-    { id: 5, image: '/carousel5.jpeg' },
-    { id: 6, image: '/carousel6.jpeg' },
+    { id: 1, image: "/statue-01.jpeg" },
+    { id: 2, image: "/statue-02.jpeg" },
+    { id: 3, image: "/statue-03.jpeg" },
+    { id: 4, image: "/statue-04.jpeg" },
+    { id: 5, image: "/statue-05.jpeg" },
+    { id: 6, image: "/statue-06.jpeg" },
   ];
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  // Fetch statue products from API
+  const fetchStatueProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/products?category=statue&limit=100&country=${selectedCountry || "USA"}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      const data = await response.json();
+      const apiProducts = data.success ? data.data.products : [];
+
+      setProducts(apiProducts);
+    } catch (error) {
+      console.error("Error fetching statue products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // For reference, here's what the hardcoded structure looked like:
+  /*
+    {
+      id: '1',
+      name: 'Lord Ganesha Idol',
+      description: 'Beautiful handcrafted Lord Ganesha idol for home temple and puja room.',
+      shortDescription: 'Sacred Ganesha idol',
+      price: 129.99,
+      comparePrice: 159.99,
+      image: '/statue-01.jpeg',
+      images: ['/statue-01.jpeg', '/statue-02.jpeg'],
+      brand: { name: 'Sacred Arts' },
+      averageRating: 4.8,
+      reviewCount: 24,
+      category: { slug: 'statue' },
+    },
+    {
+      id: '2',
+      name: 'Buddha Statue',
+      description: 'Peaceful Buddha statue for meditation and spiritual practice.',
+      shortDescription: 'Meditation Buddha statue',
+      price: 99.99,
+      comparePrice: 129.99,
+      image: '/statue-02.jpeg',
+      images: ['/statue-02.jpeg', '/statue-03.jpeg'],
+      brand: { name: 'Zen Creations' },
+      averageRating: 4.7,
+      reviewCount: 18,
+      category: { slug: 'statue' },
+    },
+    {
+      id: '3',
+      name: 'Lord Shiva Idol',
+      description: 'Elegant Lord Shiva statue with traditional design and intricate details.',
+      shortDescription: 'Traditional Shiva idol',
+      price: 149.99,
+      comparePrice: 179.99,
+      image: '/statue-03.jpeg',
+      images: ['/statue-03.jpeg', '/statue-04.jpeg'],
+      brand: { name: 'Divine Crafts' },
+      averageRating: 4.9,
+      reviewCount: 15,
+      category: { slug: 'statue' },
+    },
+    {
+      id: '4',
+      name: 'Goddess Durga Idol',
+      description: 'Graceful Goddess Durga statue for worship and home decor.',
+      shortDescription: 'Sacred Durga idol',
+      price: 179.99,
+      comparePrice: 219.99,
+      image: '/statue-04.jpeg',
+      images: ['/statue-04.jpeg', '/statue-05.jpeg'],
+      brand: { name: 'Sacred Arts' },
+      averageRating: 4.6,
+      reviewCount: 12,
+      category: { slug: 'statue' },
+    },
+    {
+      id: '5',
+      name: 'Lord Hanuman Statue',
+      description: 'Powerful Lord Hanuman statue representing strength and devotion.',
+      shortDescription: 'Devotional Hanuman statue',
+      price: 89.99,
+      comparePrice: 109.99,
+      image: '/statue-05.jpeg',
+      images: ['/statue-05.jpeg', '/statue-06.jpeg'],
+      brand: { name: 'Devotion Creations' },
+      averageRating: 4.8,
+      reviewCount: 22,
+      category: { slug: 'statue' },
+    },
+    {
+      id: '6',
+      name: 'Krishna Idol',
+      description: 'Beautiful Lord Krishna statue with flute, perfect for home shrine.',
+      shortDescription: 'Flute-playing Krishna idol',
+      price: 139.99,
+      comparePrice: 169.99,
+      image: '/statue-06.jpeg',
+      images: ['/statue-06.jpeg', '/statue-01.jpeg'],
+      brand: { name: 'Divine Arts' },
+      averageRating: 4.7,
+      reviewCount: 16,
+      category: { slug: 'statue' },
+    },
+  ];
+  */
 
   useEffect(() => {
-    const loadStatueProducts = async () => {
-      try {
-        setLoading(true);
-        // Fetch statue products specifically from the statue category, limited to 10 items
-        const res = await fetch(`${API_BASE_URL}/api/v1/products?category=statue&limit=10`);
-        console.log('Statue API response status:', res.status);
-        const json = await res.json();
-        console.log('Statue API response data:', json);
-        const list: ApiProduct[] = json?.data?.products || [];
-        setProducts(list);
-      } catch (error) {
-        console.error('Error loading statue products:', error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStatueProducts();
-  }, []); // Removed selectedCountry from dependency to avoid repeated calls
+    fetchStatueProducts();
+  }, [selectedCountry]); // Re-fetch when country changes for pricing
 
   // Auto-scroll functionality
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex + 1) % carouselImages.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     }, 3000); // Auto-scroll every 3 seconds
 
     return () => {
@@ -81,58 +176,80 @@ export default function Statues() {
   const mappedProducts = (products || []).map((p) => ({
     id: p.id,
     name: p.name,
-    category: p.category?.slug || 'statue',
-    subcategory: 'puja-samagri',
+    category: p.category?.slug || "statue",
+    subcategory: "puja-samagri",
     price: Number(p.price) || 0,
     comparePrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-    discount: p.comparePrice ? Math.max(0, Math.round(((Number(p.comparePrice) - Number(p.price)) / Number(p.comparePrice)) * 100)) : 0,
+    discount: p.comparePrice
+      ? Math.max(
+          0,
+          Math.round(
+            ((Number(p.comparePrice) - Number(p.price)) /
+              Number(p.comparePrice)) *
+              100,
+          ),
+        )
+      : 0,
     rating: p.averageRating || 0,
     reviewCount: p.reviewCount || 0,
-    image: p.image || p.images?.[0] || '/placeholder-image.jpg',
-    images: p.images || [p.image || '/placeholder-image.jpg'], // Use all images or fallback to single image
-    description: p.shortDescription || p.description || '',
+    image: p.image || p.images?.[0] || "/placeholder-image.jpg",
+    images: p.images || [p.image || "/placeholder-image.jpg"], // Use all images or fallback to single image
+    description: p.shortDescription || p.description || "",
     inStock: true,
-    brand: p.brand?.name || 'Unknown',
+    brand: p.brand?.name || "Unknown",
     tags: [],
-    sku: ''
+    sku: "",
   }));
 
-  const handleAddToCart = (product: any) => {
-    console.log('Add to cart:', product);
-    // Implement add to cart functionality - consistent with Ongoing Sales
+  const handleAddToCart = (product: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add to global cart context
+    addToGlobalCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || product.image || "/placeholder-image.jpg",
+      },
+      1,
+    );
   };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: -300, behavior: "smooth" });
     }
   };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
     }
   };
 
   const scrollCarouselLeft = () => {
-    setCurrentIndex(prevIndex => (prevIndex - 1 + carouselImages.length) % carouselImages.length);
+    setCurrentIndex(
+      (prevIndex) =>
+        (prevIndex - 1 + carouselImages.length) % carouselImages.length,
+    );
     // Reset auto-scroll timer
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     intervalRef.current = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex + 1) % carouselImages.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     }, 3000);
   };
 
   const scrollCarouselRight = () => {
-    setCurrentIndex(prevIndex => (prevIndex + 1) % carouselImages.length);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     // Reset auto-scroll timer
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     intervalRef.current = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex + 1) % carouselImages.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
     }, 3000);
   };
 
@@ -141,15 +258,16 @@ export default function Statues() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Auto-scrolling Carousel Section */}
         <div className="mb-12">
-
           {/* Carousel Container */}
           <div className="relative">
-
             {/* Auto-scrolling Carousel */}
             {loading ? (
               <div className="flex space-x-4 overflow-hidden p-4">
                 {[...Array(3)].map((_, index) => (
-                  <div key={index} className="flex-shrink-0 w-80 bg-white overflow-hidden animate-pulse">
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-80 bg-white overflow-hidden animate-pulse"
+                  >
                     <div className="h-64 bg-gray-200"></div>
                     <div className="p-4 space-y-3">
                       <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -178,83 +296,103 @@ export default function Statues() {
 
                 {/* Carousel Items */}
                 <div className="flex justify-center items-center h-[300px] sm:h-[400px] md:h-[500px] w-full">
-                  {carouselImages.map((product: { id: number; image: string }, index: number) => {
-                    // Calculate the position of each product relative to the current index
-                    const position = (index - currentIndex + carouselImages.length) % carouselImages.length;
+                  {carouselImages.map(
+                    (product: { id: number; image: string }, index: number) => {
+                      // Calculate the position of each product relative to the current index
+                      const position =
+                        (index - currentIndex + carouselImages.length) %
+                        carouselImages.length;
 
-                    // For a carousel showing 5 items, we want to show:
-                    // - Far Previous item (smallest, left)
-                    // - Previous item (smaller, left)
-                    // - Current item (larger, center)
-                    // - Next item (smaller, right)
-                    // - Far Next item (smallest, right)
+                      // For a carousel showing 5 items, we want to show:
+                      // - Far Previous item (smallest, left)
+                      // - Previous item (smaller, left)
+                      // - Current item (larger, center)
+                      // - Next item (smaller, right)
+                      // - Far Next item (smallest, right)
 
-                    // Determine visibility and scaling
-                    let transformClass = '';
-                    let zIndex = 'z-0';
-                    let opacity = 'opacity-100';
-                    let scaleClass = '';
+                      // Determine visibility and scaling
+                      let transformClass = "";
+                      let zIndex = "z-0";
+                      let opacity = "opacity-100";
+                      let scaleClass = "";
 
-                    if (position === 0) {
-                      // Far Previous item (smallest, left)
-                      transformClass = '-translate-x-[300px] sm:-translate-x-[600px] md:-translate-x-[800px]';
-                      scaleClass = 'scale-70 sm:scale-50';
-                      zIndex = 'z-0';
-                    } else if (position === 1) {
-                      // Previous item (smaller, left)
-                      transformClass = '-translate-x-[180px] sm:-translate-x-[400px] md:-translate-x-[500px]';
-                      scaleClass = 'scale-80 sm:scale-70';
-                      zIndex = 'z-5';
-                    } else if (position === 2) {
-                      // Current item (larger, center)
-                      transformClass = 'translate-x-0';
-                      scaleClass = 'scale-95 sm:scale-100';
-                      zIndex = 'z-10';
-                    } else if (position === 3) {
-                      // Next item (smaller, right)
-                      transformClass = 'translate-x-[180px] sm:translate-x-[400px] md:translate-x-[500px]';
-                      scaleClass = 'scale-80 sm:scale-70';
-                      zIndex = 'z-5';
-                    } else if (position === 4) {
-                      // Far Next item (smallest, right)
-                      transformClass = 'translate-x-[300px] sm:translate-x-[600px] md:translate-x-[800px]';
-                      scaleClass = 'scale-70 sm:scale-50';
-                      zIndex = 'z-0';
-                    } else {
-                      // Hidden items
-                      transformClass = 'translate-x-[1200px]';
-                      scaleClass = 'scale-0';
-                      opacity = 'opacity-0';
-                    }
+                      if (position === 0) {
+                        // Far Previous item (smallest, left)
+                        transformClass =
+                          "-translate-x-[300px] sm:-translate-x-[600px] md:-translate-x-[800px]";
+                        scaleClass = "scale-70 sm:scale-50";
+                        zIndex = "z-0";
+                      } else if (position === 1) {
+                        // Previous item (smaller, left)
+                        transformClass =
+                          "-translate-x-[180px] sm:-translate-x-[400px] md:-translate-x-[500px]";
+                        scaleClass = "scale-80 sm:scale-70";
+                        zIndex = "z-5";
+                      } else if (position === 2) {
+                        // Current item (larger, center)
+                        transformClass = "translate-x-0";
+                        scaleClass = "scale-95 sm:scale-100";
+                        zIndex = "z-10";
+                      } else if (position === 3) {
+                        // Next item (smaller, right)
+                        transformClass =
+                          "translate-x-[180px] sm:translate-x-[400px] md:translate-x-[500px]";
+                        scaleClass = "scale-80 sm:scale-70";
+                        zIndex = "z-5";
+                      } else if (position === 4) {
+                        // Far Next item (smallest, right)
+                        transformClass =
+                          "translate-x-[300px] sm:translate-x-[600px] md:translate-x-[800px]";
+                        scaleClass = "scale-70 sm:scale-50";
+                        zIndex = "z-0";
+                      } else {
+                        // Hidden items
+                        transformClass = "translate-x-[1200px]";
+                        scaleClass = "scale-0";
+                        opacity = "opacity-0";
+                      }
 
-                    return (
-                      <div
-                        key={product.id}
-                        className={`absolute transition-all duration-500 ease-in-out ${transformClass} ${scaleClass} ${opacity} ${zIndex}`}
-                      >
-                        <div className="w-[280px] sm:w-[400px] md:w-[600px] shadow-lg overflow-hidden h-full flex flex-col bg-white">
-                          {/* Product Image Only */}
-                          <div className="relative overflow-hidden h-full">
-                            <img
-                              src={product.image}
-                              alt={`Carousel item ${product.id}`}
-                              className="w-full h-full object-cover"
-                            />
+                      return (
+                        <div
+                          key={product.id}
+                          className={`absolute transition-all duration-500 ease-in-out ${transformClass} ${scaleClass} ${opacity} ${zIndex}`}
+                        >
+                          <div className="w-[280px] sm:w-[400px] md:w-[600px] shadow-lg overflow-hidden h-full flex flex-col bg-white">
+                            {/* Product Image Only */}
+                            <div className="relative overflow-hidden h-full">
+                              <img
+                                src={product.image}
+                                alt={`Carousel item ${product.id}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    },
+                  )}
                 </div>
               </div>
             ) : (
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
-                  <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <svg
+                    className="w-16 h-16 mx-auto"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2 font-inter">No statues available</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2 font-inter">
+                  No statues available
+                </h3>
                 <p className="text-gray-500 font-inter">
                   Check back later for new arrivals
                 </p>
@@ -265,9 +403,12 @@ export default function Statues() {
 
         {/* Header */}
         <div className="mb-8 mx-4 sm:mx-8 md:mx-16">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-inter">Religious Statues</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-inter">
+            Religious Statues2
+          </h1>
           <p className="text-gray-600 mt-2 font-inter text-sm sm:text-base">
             Discover our collection of authentic religious statues and idols
+            (using hardcoded data)
           </p>
         </div>
 
@@ -292,9 +433,15 @@ export default function Statues() {
           </button>
 
           {loading ? (
-            <div ref={scrollContainerRef} className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-8">
+            <div
+              ref={scrollContainerRef}
+              className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-8"
+            >
               {[...Array(4)].map((_, index) => (
-                <div key={index} className="flex-shrink-0 w-48 sm:w-60 bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
+                <div
+                  key={index}
+                  className="flex-shrink-0 w-48 sm:w-60 bg-white rounded-lg shadow-sm overflow-hidden animate-pulse"
+                >
                   <div className="h-32 sm:h-48 bg-gray-200"></div>
                   <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                     <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4"></div>
@@ -305,11 +452,16 @@ export default function Statues() {
               ))}
             </div>
           ) : mappedProducts.length > 0 ? (
-            <div ref={scrollContainerRef} className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-8">
+            <div
+              ref={scrollContainerRef}
+              className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-8"
+            >
               {mappedProducts.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => router.push(`/products/${product.category}/${product.id}`)}
+                  onClick={() =>
+                    router.push(`/products/${product.category}/${product.id}`)
+                  }
                   className="flex-shrink-0 w-56 sm:w-64 md:w-72 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer group/card"
                 >
                   {/* Product Image with zoom on hover and navigation */}
@@ -334,7 +486,7 @@ export default function Statues() {
                     className="bg-[#EB6426] text-white py-2 px-4 rounded-full text-sm sm:text-md font-medium transition-colors mt-3 flex items-center justify-center space-x-1 sm:space-x-2 font-inter mx-6 sm:mx-8 mb-6 sm:mb-8 hover:bg-[#d65215]"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToCart(product);
+                      handleAddToCart(product, e);
                     }}
                   >
                     <ShoppingCart size={20} className="sm:w-6 sm:h-6" />
@@ -346,11 +498,23 @@ export default function Statues() {
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2 font-inter">No statues found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2 font-inter">
+                No statues found
+              </h3>
               <p className="text-gray-500 font-inter">
                 We couldn't find any statue products in this category.
               </p>
@@ -358,16 +522,18 @@ export default function Statues() {
           )}
         </div>
 
-
         {/* Free Delivery Banner */}
         <div className="mt-8 sm:mt-12 bg-[#262626] rounded-sm p-4 sm:p-6 text-center mx-4 sm:mx-6 md:mx-10">
           <div className="flex flex-col items-center justify-center md:flex-row md:justify-between gap-3 sm:gap-4">
             <div className="flex items-center justify-center">
-              <TbTruckDelivery className='text-white w-6 h-6 sm:w-8 sm:h-8 mr-2' />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-inter">Free Delivery Worldwide</h2>
+              <TbTruckDelivery className="text-white w-6 h-6 sm:w-8 sm:h-8 mr-2" />
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-inter">
+                Free Delivery Worldwide
+              </h2>
             </div>
             <p className="text-white font-inter text-base sm:text-lg px-4 sm:px-0">
-              Enjoy complimentary shipping on all products, no matter where you are in the world
+              Enjoy complimentary shipping on all products, no matter where you
+              are in the world
             </p>
           </div>
         </div>
@@ -405,10 +571,10 @@ function ProductImageSlider({ images }: { images: string[] }) {
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     return () => {
-      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
 
@@ -419,7 +585,8 @@ function ProductImageSlider({ images }: { images: string[] }) {
     // Auto-rotate if:
     // - On small screens and not hovered, OR
     // - On large screens (auto-rotate even when hovered)
-    const shouldAutoRotate = (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
+    const shouldAutoRotate =
+      (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
 
     if (shouldAutoRotate && images.length > 1) {
       // Set up a continuous rotation without waiting
@@ -500,8 +667,9 @@ function ProductImageSlider({ images }: { images: string[] }) {
           {images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-white/50'
-                }`}
+              className={`w-2 h-2 rounded-full ${
+                index === currentIndex ? "bg-white" : "bg-white/50"
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 goToSlide(index);

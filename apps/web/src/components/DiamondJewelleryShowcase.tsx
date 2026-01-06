@@ -180,10 +180,10 @@ export default function DiamondJewelleryShowcase() {
   }
 
   return (
-    <div className="py-8 sm:py-10 md:py-12 bg-white">
-      <div className="max-w-7xl mx-4 sm:mx-6 lg:mx-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8 sm:py-10 bg-white">
+      <div className="max-w-8xl mx-4 sm:mx-6 lg:mx-24 px-4 sm:px-6 lg:px-8">
         <div className="text-left mb-8 sm:mb-10 font-inter">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Most-Loved Diamond Picks</h2>
+          <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 font-mono">Most-Loved Diamond Picks</h2>
           <p className="mt-2 text-gray-600 text-base sm:text-lg md:text-xl">Where elegance meets everyday luxury</p>
         </div>
         

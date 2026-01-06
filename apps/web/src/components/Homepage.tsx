@@ -24,6 +24,7 @@ import SignupModal from './SignupModal';
 import Statues from './Statues';
 import AfterForYouBanner from './AfterForYouBanner';
 import DiamondJewelleryShowcase from './DiamondJewelleryShowcase';
+import Carpet from './Carpet';
 
 export default function Homepage() {
   // Helper function to format price safely
@@ -369,16 +370,11 @@ export default function Homepage() {
   return (
     <div className="min-h-screen ">
      
-
-    
-
-     
-
       {/* Hero Section - Column Layout */}
             <div>
-        <div className="w-[100vw] md:w-[95vw] mx-auto">
+        <div className="w-[100vw] md:w-[95vw]">
           {/* Top Section - Slider */}
-          <div className="h-48 sm:h-64 md:h-80 lg:h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden mx-6 sm:mx-4 md:mx-6 my-4 md:my-6 rounded-lg">
+          <div className="h-48 sm:h-64 md:h-80 lg:h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden mr-6 ml-3 sm:mx-4 md:mx-6 my-2 md:my-6 rounded-lg">
             <Slider />
           </div>
               </div>
@@ -394,7 +390,7 @@ export default function Homepage() {
 
         {/* Category Section - Dynamic from API */}
       <CategorySection />
-      <CarouselCategory />
+      {/* <CarouselCategory /> */}
       {/* For You Section */}
 
      

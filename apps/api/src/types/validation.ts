@@ -300,6 +300,8 @@ const productBaseSchema = z.object({
     .array(
       z.object({
         country: z.string().min(1, "Country is required"),
+        currency: z.string().min(1, "Currency is required"),
+        symbol: z.string().min(1, "Symbol is required"),
         price: z.coerce.number().positive("Price must be positive"),
         comparePrice: z.coerce
           .number()
@@ -325,6 +327,8 @@ export const createProductSchema = productBaseSchema
       .array(
         z.object({
           country: z.string().min(1, "Country is required"),
+          currency: z.string().min(1, "Currency is required"),
+          symbol: z.string().min(1, "Symbol is required"),
           price: z.coerce.number().positive("Price must be positive"),
           comparePrice: z.coerce
             .number()

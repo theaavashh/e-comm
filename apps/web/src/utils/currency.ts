@@ -1,23 +1,100 @@
 /**
- * Currency formatting utilities for NPR (Nepalese Rupee)
+ * Currency formatting utilities for multi-currency support
  */
 
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-NP', {
-    style: 'currency',
-    currency: 'NPR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
+// Currency symbols mapping
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  NPR: "NPR",
+  USD: "$",
+  AUD: "$",
+  GBP: "£",
+  CAD: "$",
+  EUR: "€",
+  INR: "₹",
+  CNY: "¥",
+  JPY: "¥",
+  SGD: "$",
+  AED: "د.إ",
 };
 
-export const formatPrice = (price: number): string => {
-  return `NPR ${price.toLocaleString()}`;
+export const formatCurrency = (
+  amount: number,
+  currency: string = "NPR",
+): string => {
+  const symbol = CURRENCY_SYMBOLS[currency] || currency;
+
+  if (currency === "NPR") {
+    return `${symbol} ${amount.toLocaleString()}`;
+  }
+
+  return `${symbol}${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
-export const formatPriceRange = (min: number, max: number): string => {
-  return `NPR ${min.toLocaleString()} - NPR ${max.toLocaleString()}`;
+export const formatPrice = (
+  price: number,
+  currency: string = "NPR",
+): string => {
+  return formatCurrency(price, currency);
 };
 
-export const CURRENCY_SYMBOL = 'NPR';
-export const CURRENCY_CODE = 'NPR';
+export const formatPriceRange = (
+  min: number,
+  max: number,
+  currency: string = "NPR",
+): string => {
+  const symbol = CURRENCY_SYMBOLS[currency] || currency;
+
+  if (currency === "NPR") {
+    return `${symbol} ${min.toLocaleString()} - ${symbol} ${max.toLocaleString()}`;
+  }
+
+  return `${symbol}${min.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} - ${symbol}${max.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+export const CURRENCY_SYMBOL = "NPR";
+export const CURRENCY_CODE = "NPR";
+
+/**
+ * Get currency symbol for a currency code
+ */
+export const getCurrencySymbol = (currency: string): string => {
+  return CURRENCY_SYMBOLS[currency] || currency;
+};
+
+/**
+ * Detect user's country and currency (placeholder implementation)
+ */
+export const detectUserCountry = async (): Promise<string> => {
+  // In a real implementation, this would use IP geolocation
+  // For now, return Nepal as default
+  return "Nepal";
+};
+
+/**
+ * Get currency code for a country
+ */
+export const getCurrencyForCountry = (country: string): string => {
+  const countryCurrencyMap: Record<string, string> = {
+    Australia: "AUD",
+    USA: "USD",
+    UK: "GBP",
+    Canada: "CAD",
+    India: "INR",
+    China: "CNY",
+    Japan: "JPY",
+    Singapore: "SGD",
+    UAE: "AED",
+    Nepal: "NPR",
+  };
+
+  return countryCurrencyMap[country] || "NPR";
+};

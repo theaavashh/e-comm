@@ -85,7 +85,6 @@ Thank you for being part of our journey!`,
       
       setAboutData(mockData);
     } catch (error) {
-      console.error('Error loading about us data:', error);
       toast.error('Failed to load about us data');
     } finally {
       setIsLoading(false);
@@ -108,7 +107,6 @@ Thank you for being part of our journey!`,
       setIsEditing(false);
       toast.success('About Us page updated successfully!');
     } catch (error) {
-      console.error('Error saving about us data:', error);
       toast.error('Failed to save about us data');
     } finally {
       setIsSaving(false);

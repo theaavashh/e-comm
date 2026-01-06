@@ -152,6 +152,8 @@ model ProductCurrencyPrice {
   id              String   @id @default(cuid())
   productId       String
   country         String
+  currency        String   @default("NPR")
+  symbol          String   @default("NPR")
   price           Decimal  @db.Decimal(10, 2)
   comparePrice    Decimal? @db.Decimal(10, 2)
   minDeliveryDays Int
@@ -161,7 +163,7 @@ model ProductCurrencyPrice {
   updatedAt       DateTime @updatedAt
   product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, country])
+  @@unique([productId, country, currency])
   @@map("product_currency_prices")
 }
 

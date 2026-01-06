@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -26,6 +26,9 @@ export default function RichTextEditor({
   disabled = false,
 }: RichTextEditorProps) {
   const [isClient, setIsClient] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const isFormattingOperationRef = useRef<boolean>(false);
+  const lastContentRef = useRef<string>(value);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -44,7 +47,30 @@ export default function RichTextEditor({
     content: value,
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const currentContent = editor.getHTML();
+
+      // Skip update if this is a formatting operation and content hasn't meaningfully changed
+      if (isFormattingOperationRef.current) {
+        isFormattingOperationRef.current = false;
+        lastContentRef.current = currentContent;
+        return;
+      }
+
+      // Skip if content is the same as before
+      if (currentContent === lastContentRef.current) {
+        return;
+      }
+
+      // Clear existing timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Debounce the onChange callback to prevent excessive updates during formatting
+      debounceTimeoutRef.current = setTimeout(() => {
+        lastContentRef.current = currentContent;
+        onChange(currentContent);
+      }, 500); // 500ms delay for typing
     },
     editorProps: {
       attributes: {
@@ -68,6 +94,7 @@ export default function RichTextEditor({
   const setLink = useCallback(() => {
     const url = window.prompt("Enter URL:");
     if (url) {
+      isFormattingOperationRef.current = true;
       editor?.chain().focus().setLink({ href: url }).run();
     }
   }, [editor]);
@@ -75,9 +102,19 @@ export default function RichTextEditor({
   const addImage = useCallback(() => {
     const url = window.prompt("Enter image URL:");
     if (url) {
+      isFormattingOperationRef.current = true;
       editor?.chain().focus().setImage({ src: url }).run();
     }
   }, [editor]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!isClient) {
     return (
@@ -100,7 +137,11 @@ export default function RichTextEditor({
       <div className="border-b border-gray-200 bg-gray-50 p-2 flex flex-wrap gap-1">
         {/* Text Formatting */}
         <button
-          onClick={() => editor?.chain().focus().toggleBold().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().toggleBold().run();
+          }}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             editor?.isActive("bold")
@@ -112,7 +153,11 @@ export default function RichTextEditor({
         </button>
 
         <button
-          onClick={() => editor?.chain().focus().toggleItalic().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().toggleItalic().run();
+          }}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             editor?.isActive("italic")
@@ -124,7 +169,11 @@ export default function RichTextEditor({
         </button>
 
         <button
-          onClick={() => editor?.chain().focus().toggleStrike().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().toggleStrike().run();
+          }}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             editor?.isActive("strike")
@@ -138,6 +187,7 @@ export default function RichTextEditor({
         {/* Headings */}
         <select
           onChange={(e) => {
+            isFormattingOperationRef.current = true;
             const level = e.target.value;
             if (level) {
               const levelNum = parseInt(level);
@@ -164,7 +214,11 @@ export default function RichTextEditor({
 
         {/* Lists */}
         <button
-          onClick={() => editor?.chain().focus().toggleBulletList().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().toggleBulletList().run();
+          }}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             editor?.isActive("bulletList")
@@ -176,7 +230,11 @@ export default function RichTextEditor({
         </button>
 
         <button
-          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().toggleOrderedList().run();
+          }}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             editor?.isActive("orderedList")
@@ -189,6 +247,7 @@ export default function RichTextEditor({
 
         {/* Links and Images */}
         <button
+          type="button"
           onClick={setLink}
           disabled={!editor || disabled}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
@@ -201,6 +260,7 @@ export default function RichTextEditor({
         </button>
 
         <button
+          type="button"
           onClick={addImage}
           disabled={!editor || disabled}
           className="px-3 py-1 rounded text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -210,7 +270,11 @@ export default function RichTextEditor({
 
         {/* Undo/Redo */}
         <button
-          onClick={() => editor?.chain().focus().undo().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().undo().run();
+          }}
           disabled={!editor || !editor.can().undo() || disabled}
           className="px-3 py-1 rounded text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
@@ -218,7 +282,11 @@ export default function RichTextEditor({
         </button>
 
         <button
-          onClick={() => editor?.chain().focus().redo().run()}
+          type="button"
+          onClick={() => {
+            isFormattingOperationRef.current = true;
+            editor?.chain().focus().redo().run();
+          }}
           disabled={!editor || !editor.can().redo() || disabled}
           className="px-3 py-1 rounded text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
         >

@@ -6,6 +6,48 @@ import * as path from "path";
 import * as fs from "fs";
 
 /**
+ * Get currency code for a country
+ */
+const getCurrencyForCountry = (country: string): string => {
+  const countryCurrencyMap: Record<string, string> = {
+    Australia: "AUD",
+    USA: "USD",
+    UK: "GBP",
+    Canada: "CAD",
+    India: "INR",
+    China: "CNY",
+    Japan: "JPY",
+    Singapore: "SGD",
+    UAE: "AED",
+    Nepal: "NPR",
+    NPR: "NPR",
+  };
+
+  return countryCurrencyMap[country] || "NPR";
+};
+
+/**
+ * Get currency symbol for a currency code
+ */
+const getSymbolForCurrency = (currency: string): string => {
+  const currencySymbolMap: Record<string, string> = {
+    AUD: "$",
+    USD: "$",
+    GBP: "£",
+    CAD: "$",
+    EUR: "€",
+    INR: "₹",
+    CNY: "¥",
+    JPY: "¥",
+    SGD: "$",
+    AED: "د.إ",
+    NPR: "NPR",
+  };
+
+  return currencySymbolMap[currency] || "NPR";
+};
+
+/**
  * Map user country to pricing country
  * USA/Canada -> USA, UK -> UK, Australia -> Australia, Hong Kong -> Hong Kong
  * Everything else -> USA (fallback)
@@ -105,17 +147,34 @@ const getProductDisplayPrice = (
 const convertImagePathsToUrls = (req: Request, images: string[]): string[] => {
   if (!images || !Array.isArray(images)) return images;
 
-  const host = req.get("host") || `localhost:${process.env.PORT || 4444}`;
-  const [hostname] = host.split(":");
-  const protocol = req.protocol || "http";
-  const port = process.env.PORT || 4444;
+  // Use API base URL from environment variable, fallback to request-based URL for development
+  const apiBaseUrl =
+    process.env.API_BASE_URL ||
+    `${req.protocol}://${req.get("host")?.split(":")[0] || "localhost"}:${process.env.PORT || 4444}`;
 
   return images.map((img) => {
     if (img && img.startsWith("/uploads/")) {
-      return `${protocol}://${hostname}:${port}${img}`;
+      return `${apiBaseUrl}${img}`;
     }
     return img; // Return as-is if not a relative path
   });
+};
+
+// Helper function to convert single thumbnail path to full URL
+const convertThumbnailUrl = (
+  req: Request,
+  thumbnail: string | null,
+): string | null => {
+  if (!thumbnail) return null;
+
+  if (thumbnail.startsWith("/uploads/")) {
+    const apiBaseUrl =
+      process.env.API_BASE_URL ||
+      `${req.protocol}://${req.get("host")?.split(":")[0] || "localhost"}:${process.env.PORT || 4444}`;
+    return `${apiBaseUrl}${thumbnail}`;
+  }
+
+  return thumbnail; // Return as-is if not a relative path
 };
 
 // Get all products with pagination and filters
@@ -270,10 +329,7 @@ export const getProducts = async (req: Request, res: Response) => {
 
       // Convert image paths to URLs
       const imageUrls = convertImagePathsToUrls(req, product?.images || []);
-      const thumbnailUrl =
-        product?.thumbnail && product.thumbnail.startsWith("/uploads/")
-          ? `${req.protocol}://${req.get("host")?.split(":")[0] || "localhost"}:${process.env.PORT || 4444}${product.thumbnail}`
-          : product?.thumbnail;
+      const thumbnailUrl = convertThumbnailUrl(req, product?.thumbnail);
 
       return {
         ...product,
@@ -420,11 +476,7 @@ export const getProduct = async (req: Request, res: Response) => {
       req,
       (product as any)?.images || [],
     );
-    const thumbnailUrl =
-      (product as any)?.thumbnail &&
-      (product as any).thumbnail.startsWith("/uploads/")
-        ? `${req.protocol}://${req.get("host")?.split(":")[0] || "localhost"}:${process.env.PORT || 4444}${(product as any).thumbnail}`
-        : (product as any)?.thumbnail;
+    const thumbnailUrl = convertThumbnailUrl(req, (product as any)?.thumbnail);
 
     const productWithRating = {
       ...product,
@@ -734,6 +786,12 @@ export const createProduct = async (req: Request, res: Response) => {
         data: currencyPrices.map((cp: any) => ({
           productId: product.id,
           country: cp.country,
+          currency: cp.currency || getCurrencyForCountry(cp.country),
+          symbol:
+            cp.symbol ||
+            getSymbolForCurrency(
+              cp.currency || getCurrencyForCountry(cp.country),
+            ),
           price: cp.price,
           comparePrice: cp.comparePrice || null,
           minDeliveryDays: cp.minDeliveryDays || 1,
@@ -911,6 +969,12 @@ export const updateProduct = async (req: Request, res: Response) => {
           data: currencyPrices.map((cp: any) => ({
             productId: id,
             country: cp.country,
+            currency: cp.currency || getCurrencyForCountry(cp.country),
+            symbol:
+              cp.symbol ||
+              getSymbolForCurrency(
+                cp.currency || getCurrencyForCountry(cp.country),
+              ),
             price: cp.price,
             comparePrice: cp.comparePrice,
             minDeliveryDays: cp.minDeliveryDays,
@@ -1141,10 +1205,7 @@ export const getFeaturedProducts = async (req: Request, res: Response) => {
 
       // Convert image paths to URLs
       const imageUrls = convertImagePathsToUrls(req, product?.images || []);
-      const thumbnailUrl =
-        product?.thumbnail && product.thumbnail.startsWith("/uploads/")
-          ? `${req.protocol}://${req.get("host")?.split(":")[0] || "localhost"}:${process.env.PORT || 4444}${product.thumbnail}`
-          : product?.thumbnail;
+      const thumbnailUrl = convertThumbnailUrl(req, product?.thumbnail);
 
       return {
         ...product,

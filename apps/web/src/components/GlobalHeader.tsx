@@ -92,26 +92,145 @@ export default function GlobalHeader() {
   const [navigationItems, setNavigationItems] = useState<NavItem[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchNavigation = async () => {
-      try {
-        const response = await fetch('/api/navigation');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            setNavigationItems(data.data);
-          }
+  // Hardcoded navigation items
+  const hardcodedNavigationItems: NavItem[] = [
+    
+    {
+      id: 'foods',
+      label: 'Foods',
+      href: '/products/foods',
+      type: 'dropdown',
+      columns: [
+        {
+          title: 'Achar Categories',
+          items: [
+            { label: 'Veg Achar', href: '/products/foods/achar/veg-achar' },
+            { label: 'Non-Veg Achar', href: '/products/foods/achar/non-veg-achar' },
+            { label: 'Mango Achar', href: '/products/foods/achar/mango-achar' },
+            { label: 'Lemon Achar', href: '/products/foods/achar/lemon-achar' },
+            { label: 'Mixed Achar', href: '/products/foods/achar/mixed-achar' },
+          ]
+        },
+        {
+          title: 'Snack Categories',
+          items: [
+            { label: 'Buff Snacks', href: '/products/foods/snacks/buff-snacks' },
+            { label: 'Fish Snack', href: '/products/foods/snacks/fish-snack' },
+            { label: 'Chicken Snack', href: '/products/foods/snacks/chicken-snack' },
+            { label: 'Pork Snack', href: '/products/foods/snacks/pork-snack' },
+            { label: 'Mutton Snack', href: '/products/foods/snacks/mutton-snack' },
+          ]
+        },
+      ]
+    },
+    {
+      id: 'statue',
+      label: 'Statue',
+      href: '/products/statue',
+      type: 'dropdown',
+      columns: [
+        {
+          title: 'Religious Statues',
+          items: [
+            { label: 'Ganesh Idol', href: '/products/statue/ganesh' },
+            { label: 'Buddha Statue', href: '/products/statue/buddha' },
+            { label: 'Shiva Idol', href: '/products/statue/shiva' },
+            { label: 'Krishna Idol', href: '/products/statue/krishna' },
+            { label: 'Durga Idol', href: '/products/statue/durga' },
+          ]
+        },
+        
+      ]
+    },
+    {
+      id: 'carpet',
+      label: 'Carpet',
+      href: '/products/carpet',
+      type: 'dropdown',
+      columns: [
+        {
+          title: 'Carpet Types',
+          items: [
+            { label: 'Woven Carpets', href: '/products/carpet/woven' },
+            { label: 'Pashmina Carpets', href: '/products/carpet/pashmina' },
+            { label: 'Silk Carpets', href: '/products/carpet/silk' },
+            { label: 'Persian Carpets', href: '/products/carpet/persian' },
+            { label: 'Rug Carpets', href: '/products/carpet/rug' },
+          ]
+        },
+        {
+          title: 'Carpet Materials',
+          items: [
+            { label: 'Wool Carpets', href: '/products/carpet/wool' },
+            { label: 'Cotton Carpets', href: '/products/carpet/cotton' },
+            { label: 'Synthetic Carpets', href: '/products/carpet/synthetic' },
+          ]
         }
-      } catch (error) {
-        console.error('Failed to fetch navigation:', error);
-      }
-    };
-    fetchNavigation();
+      ]
+    },
+    {
+      id: 'dress',
+      label: 'Dress',
+      href: '/products/dress',
+      type: 'dropdown',
+      columns: [
+        {
+          title: 'Traditional Dresses',
+          items: [
+            { label: 'Saree', href: '/products/dress/traditional/saree' },
+            { label: 'Kurta', href: '/products/dress/traditional/kurta' },
+            { label: 'Lehenga', href: '/products/dress/traditional/lehenga' },
+            { label: 'Dhoti', href: '/products/dress/traditional/dhoti' },
+            { label: 'Sherwani', href: '/products/dress/traditional/sherwani' },
+          ]
+        },
+        {
+          title: 'Modern Dresses',
+          items: [
+            { label: 'Western Wear', href: '/products/dress/modern/western' },
+            { label: 'Casual Wear', href: '/products/dress/modern/casual' },
+            { label: 'Formal Wear', href: '/products/dress/modern/formal' },
+          ]
+        }
+      ]
+    },
+    {
+      id: 'jewelry',
+      label: 'Jewelry',
+      href: '/products/jewelry',
+      type: 'dropdown',
+      columns: [
+        {
+          title: 'Metal Types',
+          items: [
+            { label: 'Gold Jewelry', href: '/products/jewelry/gold' },
+            { label: 'Silver Jewelry', href: '/products/jewelry/silver' },
+            { label: 'Platinum Jewelry', href: '/products/jewelry/platinum' },
+            { label: 'Alloy Jewelry', href: '/products/jewelry/alloy' },
+          ]
+        },
+        {
+          title: 'Jewelry Types',
+          items: [
+            { label: 'Necklaces', href: '/products/jewelry/necklaces' },
+            { label: 'Earrings', href: '/products/jewelry/earrings' },
+            { label: 'Rings', href: '/products/jewelry/rings' },
+            { label: 'Bracelets', href: '/products/jewelry/bracelets' },
+            { label: 'Anklets', href: '/products/jewelry/anklets' },
+          ]
+        }
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    // Use hardcoded navigation items
+    setNavigationItems(hardcodedNavigationItems);
   }, []);
 
   // Use cart context instead of local state
   const { cartItemCount, cartTotal, cartItems, updateQuantity, removeFromCart } = useCart();
-  const [showCartModal, setShowCartModal] = useState(false);
+
 
   // Use LocationContext instead of local state
   const { selectedCountry, selectedCity, setSelectedCountry, setSelectedCity } = useLocation();
@@ -128,7 +247,7 @@ export default function GlobalHeader() {
     siteLogo: '',
     siteFavicon: ''
   });
-  const cartModalRef = useRef<HTMLDivElement>(null);
+
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const locationRefMobile = useRef<HTMLDivElement>(null);
@@ -306,22 +425,7 @@ export default function GlobalHeader() {
     };
   }, []);
 
-  // Close cart modal when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (cartModalRef.current && !cartModalRef.current.contains(event.target as Node)) {
-        setShowCartModal(false);
-      }
-    }
 
-    if (showCartModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showCartModal]);
 
   // Track Order function
   const handleTrackOrder = async () => {
@@ -1242,10 +1346,10 @@ export default function GlobalHeader() {
                   <span className="text-sm font-bold">Sign in</span>
                 </Link>
                 {/* Cart Icon */}
-                <button
+                <Link
+                  href="/cart"
                   className="relative flex flex-col items-center p-2 text-white rounded-lg transition-colors hover:bg-orange-700"
                   style={{ color: 'white' }}
-                  onClick={() => setShowCartModal(true)}
                 >
                   <div className="relative">
                     <ShoppingCart className="w-6 h-6" />
@@ -1262,7 +1366,7 @@ export default function GlobalHeader() {
                       maximumFractionDigits: 2,
                     }).format(cartTotal)}
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
           </div>

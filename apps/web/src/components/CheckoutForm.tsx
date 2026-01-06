@@ -2,1096 +2,410 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { useSession } from 'next-auth/react';
-import toast from 'react-hot-toast';
-import AuthModal from './AuthModal';
-import { useLocation } from '@/contexts/LocationContext';
-import { 
-  ArrowLeft, 
-  User, 
-  MapPin, 
-  CreditCard, 
-  CheckCircle,
-  Truck,
-  Shield,
-  RotateCcw,
-  Loader2
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  comparePrice?: number;
-  discount: number;
-  image: string;
-  brand: string;
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  variants?: Array<{
-    id: string;
-    name: string;
-    value: string;
-    price: number;
-    quantity: number;
-  }>;
-}
+import { useCart } from '@/contexts/CartContext';
 
 interface CheckoutFormProps {
-  productId: string | null;
-  quantity: number;
+  productId?: string | null;
+  quantity?: number;
   variant?: number;
 }
 
-interface PersonalDetails {
+interface FormData {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-}
-
-interface Address {
-  street: string;
+  address: string;
   city: string;
   state: string;
-  postalCode: string;
+  zipCode: string;
   country: string;
+  shippingMethod: string;
+  paymentMethod: string;
 }
 
-interface FormData {
-  personalDetails: PersonalDetails;
-  deliveryAddress: Address;
-  billingAddress: Address;
-  sameAsDelivery: boolean;
-}
-
-interface Coupon {
-  code: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  minimumAmount?: number;
-  description?: string;
-}
-
-export default function CheckoutForm({ productId, quantity, variant = 0 }: CheckoutFormProps) {
-  const { selectedCountry } = useLocation();
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ productId, quantity = 1, variant = 0 }) => {
   const router = useRouter();
-  const { data: session, status } = useSession();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-  const [couponError, setCouponError] = useState('');
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-
-  const { control, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm<FormData>({
-    defaultValues: {
-      personalDetails: {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: ''
-      },
-      deliveryAddress: {
-        street: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'Nepal'
-      },
-      billingAddress: {
-        street: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'Nepal'
-      },
-      sameAsDelivery: false
-    },
-    mode: 'onChange'
+  const { cartItems, cartTotal, clearCart } = useCart();
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'Nepal',
+    shippingMethod: 'standard',
+    paymentMethod: 'cod',
   });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const sameAsDelivery = watch('sameAsDelivery');
-  const personalDetails = watch('personalDetails');
-  const deliveryAddress = watch('deliveryAddress');
-  const billingAddress = watch('billingAddress');
+  // If productId is provided, we're buying a single product directly
+  const directProduct = productId ? { id: productId, quantity, variant } : null;
+  const itemsToCheckout = directProduct ? [directProduct] : cartItems || [];
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        // Get user country from context for pricing
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}?country=${encodeURIComponent(selectedCountry)}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch product');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.data.product) {
-          const productData = data.data.product;
-          
-          // Transform API data to match our interface
-          const transformedProduct: Product = {
-            id: productData.id,
-            name: productData.name,
-            price: Number(productData.price),
-            comparePrice: productData.comparePrice ? Number(productData.comparePrice) : undefined,
-            discount: productData.comparePrice && productData.price 
-              ? Math.round(((productData.comparePrice - productData.price) / productData.comparePrice) * 100)
-              : 0,
-            image: productData.image || '/image.png',
-            brand: productData.brand?.name || 'Unknown Brand',
-            category: productData.category,
-            variants: productData.variants || []
-          };
-          
-          setProduct(transformedProduct);
-        } else {
-          throw new Error('Product not found');
-        }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        // Fallback to mock data for development
-        const mockProduct: Product = {
-          id: productId,
-          name: 'Premium Wireless Headphones',
-          price: 2500,
-          comparePrice: 3500,
-          discount: 28,
-          image: '/image.png',
-          brand: 'TechSound'
-        };
-        setProduct(mockProduct);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [productId, selectedCountry]);
-
-  // Update billing address when same as delivery is checked
-  useEffect(() => {
-    if (sameAsDelivery) {
-      setValue('billingAddress', deliveryAddress);
+    if (itemsToCheckout && itemsToCheckout.length === 0) {
+      router.push('/cart');
     }
-  }, [sameAsDelivery, deliveryAddress, setValue]);
+  }, [itemsToCheckout, router]);
 
-  const nextStep = () => {
-    if (currentStep < 4) {
-      // Validate current step before proceeding
-      if (currentStep === 1) {
-        if (!personalDetails.firstName || !personalDetails.lastName || !personalDetails.email || !personalDetails.phone) {
-          toast.error('Please fill in all personal details');
-          return;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalDetails.email)) {
-          toast.error('Please enter a valid email address');
-          return;
-        }
-      } else if (currentStep === 2) {
-        if (!deliveryAddress.street || !deliveryAddress.city || !deliveryAddress.state || !deliveryAddress.postalCode) {
-          toast.error('Please fill in all delivery address fields');
-          return;
-        }
-      } else if (currentStep === 3) {
-        if (!sameAsDelivery && (!billingAddress.street || !billingAddress.city || !billingAddress.state || !billingAddress.postalCode)) {
-          toast.error('Please fill in all billing address fields');
-          return;
-        }
-      }
-      setCurrentStep(prev => prev + 1);
-      toast.success(`Step ${currentStep + 1} completed!`);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-    }
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.state.trim()) newErrors.state = 'State is required';
+    if (!formData.zipCode.trim()) newErrors.zipCode = 'Zip code is required';
+    if (!formData.country.trim()) newErrors.country = 'Country is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
-      return;
-    }
-
-    setIsApplyingCoupon(true);
-    setCouponError('');
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    
     try {
-      // Simulate API call to validate coupon
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real application, you would send the order data to your backend
+      // For now, we'll simulate the checkout process
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock coupon validation - in real app, this would be an API call
-      const mockCoupons: Coupon[] = [
-        { code: 'WELCOME10', discountType: 'percentage', discountValue: 10, minimumAmount: 1000, description: '10% off on orders above $1,000' },
-        { code: 'SAVE500', discountType: 'fixed', discountValue: 500, minimumAmount: 2000, description: '$500 off on orders above $2,000' },
-        { code: 'NEWUSER', discountType: 'percentage', discountValue: 15, minimumAmount: 500, description: '15% off for new users' }
-      ];
-
-      const coupon = mockCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
+      // Clear cart after successful checkout
+      if (!directProduct) {
+        clearCart();
+      }
       
-      if (!coupon) {
-        setCouponError('Invalid coupon code');
-        return;
-      }
-
-      const subtotal = getCurrentPrice() * quantity;
-      if (coupon.minimumAmount && subtotal < coupon.minimumAmount) {
-        setCouponError(`Minimum order amount of $${coupon.minimumAmount.toLocaleString()} required`);
-        return;
-      }
-
-      setAppliedCoupon(coupon);
-      setCouponCode('');
-      toast.success(`Coupon "${coupon.code}" applied successfully!`);
+      // Redirect to success page
+      router.push('/checkout/success');
     } catch (error) {
-      setCouponError('Failed to apply coupon. Please try again.');
+      console.error('Checkout error:', error);
+      alert('There was an error processing your order. Please try again.');
     } finally {
-      setIsApplyingCoupon(false);
+      setLoading(false);
     }
   };
 
-  const removeCoupon = () => {
-    setAppliedCoupon(null);
-    toast.success('Coupon removed');
-  };
-
-  const getCurrentPrice = () => {
-    if (!product) return 0;
-    
-    if (product.variants && product.variants[variant]) {
-      return product.variants[variant].price;
-    }
-    
-    return product.price;
-  };
-
-  const calculateDiscount = () => {
-    if (!appliedCoupon || !product) return 0;
-    
-    const subtotal = getCurrentPrice() * quantity;
-    
-    if (appliedCoupon.discountType === 'percentage') {
-      return (subtotal * appliedCoupon.discountValue) / 100;
-    } else {
-      return appliedCoupon.discountValue;
-    }
-  };
-
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    try {
-      // Simulate payment processing
-      toast.loading('Processing payment...', { id: 'payment' });
-      
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success('Payment successful! Redirecting...', { id: 'payment' });
-      
-      setTimeout(() => {
-        router.push('/checkout/success');
-      }, 1500);
-    } catch (error) {
-      toast.error('Payment failed. Please try again.');
-      setIsSubmitting(false);
-    }
-  };
-
-  const steps = [
-    { id: 1, name: 'Personal Details', icon: User },
-    { id: 2, name: 'Delivery Address', icon: MapPin },
-    { id: 3, name: 'Billing Address', icon: MapPin },
-    { id: 4, name: 'Payment', icon: CreditCard }
-  ];
-
-  if (loading) {
+  if (itemsToCheckout.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading checkout...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h2>
-          <button
-            onClick={() => router.back()}
-            className="text-blue-600 hover:text-blue-700"
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Your cart is empty</h2>
+          <p className="text-gray-600 mb-4">There are no items in your cart to checkout.</p>
+          <button 
+            onClick={() => router.push('/products')}
+            className="bg-[#EB6426] hover:bg-[#d65a1f] text-white py-2 px-4 rounded-md"
           >
-            Go back
+            Continue Shopping
           </button>
         </div>
       </div>
     );
   }
-
-  const subtotal = getCurrentPrice() * quantity;
-  const couponDiscount = calculateDiscount();
-  const shipping = subtotal > 2000 ? 0 : 200;
-  const total = subtotal + shipping - couponDiscount;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 custom-font">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Checkout</h1>
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 custom-font">Checkout</h1>
-        </div>
-        
-        {/* Sign In Button */}
-        {!session && (
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            <User className="w-5 h-5" />
-            <span>Sign In</span>
-          </button>
-        )}
-        
-        {/* User Info */}
-        {session && (
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-              <p className="text-xs text-gray-500">{session.user?.email}</p>
-            </div>
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-blue-600" />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Steps */}
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              {steps.map((step, index) => {
-                const Icon = step.icon;
-                const isActive = currentStep === step.id;
-                const isCompleted = currentStep > step.id;
-                const isAccessible = currentStep >= step.id;
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Shipping Information Form */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Shipping Information</h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded-md ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+                </div>
                 
-                return (
-                  <motion.div 
-                    key={step.id} 
-                    className={`bg-[#F0F2F5] rounded-lg shadow-2xl transition-all duration-200 ${
-                      isActive 
-                        ? '' 
-                        : isCompleted 
-                        ? 'opacity-75'
-                        : !isAccessible
-                        ? 'opacity-50'
-                        : ''
-                    }`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <div className="p-6">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-                          isActive 
-                            ? 'bg-blue-600 text-white' 
-                            : isCompleted 
-                            ? 'bg-green-600 text-white'
-                            : isAccessible
-                            ? 'bg-gray-300 text-gray-600'
-                            : 'bg-gray-200 text-gray-400'
-                        }`}>
-                          {isCompleted ? (
-                            <CheckCircle className="w-4 h-4" />
-                          ) : (
-                            <Icon className="w-4 h-4" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className={`text-lg font-semibold transition-colors custom-font ${
-                            isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
-                          }`}>
-                            {step.name}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Step {step.id} of 4
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Step Content - Only show for active step */}
-                      {isActive && (
-                        <motion.div 
-                          className="mt-6"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {step.id === 1 && (
-                            <div>
-                              <div className="text-lg text-gray-600 mb-6">
-                                <p>Enter your personal information to continue with the checkout process.</p>
-                              </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      First Name *
-                                    </label>
-                                    <Controller
-                                      name="personalDetails.firstName"
-                                      control={control}
-                                      rules={{ required: 'First name is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.personalDetails?.firstName ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your first name"
-                                        />
-                                      )}
-                                    />
-                                    {errors.personalDetails?.firstName && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.firstName.message}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Last Name *
-                                    </label>
-                                    <Controller
-                                      name="personalDetails.lastName"
-                                      control={control}
-                                      rules={{ required: 'Last name is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.personalDetails?.lastName ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your last name"
-                                        />
-                                      )}
-                                    />
-                                    {errors.personalDetails?.lastName && (
-                                      <p className="text-red-500 text-lg mt-1">{errors.personalDetails.lastName.message}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Email Address *
-                                    </label>
-                                    <Controller
-                                      name="personalDetails.email"
-                                      control={control}
-                                      rules={{ 
-                                        required: 'Email is required',
-                                        pattern: {
-                                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                          message: 'Please enter a valid email address'
-                                        }
-                                      }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="email"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.personalDetails?.email ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your email"
-                                        />
-                                      )}
-                                    />
-                                    {errors.personalDetails?.email && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.email.message}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Phone Number *
-                                    </label>
-                                    <Controller
-                                      name="personalDetails.phone"
-                                      control={control}
-                                      rules={{ required: 'Phone number is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="tel"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.personalDetails?.phone ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your phone number"
-                                        />
-                                      )}
-                                    />
-                                    {errors.personalDetails?.phone && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.personalDetails.phone.message}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              <div className="flex justify-end mt-6">
-                                <button
-                                  type="button"
-                                  onClick={nextStep}
-                                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                                >
-                                  Next
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          {step.id === 2 && (
-                            <div>
-                              <div className="text-lg text-black mb-6">
-                                <p>Provide your delivery address for shipping.</p>
-                              </div>
-                              <div className="space-y-6">
-                                <div>
-                                  <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                    Street Address *
-                                  </label>
-                                  <Controller
-                                    name="deliveryAddress.street"
-                                    control={control}
-                                    rules={{ required: 'Street address is required' }}
-                                    render={({ field }) => (
-                                      <input
-                                        {...field}
-                                        type="text"
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                          errors.deliveryAddress?.street ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        placeholder="Enter your street address"
-                                      />
-                                    )}
-                                  />
-                                  {errors.deliveryAddress?.street && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress.street.message}</p>
-                                  )}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      City *
-                                    </label>
-                                    <Controller
-                                      name="deliveryAddress.city"
-                                      control={control}
-                                      rules={{ required: 'City is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.deliveryAddress?.city ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your city"
-                                        />
-                                      )}
-                                    />
-                                    {errors.deliveryAddress?.city && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress.city.message}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      State/Province *
-                                    </label>
-                                    <Controller
-                                      name="deliveryAddress.state"
-                                      control={control}
-                                      rules={{ required: 'State is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.deliveryAddress?.state ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your state"
-                                        />
-                                      )}
-                                    />
-                                    {errors.deliveryAddress?.state && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress.state.message}</p>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Postal Code *
-                                    </label>
-                                    <Controller
-                                      name="deliveryAddress.postalCode"
-                                      control={control}
-                                      rules={{ required: 'Postal code is required' }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.deliveryAddress?.postalCode ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your postal code"
-                                        />
-                                      )}
-                                    />
-                                    {errors.deliveryAddress?.postalCode && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress.postalCode.message}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Country *
-                                    </label>
-                                    <Controller
-                                      name="deliveryAddress.country"
-                                      control={control}
-                                      rules={{ required: 'Country is required' }}
-                                      render={({ field }) => (
-                                        <select
-                                          {...field}
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.deliveryAddress?.country ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                        >
-                                          <option value="Nepal">Nepal</option>
-                                          <option value="India">India</option>
-                                          <option value="USA">USA</option>
-                                          <option value="UK">UK</option>
-                                        </select>
-                                      )}
-                                    />
-                                    {errors.deliveryAddress?.country && (
-                                      <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress.country.message}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex justify-between mt-6">
-                                <button
-                                  type="button"
-                                  onClick={prevStep}
-                                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                  Previous
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={nextStep}
-                                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                                >
-                                  Next
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          {step.id === 3 && (
-                            <div>
-                              <div className="text-lg text-gray-600 mb-6">
-                                <p>Enter billing information or use same as delivery address.</p>
-                              </div>
-                              {/* Same as Delivery Checkbox */}
-                              <div className="mb-6">
-                                <Controller
-                                  name="sameAsDelivery"
-                                  control={control}
-                                  render={({ field }) => (
-                                    <label className="flex items-center">
-                                      <input
-                                        type="checkbox"
-                                        checked={field.value}
-                                        onChange={field.onChange}
-                                        onBlur={field.onBlur}
-                                        name={field.name}
-                                        ref={field.ref}
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                      />
-                                      <span className="ml-2 text-lg text-gray-700">
-                                        Same as delivery address
-                                      </span>
-                                    </label>
-                                  )}
-                                />
-                              </div>
-
-                              {!sameAsDelivery && (
-                                <div className="space-y-6">
-                                  <div>
-                                    <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                      Street Address *
-                                    </label>
-                                    <Controller
-                                      name="billingAddress.street"
-                                      control={control}
-                                      rules={{ required: !sameAsDelivery ? 'Street address is required' : false }}
-                                      render={({ field }) => (
-                                        <input
-                                          {...field}
-                                          type="text"
-                                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                            errors.billingAddress?.street ? 'border-red-500' : 'border-gray-300'
-                                          }`}
-                                          placeholder="Enter your street address"
-                                        />
-                                      )}
-                                    />
-                                    {errors.billingAddress?.street && (
-                                      <p className="text-red-500 text-lg mt-1">{errors.billingAddress.street.message}</p>
-                                    )}
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                        City *
-                                      </label>
-                                      <Controller
-                                        name="billingAddress.city"
-                                        control={control}
-                                        rules={{ required: !sameAsDelivery ? 'City is required' : false }}
-                                        render={({ field }) => (
-                                          <input
-                                            {...field}
-                                            type="text"
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                              errors.billingAddress?.city ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                            placeholder="Enter your city"
-                                          />
-                                        )}
-                                      />
-                                      {errors.billingAddress?.city && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.billingAddress.city.message}</p>
-                                      )}
-                                    </div>
-                                    <div>
-                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                        State/Province *
-                                      </label>
-                                      <Controller
-                                        name="billingAddress.state"
-                                        control={control}
-                                        rules={{ required: !sameAsDelivery ? 'State is required' : false }}
-                                        render={({ field }) => (
-                                          <input
-                                            {...field}
-                                            type="text"
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                              errors.billingAddress?.state ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                            placeholder="Enter your state"
-                                          />
-                                        )}
-                                      />
-                                      {errors.billingAddress?.state && (
-                                        <p className="text-red-500 text-lg mt-1">{errors.billingAddress.state.message}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                        Postal Code *
-                                      </label>
-                                      <Controller
-                                        name="billingAddress.postalCode"
-                                        control={control}
-                                        rules={{ required: !sameAsDelivery ? 'Postal code is required' : false }}
-                                        render={({ field }) => (
-                                          <input
-                                            {...field}
-                                            type="text"
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                              errors.billingAddress?.postalCode ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                            placeholder="Enter your postal code"
-                                          />
-                                        )}
-                                      />
-                                      {errors.billingAddress?.postalCode && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.billingAddress.postalCode.message}</p>
-                                      )}
-                                    </div>
-                                    <div>
-                                      <label className="block text-lg font-medium text-gray-700 mb-2 custom-font">
-                                        Country *
-                                      </label>
-                                      <Controller
-                                        name="billingAddress.country"
-                                        control={control}
-                                        rules={{ required: !sameAsDelivery ? 'Country is required' : false }}
-                                        render={({ field }) => (
-                                          <select
-                                            {...field}
-                                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black transition-colors ${
-                                              errors.billingAddress?.country ? 'border-red-500' : 'border-gray-300'
-                                            }`}
-                                          >
-                                            <option value="Nepal">Nepal</option>
-                                            <option value="India">India</option>
-                                            <option value="USA">USA</option>
-                                            <option value="UK">UK</option>
-                                          </select>
-                                        )}
-                                      />
-                                      {errors.billingAddress?.country && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.billingAddress.country.message}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                              <div className="flex justify-between mt-6">
-                                <button
-                                  type="button"
-                                  onClick={prevStep}
-                                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                  Previous
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={nextStep}
-                                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                                >
-                                  Next
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          {step.id === 4 && (
-                            <div>
-                              <div className="text-lg text-gray-600 mb-6">
-                                <p>Complete your payment securely with Paddle.</p>
-                              </div>
-                              <div className="text-center">
-                                <div className="mb-6">
-                                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <CreditCard className="w-8 h-8 text-blue-600" />
-                                  </div>
-                                  <h3 className="text-lg font-semibold text-gray-900 mb-2 custom-font">
-                                    Secure Payment with Paddle
-                                  </h3>
-                                  <p className="text-gray-600">
-                                    Your payment will be processed securely through Paddle
-                                  </p>
-                                </div>
-                                
-                                <button
-                                  type="submit"
-                                  disabled={isSubmitting}
-                                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                >
-                                  {isSubmitting ? (
-                                    <>
-                                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                      Processing Payment...
-                                    </>
-                                  ) : (
-                                    'Proceed to Payment'
-                                  )}
-                                </button>
-                              </div>
-                              <div className="flex justify-between mt-6">
-                                <button
-                                  type="button"
-                                  onClick={prevStep}
-                                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                  Previous
-                                </button>
-                                <button
-                                  type="submit"
-                                  disabled={isSubmitting}
-                                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                                >
-                                  {isSubmitting ? (
-                                    <>
-                                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                      Processing...
-                                    </>
-                                  ) : (
-                                    'Complete Order'
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right Column - Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-[#F0F2F5] rounded-xl shadow-lg p-6 sticky top-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 custom-font">Order Summary</h3>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded-md ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
+                </div>
+              </div>
               
-              {/* Product */}
-              <div className="flex items-center space-x-4 mb-4">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-16 h-16 object-cover rounded-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/image.png';
-                  }}
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                 />
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{product.name}</h4>
-                  <p className="text-sm text-gray-500">{product.brand}</p>
-                  {product.variants && product.variants[variant] && (
-                    <p className="text-xs text-gray-500">{product.variants[variant].name}: {product.variants[variant].value}</p>
-                  )}
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-lg font-semibold text-gray-900">${getCurrentPrice().toLocaleString()}</span>
-                    {product.comparePrice && (
-                      <span className="text-sm text-gray-500 line-through">${product.comparePrice.toLocaleString()}</span>
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded-md ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+                </div>
+                
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    id="state"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded-md ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+                </div>
+                
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                    Zip Code *
+                  </label>
+                  <input
+                    type="text"
+                    id="zipCode"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 border rounded-md ${errors.zipCode ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.zipCode && <p className="text-red-500 text-xs mt-1">{errors.zipCode}</p>}
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                  Country *
+                </label>
+                <select
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-md ${errors.country ? 'border-red-500' : 'border-gray-300'}`}
+                >
+                  <option value="">Select Country</option>
+                  <option value="Nepal">Nepal</option>
+                  <option value="USA">United States</option>
+                  <option value="India">India</option>
+                  <option value="China">China</option>
+                </select>
+                {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country}</p>}
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-800 mb-3">Shipping Method</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value="standard"
+                      checked={formData.shippingMethod === 'standard'}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-[#EB6426] focus:ring-[#EB6426]"
+                    />
+                    <span className="ml-2 text-gray-700">Standard Shipping (3-5 business days)</span>
+                    <span className="ml-auto text-gray-700">$5.00</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value="express"
+                      checked={formData.shippingMethod === 'express'}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-[#EB6426] focus:ring-[#EB6426]"
+                    />
+                    <span className="ml-2 text-gray-700">Express Shipping (1-2 business days)</span>
+                    <span className="ml-auto text-gray-700">$15.00</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-800 mb-3">Payment Method</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={formData.paymentMethod === 'cod'}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-[#EB6426] focus:ring-[#EB6426]"
+                    />
+                    <span className="ml-2 text-gray-700">Cash on Delivery</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={formData.paymentMethod === 'card'}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-[#EB6426] focus:ring-[#EB6426]"
+                    />
+                    <span className="ml-2 text-gray-700">Credit/Debit Card</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="paypal"
+                      checked={formData.paymentMethod === 'paypal'}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-[#EB6426] focus:ring-[#EB6426]"
+                    />
+                    <span className="ml-2 text-gray-700">PayPal</span>
+                  </label>
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#EB6426] hover:bg-[#d65a1f] text-white py-3 px-4 rounded-md font-medium disabled:opacity-50"
+              >
+                {loading ? 'Processing...' : 'Place Order'}
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        {/* Order Summary */}
+        <div>
+          <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
+            
+            <div className="space-y-4 mb-6">
+              {itemsToCheckout.map((item: any, index: number) => (
+                <div key={item.id || index} className="flex items-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center mr-3">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-md" />
+                    ) : (
+                      <span className="text-gray-500">No Image</span>
                     )}
-                    <span className="text-sm text-green-600 font-medium">{product.discount}% off</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-800">{item.name || `Product ${index + 1}`}</h3>
+                    <p className="text-gray-600 text-sm">Qty: {item.quantity || quantity}</p>
+                  </div>
+                  <div className="text-gray-800 font-medium">
+                    ${typeof item.price === 'number' ? item.price.toFixed(2) : (item.price || '0.00')}
                   </div>
                 </div>
+              ))}
+            </div>
+            
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-800">${cartTotal.toFixed(2)}</span>
               </div>
-
-              {/* Quantity */}
-              <div className="flex items-center justify-between py-2 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Quantity</span>
-                <span className="text-sm font-medium text-gray-900">{quantity}</span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Shipping</span>
+                <span className="text-gray-800">
+                  {formData.shippingMethod === 'standard' ? '$5.00' : '$15.00'}
+                </span>
               </div>
-
-              {/* Coupon Section */}
-              <div className="py-4 border-t border-gray-200">
-                {appliedCoupon ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-green-800">{appliedCoupon.code}</p>
-                        <p className="text-xs text-green-600">{appliedCoupon.description}</p>
-                      </div>
-                      <button
-                        onClick={removeCoupon}
-                        className="text-green-600 hover:text-green-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex space-x-2 mb-2">
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter coupon code"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <button
-                        onClick={applyCoupon}
-                        disabled={isApplyingCoupon || !couponCode.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-                      >
-                        {isApplyingCoupon ? 'Applying...' : 'Apply'}
-                      </button>
-                    </div>
-                    {couponError && (
-                      <p className="text-red-500 text-xs">{couponError}</p>
-                    )}
-                  </div>
-                )}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tax</span>
+                <span className="text-gray-800">$0.00</span>
               </div>
-
-              {/* Pricing */}
-              <div className="space-y-2 py-4 border-t border-gray-200">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Subtotal</span>
-                  <span className="text-sm font-medium text-gray-900">${subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Shipping</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {shipping === 0 ? 'Free' : `$${shipping.toLocaleString()}`}
-                  </span>
-                </div>
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-green-600">Coupon Discount</span>
-                    <span className="text-sm font-medium text-green-600">-${couponDiscount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200">
-                  <span>Total</span>
-                  <span>${total.toLocaleString()}</span>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="space-y-3 mt-6">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Truck className="w-4 h-4 text-blue-600" />
-                  <span>Free shipping on orders over $2,000</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Shield className="w-4 h-4 text-blue-600" />
-                  <span>Secure payment with Paddle</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <RotateCcw className="w-4 h-4 text-blue-600" />
-                  <span>7 days return policy</span>
-                </div>
+              <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                <span>Total</span>
+                <span>${(cartTotal + (formData.shippingMethod === 'standard' ? 5 : 15)).toFixed(2)}</span>
               </div>
             </div>
           </div>
         </div>
-      </form>
-      
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-      />
+      </div>
     </div>
   );
-}
+};
+
+export default CheckoutForm;

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import nextImage from "next/image";
 import EnhancedProductForm from "@/components/EnhancedProductForm";
 import AdvancedProductFilter from "@/components/AdvancedProductFilter";
 import EnhancedProductCard from "@/components/EnhancedProductCard";
@@ -15,6 +16,8 @@ import {
   ProductFilterData,
 } from "@/schemas/productSchema";
 import { getApiBaseUrl } from "@/utils/api";
+import DeleteAlert from "@/components/DeleteAlert";
+import { CompleteProductData } from "@/schemas/productFormSchema";
 import {
   Plus,
   Search,
@@ -25,14 +28,14 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Grid3X3,
-  List,
   Download,
   Upload,
   RefreshCw,
   Settings,
   Eye,
   EyeOff,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 interface Product {
@@ -84,21 +87,28 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteAlert, setDeleteAlert] = useState({
+    isOpen: false,
+    productId: "",
+    productName: "",
+    productImage: "",
+  });
   const [categories, setCategories] = useState<
     Array<{
       id: string;
       name: string;
-      children?: Array<{ id: string; name: string }>;
+      slug: string;
+      children?: Array<{ id: string; name: string; slug: string }>;
     }>
   >([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
   // UI State
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(true);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -182,7 +192,12 @@ export default function ProductsPage() {
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
                 price: cp.price,
-                comparePrice: cp.comparePrice !== undefined && cp.comparePrice !== null && cp.comparePrice !== '' ? cp.comparePrice : undefined,
+                comparePrice:
+                  cp.comparePrice !== undefined &&
+                  cp.comparePrice !== null &&
+                  cp.comparePrice !== ""
+                    ? cp.comparePrice
+                    : undefined,
                 minDeliveryDays: cp.minDeliveryDays || 1,
                 maxDeliveryDays: cp.maxDeliveryDays || 7,
                 isActive: cp.isActive !== false,
@@ -190,7 +205,10 @@ export default function ProductsPage() {
             : [
                 {
                   country: "USA",
-                  price: productData.price || 0,
+                  price:
+                    productData.price && productData.price > 0
+                      ? productData.price
+                      : 1,
                   minDeliveryDays: 1,
                   maxDeliveryDays: 7,
                   isActive: true,
@@ -200,7 +218,8 @@ export default function ProductsPage() {
         sku:
           productData.sku ||
           `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        asin: productData.asin ||
+        asin:
+          productData.asin ||
           `ASIN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         trackQuantity: productData.trackQuantity !== false,
         manageStock: productData.manageStock !== false,
@@ -222,23 +241,39 @@ export default function ProductsPage() {
           },
         }),
         // Transform variants to ensure proper structure with new fields
-        variants: productData.variants && productData.variants.length > 0
-          ? productData.variants.map((variant: any) => ({
-              ...variant,
-              options: variant.options && variant.options.length > 0
-                ? variant.options.map((option: any) => ({
-                    ...option,
-                    // Ensure numeric fields are properly converted
-                    price: option.price !== undefined ? Number(option.price) : undefined,
-                    comparePrice: option.comparePrice !== undefined ? Number(option.comparePrice) : undefined,
-                    weight: option.weight !== undefined ? Number(option.weight) : undefined,
-                    additionalCost: option.additionalCost !== undefined ? Number(option.additionalCost) : 0,
-                    stock: option.stock !== undefined ? Number(option.stock) : 0,
-                    asin: option.asin !== undefined ? option.asin : undefined,
-                  }))
-                : [],
-            }))
-          : [],
+        variants:
+          productData.variants && productData.variants.length > 0
+            ? productData.variants.map((variant: any) => ({
+                ...variant,
+                options:
+                  variant.options && variant.options.length > 0
+                    ? variant.options.map((option: any) => ({
+                        ...option,
+                        // Ensure numeric fields are properly converted
+                        price:
+                          option.price !== undefined
+                            ? Number(option.price)
+                            : undefined,
+                        comparePrice:
+                          option.comparePrice !== undefined
+                            ? Number(option.comparePrice)
+                            : undefined,
+                        weight:
+                          option.weight !== undefined
+                            ? Number(option.weight)
+                            : undefined,
+                        additionalCost:
+                          option.additionalCost !== undefined
+                            ? Number(option.additionalCost)
+                            : 0,
+                        stock:
+                          option.stock !== undefined ? Number(option.stock) : 0,
+                        asin:
+                          option.asin !== undefined ? option.asin : undefined,
+                      }))
+                    : [],
+              }))
+            : [],
         // Remove fields not expected by API
         currency: undefined,
         symbol: undefined,
@@ -294,7 +329,8 @@ export default function ProductsPage() {
         sku:
           productData.sku ||
           `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        asin: productData.asin ||
+        asin:
+          productData.asin ||
           `ASIN-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         categoryId: productData.categoryId || "",
         // Ensure currencyPrices has at least one entry for API requirement
@@ -303,7 +339,12 @@ export default function ProductsPage() {
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
                 price: cp.price,
-                comparePrice: cp.comparePrice !== undefined && cp.comparePrice !== null && cp.comparePrice !== '' ? cp.comparePrice : undefined,
+                comparePrice:
+                  cp.comparePrice !== undefined &&
+                  cp.comparePrice !== null &&
+                  cp.comparePrice !== ""
+                    ? cp.comparePrice
+                    : undefined,
                 minDeliveryDays: cp.minDeliveryDays || 1,
                 maxDeliveryDays: cp.maxDeliveryDays || 7,
                 isActive: cp.isActive !== false,
@@ -311,7 +352,10 @@ export default function ProductsPage() {
             : [
                 {
                   country: "USA",
-                  price: productData.price || 0,
+                  price:
+                    productData.price && productData.price > 0
+                      ? productData.price
+                      : 1,
                   minDeliveryDays: 1,
                   maxDeliveryDays: 7,
                   isActive: true,
@@ -338,27 +382,43 @@ export default function ProductsPage() {
           },
         }),
         // Transform variants to ensure proper structure with new fields
-        variants: productData.variants && productData.variants.length > 0
-          ? productData.variants.map((variant: any) => ({
-              ...variant,
-              options: variant.options && variant.options.length > 0
-                ? variant.options.map((option: any) => ({
-                    ...option,
-                    // Ensure numeric fields are properly converted
-                    price: option.price !== undefined ? Number(option.price) : undefined,
-                    comparePrice: option.comparePrice !== undefined ? Number(option.comparePrice) : undefined,
-                    weight: option.weight !== undefined ? Number(option.weight) : undefined,
-                    additionalCost: option.additionalCost !== undefined ? Number(option.additionalCost) : 0,
-                    stock: option.stock !== undefined ? Number(option.stock) : 0,
-                    asin: option.asin !== undefined ? option.asin : undefined,
-                  }))
-                : [],
-            }))
-          : [],
+        variants:
+          productData.variants && productData.variants.length > 0
+            ? productData.variants.map((variant: any) => ({
+                ...variant,
+                options:
+                  variant.options && variant.options.length > 0
+                    ? variant.options.map((option: any) => ({
+                        ...option,
+                        // Ensure numeric fields are properly converted
+                        price:
+                          option.price !== undefined
+                            ? Number(option.price)
+                            : undefined,
+                        comparePrice:
+                          option.comparePrice !== undefined
+                            ? Number(option.comparePrice)
+                            : undefined,
+                        weight:
+                          option.weight !== undefined
+                            ? Number(option.weight)
+                            : undefined,
+                        additionalCost:
+                          option.additionalCost !== undefined
+                            ? Number(option.additionalCost)
+                            : 0,
+                        stock:
+                          option.stock !== undefined ? Number(option.stock) : 0,
+                        asin:
+                          option.asin !== undefined ? option.asin : undefined,
+                      }))
+                    : [],
+              }))
+            : [],
         // Remove fields not expected by API
         currency: undefined,
         symbol: undefined,
-      }
+      };
 
       const response = await fetch(
         `${API_BASE_URL}/api/v1/products/${productId}`,
@@ -451,7 +511,21 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setCategories(data.data.categories || []);
+        const mappedCategories = (data.data.categories || []).map(
+          (cat: any) => ({
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-"),
+            children:
+              cat.children?.map((child: any) => ({
+                id: child.id,
+                name: child.name,
+                slug:
+                  child.slug || child.name.toLowerCase().replace(/\s+/g, "-"),
+              })) || [],
+          }),
+        );
+        setCategories(mappedCategories);
       } else {
         throw new Error(data.message || "Failed to fetch categories");
       }
@@ -593,16 +667,48 @@ export default function ProductsPage() {
   }, [watchedFilters]);
 
   // Enhanced handlers with performance optimizations
-  const handleDelete = useCallback(async (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      const success = await deleteProduct(id);
-      if (success) {
-        toast.success("Product deleted successfully!");
-        setSelectedProducts((prev) =>
-          prev.filter((productId) => productId !== id),
-        );
+  const handleDelete = useCallback(
+    async (id: string) => {
+      // Find the product to get its name and image for the delete alert
+      const product = products.find((p) => p.id === id);
+      if (product) {
+        setDeleteAlert({
+          isOpen: true,
+          productId: id,
+          productName: product.name,
+          productImage:
+            product.images && product.images.length > 0
+              ? product.images[0]
+              : "",
+        });
       }
+    },
+    [products],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    const success = await deleteProduct(deleteAlert.productId);
+    if (success) {
+      toast.success("Product deleted successfully!");
+      setSelectedProducts((prev) =>
+        prev.filter((productId) => productId !== deleteAlert.productId),
+      );
+      setDeleteAlert({
+        isOpen: false,
+        productId: "",
+        productName: "",
+        productImage: "",
+      });
     }
+  }, [deleteAlert.productId]);
+
+  const cancelDelete = useCallback(() => {
+    setDeleteAlert({
+      isOpen: false,
+      productId: "",
+      productName: "",
+      productImage: "",
+    });
   }, []);
 
   const handleStatusChange = useCallback(
@@ -732,30 +838,6 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === "list"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -836,29 +918,175 @@ export default function ProductsPage() {
           </motion.div>
         )}
 
-        {/* Products Grid/List */}
+        {/* Products Table */}
         {!isLoadingProducts && !error && (
           <motion.div
-            className={`${
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                : "space-y-4"
-            }`}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {paginatedProducts.map((product, index) => (
-              <EnhancedProductCard
-                key={product.id}
-                product={product}
-                index={index}
-                onEdit={handleEditProduct}
-                onDelete={handleDelete}
-                onStatusChange={handleStatusChange}
-                onToggleFeatured={(id) => handleBulkFeaturedToggle([id])}
-              />
-            ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SKU
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Featured
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedProducts.map((product, index) => (
+                    <motion.tr
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            {product.images && product.images.length > 0 ? (
+                              <img
+                                className="h-10 w-10 rounded object-cover"
+                                src={product.images[0]}
+                                alt={product.name}
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
+                                <Package className="h-6 w-6 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {product.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {product.slug}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.sku}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {typeof product.category === "string"
+                            ? product.category
+                            : product.category?.name || "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ${product.price}
+                          {product.comparePrice && (
+                            <span className="ml-2 text-sm text-gray-500 line-through">
+                              ${product.comparePrice}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.stock}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            product.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {product.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleBulkFeaturedToggle([product.id])}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
+                            product.isFeatured
+                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                          }`}
+                        >
+                          {product.isFeatured ? "Featured" : "Normal"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => setPreviewProduct(product)}
+                            className="text-gray-600 hover:text-gray-900 transition-colors"
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleStatusChange(product.id, !product.isActive)
+                            }
+                            className={`${
+                              product.isActive
+                                ? "text-yellow-600 hover:text-yellow-900"
+                                : "text-green-600 hover:text-green-900"
+                            } transition-colors`}
+                            title={product.isActive ? "Deactivate" : "Activate"}
+                          >
+                            {product.isActive ? (
+                              <AlertCircle className="h-4 w-4" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
         )}
 
@@ -942,11 +1170,280 @@ export default function ProductsPage() {
           isOpen={showAddModal}
           onClose={handleCloseModal}
           onSubmit={handleProductSubmit}
-          initialData={editingProduct}
+          initialData={(editingProduct as any) || undefined}
           isLoading={isLoading}
           categories={categories}
           brands={brands}
         />
+
+        {/* Delete Alert Modal */}
+        <DeleteAlert
+          isOpen={deleteAlert.isOpen}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          productName={deleteAlert.productName}
+          productImage={deleteAlert.productImage}
+          title="Delete Product"
+          message={`Are you sure you want to delete "${deleteAlert.productName}"? This action cannot be undone and will permanently remove the product from your inventory.`}
+        />
+
+        {/* Product Preview Modal */}
+        <AnimatePresence>
+          {previewProduct && (
+            <motion.div
+              className="fixed inset-0 z-50 overflow-y-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPreviewProduct(null)}
+            >
+              <div className="flex min-h-screen items-center justify-center p-4">
+                <motion.div
+                  className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Product Preview
+                    </h2>
+                    <button
+                      onClick={() => setPreviewProduct(null)}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <EyeOff className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Left Column - Images */}
+                      <div>
+                        <div className="space-y-4">
+                          {/* Main Image */}
+                          <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                            {previewProduct.images &&
+                            previewProduct.images.length > 0 ? (
+                              <img
+                                src={previewProduct.images[0]}
+                                alt={previewProduct.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="w-16 h-16 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Thumbnail Images */}
+                          {previewProduct.images &&
+                            previewProduct.images.length > 1 && (
+                              <div className="flex space-x-2 overflow-x-auto">
+                                {previewProduct.images
+                                  .slice(1)
+                                  .map((image, index) => (
+                                    <img
+                                      key={index}
+                                      src={image}
+                                      alt={`${previewProduct.name} ${index + 2}`}
+                                      className="w-20 h-20 rounded-lg object-cover flex-shrink-0 cursor-pointer hover:opacity-75 transition-opacity"
+                                    />
+                                  ))}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+
+                      {/* Right Column - Product Details */}
+                      <div className="space-y-6">
+                        {/* Basic Info */}
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                            {previewProduct.name || "N/A"}
+                          </h3>
+                          <p className="text-gray-600 mb-4">
+                            {previewProduct.description ||
+                              "No description available"}
+                          </p>
+
+                          {/* SKU and Category */}
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <span>SKU: {previewProduct.sku || "N/A"}</span>
+                            <span>•</span>
+                            <span>
+                              Category:{" "}
+                              {typeof previewProduct.category === "string"
+                                ? previewProduct.category
+                                : previewProduct.category?.name || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Pricing */}
+                        <div>
+                          <div className="flex items-baseline space-x-3">
+                            <span className="text-3xl font-bold text-gray-900">
+                              ${previewProduct.price}
+                            </span>
+                            {previewProduct.comparePrice &&
+                              previewProduct.comparePrice >
+                                previewProduct.price && (
+                                <span className="text-lg text-gray-500 line-through">
+                                  ${previewProduct.comparePrice}
+                                </span>
+                              )}
+                          </div>
+                          {previewProduct.comparePrice &&
+                            previewProduct.comparePrice >
+                              previewProduct.price && (
+                              <div className="mt-2">
+                                <span className="inline-flex px-2 py-1 bg-red-100 text-red-600 text-sm font-medium rounded">
+                                  {Math.round(
+                                    ((previewProduct.comparePrice -
+                                      previewProduct.price) /
+                                      previewProduct.comparePrice) *
+                                      100,
+                                  )}
+                                  % OFF
+                                </span>
+                              </div>
+                            )}
+                        </div>
+
+                        {/* Stock and Status */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-sm text-gray-500 mb-1">
+                              Stock Quantity
+                            </div>
+                            <div className="text-xl font-semibold text-gray-900">
+                              {previewProduct.stock}
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-sm text-gray-500 mb-1">
+                              Status
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  previewProduct.isActive
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {previewProduct.isActive
+                                  ? "Active"
+                                  : "Inactive"}
+                              </span>
+                              {previewProduct.isFeatured && (
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  Featured
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        {previewProduct.tags &&
+                          previewProduct.tags.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-2">
+                                Tags
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {previewProduct.tags.map((tag, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Dimensions and Weight */}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">
+                            Physical Details
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Weight:</span>
+                              <span className="ml-2 font-medium">
+                                {previewProduct.weight} kg
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Dimensions:</span>
+                              <span className="ml-2 font-medium">
+                                {previewProduct.dimensions.length} ×{" "}
+                                {previewProduct.dimensions.width} ×{" "}
+                                {previewProduct.dimensions.height} cm
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SEO Info */}
+                        {previewProduct.seo && (
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 mb-2">
+                              SEO Information
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="text-gray-500">Title:</span>
+                                <span className="ml-2">
+                                  {previewProduct.seo.title || "N/A"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">
+                                  Description:
+                                </span>
+                                <span className="ml-2">
+                                  {previewProduct.seo.description || "N/A"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer with Actions */}
+                  <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+                    <button
+                      onClick={() => setPreviewProduct(null)}
+                      className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPreviewProduct(null);
+                        handleEditProduct(previewProduct);
+                      }}
+                      className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Edit Product
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Bulk Operations */}
         <BulkOperations

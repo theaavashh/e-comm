@@ -5,7 +5,7 @@ import ProductDetail from '@/components/ProductDetail';
 
 export default function ProductPage() {
   const params = useParams();
-  const { category, id } = params;
+  const { category, id } = params as { category: string; id: string };
 
   return (
     <div className="min-h-screen bg-gray-50">

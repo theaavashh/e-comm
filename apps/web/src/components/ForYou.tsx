@@ -1,10 +1,21 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Star, TrendingUp, ShoppingCart, Heart, Eye, Plus, Minus, Image, ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useLocation } from '@/contexts/LocationContext';
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronRight,
+  Star,
+  TrendingUp,
+  ShoppingCart,
+  Heart,
+  Eye,
+  Plus,
+  Minus,
+  Image,
+  ChevronLeft,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface ApiProduct {
   id: string;
@@ -47,60 +58,100 @@ interface ProductImageSliderProps {
 const ProductImageSlider: React.FC<ProductImageSliderProps> = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const goToPrevious = () => {
     const isFirstSlide = currentIndex === 0;
     const newIndex = isFirstSlide ? images.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
+    // Mark that user has interacted
+    setHasUserInteracted(true);
+    // Reset auto-scroll timer when manually navigating
+    restartAutoScroll();
   };
 
   const goToNext = () => {
     const isLastSlide = currentIndex === images.length - 1;
     const newIndex = isLastSlide ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
+    // Mark that user has interacted
+    setHasUserInteracted(true);
+    // Reset auto-scroll timer when manually navigating
+    restartAutoScroll();
   };
 
-  // Auto-rotate when not hovered
+  // Function to restart auto-scroll after user interaction
+  const restartAutoScroll = () => {
+    setIsHovered(true);
+    // Clear any existing timeout
+    if (autoScrollTimerRef.current) {
+      clearTimeout(autoScrollTimerRef.current);
+    }
+    // Set a new timeout to stop auto-scroll after 3 seconds of inactivity
+    autoScrollTimerRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 3000);
+  };
+
+  // Auto-rotate when not hovered and user has interacted
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
-    if (!isHovered && images.length > 1) {
+
+    if (!isHovered && hasUserInteracted && images.length > 1) {
       interval = setInterval(() => {
         goToNext();
       }, 3000);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
+      // Clear any pending auto-scroll timers
+      if (autoScrollTimerRef.current) {
+        clearTimeout(autoScrollTimerRef.current);
+      }
     };
-  }, [isHovered, currentIndex, images.length]);
+  }, [isHovered, hasUserInteracted, images.length, goToNext]);
 
   if (images.length === 0) {
     return (
       <div className="relative group overflow-hidden w-full h-full">
-        <img 
-          src="/placeholder-image.jpg" 
+        <img
+          src="/placeholder-image.jpg"
           alt="Product placeholder"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       className="relative group overflow-hidden w-full h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        // Mark that user has interacted
+        setHasUserInteracted(true);
+        setIsHovered(true);
+        if (autoScrollTimerRef.current) {
+          clearTimeout(autoScrollTimerRef.current);
+          autoScrollTimerRef.current = null;
+        }
+      }}
+      onMouseLeave={() => {
+        // Set a new timeout to stop auto-scroll after 3 seconds of inactivity
+        autoScrollTimerRef.current = setTimeout(() => {
+          setIsHovered(false);
+        }, 3000);
+      }}
     >
       {/* Main Image with seamless transitions */}
       <div className="relative w-full h-full overflow-hidden">
-        <AnimatePresence initial={false} mode="wait">
+        <AnimatePresence initial={false} mode="sync">
           <motion.img
             key={currentIndex}
             src={images[currentIndex]}
             alt={`Product image ${currentIndex + 1}`}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
@@ -142,11 +193,15 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({ images }) => {
             <button
               key={index}
               className={`w-2 h-2 rounded-full ${
-                index === currentIndex ? 'bg-white' : 'bg-white/50'
+                index === currentIndex ? "bg-white" : "bg-white/50"
               }`}
               onClick={(e) => {
                 e.stopPropagation();
                 setCurrentIndex(index);
+                // Mark that user has interacted
+                setHasUserInteracted(true);
+                // Reset auto-scroll timer when manually navigating
+                restartAutoScroll();
               }}
               aria-label={`Go to image ${index + 1}`}
             />
@@ -161,38 +216,46 @@ interface ForYouProps {
   className?: string;
 }
 
-const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
+const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
   const router = useRouter();
   const { selectedCountry } = useLocation();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        // Get user country from context for pricing
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/products?limit=12&isActive=true&country=${encodeURIComponent(selectedCountry)}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        
-        const data = await response.json();
-        setProducts(data.data.products || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch products');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch "For You" products from API (featured products)
+  const fetchForYouProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/api/v1/products?limit=20`,
+      );
 
-    fetchProducts();
-  }, [selectedCountry]);
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      const data = await response.json();
+      const apiProducts = data.success ? data.data.products : [];
+
+      setProducts(apiProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setError("Failed to load products");
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+     
+    
+
+  useEffect(() => {
+    fetchForYouProducts();
+  }, []);
 
   const handleProductClick = (product: ApiProduct) => {
     // Navigate to product detail page
@@ -200,9 +263,9 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -250,8 +313,12 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
           <div className="text-center">
             <div className="text-gray-500">
               <Star className="h-12 w-12 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No products available</h3>
-              <p className="text-sm">Check back later for personalized recommendations</p>
+              <h3 className="text-lg font-semibold mb-2">
+                No products available
+              </h3>
+              <p className="text-sm">
+                Check back later for personalized recommendations
+              </p>
             </div>
           </div>
         </div>
@@ -269,7 +336,9 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
           transition={{ duration: 0.6 }}
           className="text-left mb-6 sm:mb-8 md:mb-12 w-full"
         >
-          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold mb-2 font-inter px-4 sm:px-0">For You</h2>
+          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold mb-2 font-inter px-4 sm:px-0">
+            For You
+          </h2>
           <p className="text-sm sm:text-base md:text-xl text-gray-600 max-w-9xl mx-auto px-4 sm:px-0">
             Discover personalized product recommendations just for you
           </p>
@@ -305,28 +374,35 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
                     <div className="flex items-center space-x-2">
                       <span className="text-lg md:text-xl font-extrabold text-[#EB6426]">
                         $
-                        {new Intl.NumberFormat('en-US', {
+                        {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }).format(product.price)}
                       </span>
-                      {product.comparePrice && product.comparePrice > product.price && (
-                        <span className="text-xs md:text-sm text-gray-500 line-through">
-                          <sup className="text-[0.7em]">$</sup>
-                          {new Intl.NumberFormat('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(product.comparePrice)}
-                        </span>
-                      )}
+                      {product.comparePrice &&
+                        product.comparePrice > product.price && (
+                          <span className="text-xs md:text-sm text-gray-500 line-through">
+                            <sup className="text-[0.7em]">$</sup>
+                            {new Intl.NumberFormat("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(product.comparePrice)}
+                          </span>
+                        )}
                     </div>
-                    {product.comparePrice && product.comparePrice > product.price && (
-                      <div>
-                        <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium">
-                          {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
-                        </span>
-                      </div>
-                    )}
+                    {product.comparePrice &&
+                      product.comparePrice > product.price && (
+                        <div>
+                          <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full font-medium">
+                            {Math.round(
+                              ((product.comparePrice - product.price) /
+                                product.comparePrice) *
+                                100,
+                            )}
+                            % OFF
+                          </span>
+                        </div>
+                      )}
                   </div>
 
                   {/* Product Name */}
@@ -361,11 +437,13 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? 'fill-current' : 'text-gray-300'}`}
+                          className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? "fill-current" : "text-gray-300"}`}
                         />
                       ))}
                     </div>
-                    <span className="text-sm text-gray-500">({product.reviewCount || 0})</span>
+                    <span className="text-sm text-gray-500">
+                      ({product.reviewCount || 0})
+                    </span>
                   </div>
                 </div>
               </div>
@@ -373,8 +451,6 @@ const ForYou: React.FC<ForYouProps> = ({ className = '' }) => {
           ))}
         </motion.div>
       </div>
-
-
     </div>
   );
 };

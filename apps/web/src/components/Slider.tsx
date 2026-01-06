@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -19,75 +19,35 @@ interface SliderImage {
 }
 
 export default function Slider() {
-  const [sliders, setSliders] = useState<SliderImage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Hardcoded slider data
+  const hardcodedSliders: SliderImage[] = [
+    {
+      id: '1',
+      imageUrl: '/banners.jpeg',
+      internalLink: '/products',
+      isActive: true,
+      order: 1,
+    },
+    {
+      id: '2',
+      imageUrl: '/banners.jpeg',
+      internalLink: '/categories',
+      isActive: true,
+      order: 2,
+    },
+    {
+      id: '3',
+      imageUrl: '/banners.jpeg',
+      internalLink: '/offers',
+      isActive: true,
+      order: 3,
+    }
+  ];
 
-  useEffect(() => {
-    const fetchSliders = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/sliders`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch sliders');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          // Filter active sliders and sort by order
-          const activeSliders = (data.data.sliders || [])
-            .filter((slider: SliderImage) => slider.isActive)
-            .sort((a: SliderImage, b: SliderImage) => a.order - b.order);
-          
-          setSliders(activeSliders);
-        } else {
-          throw new Error(data.message || 'Failed to fetch sliders');
-        }
-      } catch (err) {
-        console.error('Error fetching sliders:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSliders();
-  }, []);
-
-  // Show loading state while fetching data
-  if (loading) {
-    return (
-      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-      </div>
-    );
-  }
-
-  // Show error state if there was an error
-  if (error) {
-    console.error('Slider error:', error);
-    return (
-      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <p>Failed to load slider</p>
-          <p className="text-sm text-gray-300 mt-2">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show empty state if no active sliders
-  if (sliders.length === 0) {
-    return (
-      <div className="relative w-full h-full shadow-lg bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <p>No active sliders available</p>
-        </div>
-      </div>
-    );
-  }
+  const [sliders] = useState<SliderImage[]>(hardcodedSliders);
+  
+  // No loading needed since data is hardcoded
+  // No error handling needed since data is hardcoded
 
   return (
     <div className="relative w-full h-full shadow-lg ">
