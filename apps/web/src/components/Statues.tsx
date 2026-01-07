@@ -48,7 +48,7 @@ export default function Statues() {
     try {
       setLoading(true);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/products?category=statue&limit=100&country=${selectedCountry || "USA"}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/products?categories=statue&limit=10&country=${selectedCountry || "USA"}`,
       );
 
       if (!response.ok) {
@@ -67,95 +67,7 @@ export default function Statues() {
     }
   };
 
-  // For reference, here's what the hardcoded structure looked like:
-  /*
-    {
-      id: '1',
-      name: 'Lord Ganesha Idol',
-      description: 'Beautiful handcrafted Lord Ganesha idol for home temple and puja room.',
-      shortDescription: 'Sacred Ganesha idol',
-      price: 129.99,
-      comparePrice: 159.99,
-      image: '/statue-01.jpeg',
-      images: ['/statue-01.jpeg', '/statue-02.jpeg'],
-      brand: { name: 'Sacred Arts' },
-      averageRating: 4.8,
-      reviewCount: 24,
-      category: { slug: 'statue' },
-    },
-    {
-      id: '2',
-      name: 'Buddha Statue',
-      description: 'Peaceful Buddha statue for meditation and spiritual practice.',
-      shortDescription: 'Meditation Buddha statue',
-      price: 99.99,
-      comparePrice: 129.99,
-      image: '/statue-02.jpeg',
-      images: ['/statue-02.jpeg', '/statue-03.jpeg'],
-      brand: { name: 'Zen Creations' },
-      averageRating: 4.7,
-      reviewCount: 18,
-      category: { slug: 'statue' },
-    },
-    {
-      id: '3',
-      name: 'Lord Shiva Idol',
-      description: 'Elegant Lord Shiva statue with traditional design and intricate details.',
-      shortDescription: 'Traditional Shiva idol',
-      price: 149.99,
-      comparePrice: 179.99,
-      image: '/statue-03.jpeg',
-      images: ['/statue-03.jpeg', '/statue-04.jpeg'],
-      brand: { name: 'Divine Crafts' },
-      averageRating: 4.9,
-      reviewCount: 15,
-      category: { slug: 'statue' },
-    },
-    {
-      id: '4',
-      name: 'Goddess Durga Idol',
-      description: 'Graceful Goddess Durga statue for worship and home decor.',
-      shortDescription: 'Sacred Durga idol',
-      price: 179.99,
-      comparePrice: 219.99,
-      image: '/statue-04.jpeg',
-      images: ['/statue-04.jpeg', '/statue-05.jpeg'],
-      brand: { name: 'Sacred Arts' },
-      averageRating: 4.6,
-      reviewCount: 12,
-      category: { slug: 'statue' },
-    },
-    {
-      id: '5',
-      name: 'Lord Hanuman Statue',
-      description: 'Powerful Lord Hanuman statue representing strength and devotion.',
-      shortDescription: 'Devotional Hanuman statue',
-      price: 89.99,
-      comparePrice: 109.99,
-      image: '/statue-05.jpeg',
-      images: ['/statue-05.jpeg', '/statue-06.jpeg'],
-      brand: { name: 'Devotion Creations' },
-      averageRating: 4.8,
-      reviewCount: 22,
-      category: { slug: 'statue' },
-    },
-    {
-      id: '6',
-      name: 'Krishna Idol',
-      description: 'Beautiful Lord Krishna statue with flute, perfect for home shrine.',
-      shortDescription: 'Flute-playing Krishna idol',
-      price: 139.99,
-      comparePrice: 169.99,
-      image: '/statue-06.jpeg',
-      images: ['/statue-06.jpeg', '/statue-01.jpeg'],
-      brand: { name: 'Divine Arts' },
-      averageRating: 4.7,
-      reviewCount: 16,
-      category: { slug: 'statue' },
-    },
-  ];
-  */
-
+ 
   useEffect(() => {
     fetchStatueProducts();
   }, [selectedCountry]); // Re-fetch when country changes for pricing

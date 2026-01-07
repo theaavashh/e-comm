@@ -371,7 +371,7 @@ export default function EnhancedProductForm({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialData?.slug && !!initialData?.slug.trim()); // Set to true if editing existing product with a non-empty slug
 
   // Effect to reset form when initialData changes (for edit mode)
-  const prevInitialDataRef = useRef();
+  const prevInitialDataRef = useRef<any>(null);
   
   useEffect(() => {
     // Only update if initialData has actually changed (not on initial mount)

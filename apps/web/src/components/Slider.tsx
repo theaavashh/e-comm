@@ -107,7 +107,7 @@ export default function Slider() {
   }
 
   return (
-    <div className="relative w-full h-full shadow-lg bg-red-200 ">
+    <div className="relative w-full h-full shadow-lg  ">
       <Swiper
         modules={[Navigation, Pagination, Autoplay]}
         spaceBetween={0}
