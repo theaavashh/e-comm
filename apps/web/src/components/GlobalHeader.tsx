@@ -1,21 +1,41 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, User, Heart, ChevronRight, MapPin, ChevronDown, PackageSearch, X, Menu, Truck, Car, ShoppingBag, Home, ChevronUp, Smartphone, Minus, Plus, ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import TopBanner from './TopBanner';
-import { useLocation } from '@/contexts/LocationContext';
-import { useCart } from '@/contexts/CartContext';
+import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Heart,
+  ChevronRight,
+  MapPin,
+  ChevronDown,
+  PackageSearch,
+  X,
+  Menu,
+  Truck,
+  Car,
+  ShoppingBag,
+  Home,
+  ChevronUp,
+  Smartphone,
+  Minus,
+  Plus,
+  ChevronLeft,
+} from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import TopBanner from "./TopBanner";
+import { useLocation } from "@/contexts/LocationContext";
+import { useCart } from "@/contexts/CartContext";
 
 interface NavItem {
   id: string;
   label: string;
   href: string;
-  type: 'link' | 'dropdown';
+  type: "link" | "dropdown";
   columns?: NavColumn[];
 }
 
@@ -39,17 +59,22 @@ export default function GlobalHeader() {
   const pathname = usePathname();
 
   // Hide GlobalHeader on login page
-  if (pathname === '/login') {
+  if (pathname === "/login") {
     return null;
   }
 
   // Helper function to format price safely
   const formatPrice = (price: any): string => {
-    const numPrice = typeof price === 'number' ? price : typeof price === 'string' ? parseFloat(price) : 0;
+    const numPrice =
+      typeof price === "number"
+        ? price
+        : typeof price === "string"
+          ? parseFloat(price)
+          : 0;
     const validPrice = isNaN(numPrice) ? 0 : numPrice;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(validPrice);
   };
@@ -58,25 +83,30 @@ export default function GlobalHeader() {
   const [showMenu, setShowMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showTrackOrderModal, setShowTrackOrderModal] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
-  const [userLocation, setUserLocation] = useState<string>('Detecting location...');
+  const [orderNumber, setOrderNumber] = useState("");
+  const [userLocation, setUserLocation] = useState<string>(
+    "Detecting location...",
+  );
   const [isLocationLoadingState, setIsLocationLoadingState] = useState(true);
   const [trackingResult, setTrackingResult] = useState<any>(null);
   const [isTrackingOrder, setIsTrackingOrder] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [isDeliverySectionExpanded, setIsDeliverySectionExpanded] = useState(false);
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState<'shipping' | 'pickup' | 'delivery'>('delivery');
+  const [isDeliverySectionExpanded, setIsDeliverySectionExpanded] =
+    useState(false);
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState<
+    "shipping" | "pickup" | "delivery"
+  >("delivery");
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const [addressInput, setAddressInput] = useState('');
+  const [addressInput, setAddressInput] = useState("");
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [addressStep, setAddressStep] = useState(1);
   const [addressFormData, setAddressFormData] = useState({
-    country: '',
-    state: '',
-    postalCode: '',
-    streetAddress: '',
-    apartment: '',
-    phoneNumber: ''
+    country: "",
+    state: "",
+    postalCode: "",
+    streetAddress: "",
+    apartment: "",
+    phoneNumber: "",
   });
   const [savedAddress, setSavedAddress] = useState<{
     country: string;
@@ -87,154 +117,53 @@ export default function GlobalHeader() {
     phoneNumber: string;
   } | null>(null);
 
-
   // Navigation State
   const [navigationItems, setNavigationItems] = useState<NavItem[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  // Hardcoded navigation items
-  const hardcodedNavigationItems: NavItem[] = [
-    
-    {
-      id: 'foods',
-      label: 'Foods',
-      href: '/products/foods',
-      type: 'dropdown',
-      columns: [
-        {
-          title: 'Achar Categories',
-          items: [
-            { label: 'Veg Achar', href: '/products/foods/achar/veg-achar' },
-            { label: 'Non-Veg Achar', href: '/products/foods/achar/non-veg-achar' },
-            { label: 'Mango Achar', href: '/products/foods/achar/mango-achar' },
-            { label: 'Lemon Achar', href: '/products/foods/achar/lemon-achar' },
-            { label: 'Mixed Achar', href: '/products/foods/achar/mixed-achar' },
-          ]
-        },
-        {
-          title: 'Snack Categories',
-          items: [
-            { label: 'Buff Snacks', href: '/products/foods/snacks/buff-snacks' },
-            { label: 'Fish Snack', href: '/products/foods/snacks/fish-snack' },
-            { label: 'Chicken Snack', href: '/products/foods/snacks/chicken-snack' },
-            { label: 'Pork Snack', href: '/products/foods/snacks/pork-snack' },
-            { label: 'Mutton Snack', href: '/products/foods/snacks/mutton-snack' },
-          ]
-        },
-      ]
-    },
-    {
-      id: 'statue',
-      label: 'Statue',
-      href: '/products/statue',
-      type: 'dropdown',
-      columns: [
-        {
-          title: 'Religious Statues',
-          items: [
-            { label: 'Ganesh Idol', href: '/products/statue/ganesh' },
-            { label: 'Buddha Statue', href: '/products/statue/buddha' },
-            { label: 'Shiva Idol', href: '/products/statue/shiva' },
-            { label: 'Krishna Idol', href: '/products/statue/krishna' },
-            { label: 'Durga Idol', href: '/products/statue/durga' },
-          ]
-        },
-        
-      ]
-    },
-    {
-      id: 'carpet',
-      label: 'Carpet',
-      href: '/products/carpet',
-      type: 'dropdown',
-      columns: [
-        {
-          title: 'Carpet Types',
-          items: [
-            { label: 'Woven Carpets', href: '/products/carpet/woven' },
-            { label: 'Pashmina Carpets', href: '/products/carpet/pashmina' },
-            { label: 'Silk Carpets', href: '/products/carpet/silk' },
-            { label: 'Persian Carpets', href: '/products/carpet/persian' },
-            { label: 'Rug Carpets', href: '/products/carpet/rug' },
-          ]
-        },
-        {
-          title: 'Carpet Materials',
-          items: [
-            { label: 'Wool Carpets', href: '/products/carpet/wool' },
-            { label: 'Cotton Carpets', href: '/products/carpet/cotton' },
-            { label: 'Synthetic Carpets', href: '/products/carpet/synthetic' },
-          ]
-        }
-      ]
-    },
-    {
-      id: 'dress',
-      label: 'Dress',
-      href: '/products/dress',
-      type: 'dropdown',
-      columns: [
-        {
-          title: 'Traditional Dresses',
-          items: [
-            { label: 'Saree', href: '/products/dress/traditional/saree' },
-            { label: 'Kurta', href: '/products/dress/traditional/kurta' },
-            { label: 'Lehenga', href: '/products/dress/traditional/lehenga' },
-            { label: 'Dhoti', href: '/products/dress/traditional/dhoti' },
-            { label: 'Sherwani', href: '/products/dress/traditional/sherwani' },
-          ]
-        },
-        {
-          title: 'Modern Dresses',
-          items: [
-            { label: 'Western Wear', href: '/products/dress/modern/western' },
-            { label: 'Casual Wear', href: '/products/dress/modern/casual' },
-            { label: 'Formal Wear', href: '/products/dress/modern/formal' },
-          ]
-        }
-      ]
-    },
-    {
-      id: 'jewelry',
-      label: 'Jewelry',
-      href: '/products/jewelry',
-      type: 'dropdown',
-      columns: [
-        {
-          title: 'Metal Types',
-          items: [
-            { label: 'Gold Jewelry', href: '/products/jewelry/gold' },
-            { label: 'Silver Jewelry', href: '/products/jewelry/silver' },
-            { label: 'Platinum Jewelry', href: '/products/jewelry/platinum' },
-            { label: 'Alloy Jewelry', href: '/products/jewelry/alloy' },
-          ]
-        },
-        {
-          title: 'Jewelry Types',
-          items: [
-            { label: 'Necklaces', href: '/products/jewelry/necklaces' },
-            { label: 'Earrings', href: '/products/jewelry/earrings' },
-            { label: 'Rings', href: '/products/jewelry/rings' },
-            { label: 'Bracelets', href: '/products/jewelry/bracelets' },
-            { label: 'Anklets', href: '/products/jewelry/anklets' },
-          ]
-        }
-      ]
-    }
-  ];
-
   useEffect(() => {
-    // Use hardcoded navigation items
-    setNavigationItems(hardcodedNavigationItems);
+    // Fetch navigation items from API
+    const fetchNavigationItems = async () => {
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!API_BASE_URL) {
+          console.error('NEXT_PUBLIC_API_BASE_URL is not defined');
+          return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/v1/configuration/public/navigation`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && Array.isArray(result.data)) {
+            setNavigationItems(result.data);
+          } else {
+            console.error('Invalid response format for navigation data');
+          }
+        } else {
+          console.error('Failed to fetch navigation data:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching navigation data:', error);
+      }
+    };
+    
+    fetchNavigationItems();
   }, []);
 
   // Use cart context instead of local state
-  const { cartItemCount, cartTotal, cartItems, updateQuantity, removeFromCart } = useCart();
-
+  const {
+    cartItemCount,
+    cartTotal,
+    cartItems,
+    updateQuantity,
+    removeFromCart,
+  } = useCart();
 
   // Use LocationContext instead of local state
-  const { selectedCountry, selectedCity, setSelectedCountry, setSelectedCity } = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { selectedCountry, selectedCity, setSelectedCountry, setSelectedCity } =
+    useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -243,9 +172,9 @@ export default function GlobalHeader() {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [siteSettings, setSiteSettings] = useState({
-    siteName: 'GharSamma',
-    siteLogo: '',
-    siteFavicon: ''
+    siteName: "GharSamma",
+    siteLogo: "",
+    siteFavicon: "",
   });
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -263,9 +192,9 @@ export default function GlobalHeader() {
 
         // Try multiple IP geolocation services for better accuracy
         const services = [
-          'https://ipapi.co/json/',
-          'https://ipinfo.io/json',
-          'https://api.ipgeolocation.io/ipgeo?apiKey=free'
+          "https://ipapi.co/json/",
+          "https://ipinfo.io/json",
+          "https://api.ipgeolocation.io/ipgeo?apiKey=free",
         ];
 
         let locationData = null;
@@ -292,71 +221,48 @@ export default function GlobalHeader() {
           const region = locationData.region || locationData.state;
           const country = locationData.country_name || locationData.country;
 
-          // For Nepal, try to get more specific location
-          if (country === 'Nepal' || country === 'NP') {
-            // Try to get more precise location using a different service
-            try {
-              const preciseResponse = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client');
-              const preciseData = await preciseResponse.json();
-
-              if (preciseData.city && preciseData.principalSubdivision) {
-                setSelectedCity(preciseData.city);
-                setSelectedCountry('Nepal');
-              } else {
-                setSelectedCity(city);
-                setSelectedCountry('Nepal');
-              }
-            } catch {
-              setSelectedCity(city);
-              setSelectedCountry('Nepal');
-            }
+          // For Nepal, set default location without external API calls
+          if (country === "Nepal" || country === "NP") {
+            setSelectedCity(city || "Kathmandu");
+            setSelectedCountry("Nepal");
           } else {
-            setSelectedCity(city);
-            const finalCountry = country || 'Nepal';
+            setSelectedCity(city || "Kathmandu");
+            const finalCountry = country || "Nepal";
             setSelectedCountry(finalCountry);
           }
         } else {
-          // Fallback to browser geolocation for more accuracy
+          // Fallback to browser geolocation with secure implementation
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              async (position) => {
-                try {
-                  const { latitude, longitude } = position.coords;
-                  const response = await fetch(
-                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-                  );
-                  const data = await response.json();
-
-                  if (data.city && data.principalSubdivision) {
-                    setSelectedCity(data.city);
-                    setSelectedCountry('Nepal');
-                  } else {
-                    setSelectedCity(data.city || 'Kathmandu');
-                    setSelectedCountry('Nepal');
-                  }
-                } catch (error) {
-                  setSelectedCity('Kathmandu');
-                  setSelectedCountry('Nepal');
-                } finally {
-                  setIsLocationLoadingState(false);
-                }
+              (position) => {
+                // Use secure browser geolocation without external APIs
+                // Set default location for Nepal based on browser location
+                setSelectedCity("Kathmandu");
+                setSelectedCountry("Nepal");
+                setIsLocationLoadingState(false);
               },
               () => {
-                setSelectedCity('Kathmandu');
-                setSelectedCountry('Nepal');
+                // Handle geolocation denial gracefully
+                setSelectedCity("Kathmandu");
+                setSelectedCountry("Nepal");
                 setIsLocationLoadingState(false);
-              }
+              },
+              {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 300000, // 5 minutes cache
+              },
             );
             return; // Don't set loading to false here as geolocation is async
           } else {
-            setSelectedCity('Kathmandu');
-            setSelectedCountry('Nepal');
+            setSelectedCity("Kathmandu");
+            setSelectedCountry("Nepal");
           }
         }
       } catch (error) {
-        console.error('Error fetching location:', error);
-        setSelectedCity('Kathmandu');
-        setSelectedCountry('Nepal');
+        console.error("Error fetching location:", error);
+        setSelectedCity("Kathmandu");
+        setSelectedCountry("Nepal");
       } finally {
         setIsLocationLoadingState(false);
       }
@@ -364,7 +270,6 @@ export default function GlobalHeader() {
 
     getUserLocation();
   }, []);
-
 
   // Set mounted state after initial render to prevent animations on page load
   useEffect(() => {
@@ -376,7 +281,9 @@ export default function GlobalHeader() {
     const fetchSiteSettings = async () => {
       try {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-        const response = await fetch(`${API_BASE_URL}/api/v1/configuration/public/site-settings`);
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/configuration/public/site-settings`,
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -385,26 +292,26 @@ export default function GlobalHeader() {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch site settings:', error);
+        console.error("Failed to fetch site settings:", error);
         // Keep default values
       }
     };
 
-
     fetchSiteSettings();
-
   }, []);
 
   // Update favicon when site settings change
   useEffect(() => {
     if (siteSettings.siteFavicon) {
-      const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      const link = document.querySelector(
+        "link[rel~='icon']",
+      ) as HTMLLinkElement;
       if (link) {
         link.href = siteSettings.siteFavicon;
       } else {
         // Create a new link element if it doesn't exist
-        const newLink = document.createElement('link');
-        newLink.rel = 'icon';
+        const newLink = document.createElement("link");
+        newLink.rel = "icon";
         newLink.href = siteSettings.siteFavicon;
         document.head.appendChild(newLink);
       }
@@ -419,18 +326,16 @@ export default function GlobalHeader() {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-
 
   // Track Order function
   const handleTrackOrder = async () => {
     if (!orderNumber.trim()) {
-      alert('Please enter an order number');
+      alert("Please enter an order number");
       return;
     }
 
@@ -445,11 +350,15 @@ export default function GlobalHeader() {
       if (response.ok && data.success) {
         setTrackingResult(data.data.order);
       } else {
-        setTrackingResult({ error: 'Order not found. Please check your order number.' });
+        setTrackingResult({
+          error: "Order not found. Please check your order number.",
+        });
       }
     } catch (error) {
-      console.error('Error tracking order:', error);
-      setTrackingResult({ error: 'Unable to track order. Please try again later.' });
+      console.error("Error tracking order:", error);
+      setTrackingResult({
+        error: "Unable to track order. Please try again later.",
+      });
     } finally {
       setIsTrackingOrder(false);
     }
@@ -468,7 +377,9 @@ export default function GlobalHeader() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-      const response = await fetch(`${apiUrl}/api/v1/products?search=${encodeURIComponent(query)}&limit=8`);
+      const response = await fetch(
+        `${apiUrl}/api/v1/products?search=${encodeURIComponent(query)}&limit=8`,
+      );
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -477,7 +388,7 @@ export default function GlobalHeader() {
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error("Error searching products:", error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -500,14 +411,17 @@ export default function GlobalHeader() {
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowSearchResults(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -516,8 +430,12 @@ export default function GlobalHeader() {
     const handleClickOutside = (event: MouseEvent) => {
       if (showLocationModal) {
         const target = event.target as Node;
-        const isMobile = locationRefMobile.current && locationRefMobile.current.contains(target);
-        const isDesktop = locationRefDesktop.current && locationRefDesktop.current.contains(target);
+        const isMobile =
+          locationRefMobile.current &&
+          locationRefMobile.current.contains(target);
+        const isDesktop =
+          locationRefDesktop.current &&
+          locationRefDesktop.current.contains(target);
 
         // Close if clicked outside both (on mobile or desktop)
         if (!isMobile && !isDesktop) {
@@ -527,25 +445,28 @@ export default function GlobalHeader() {
     };
 
     if (showLocationModal) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showLocationModal]);
 
   // Close expandable delivery section when clicking outside
-  useEffect(() => {
-  }, [showLocationModal]);
+  useEffect(() => {}, [showLocationModal]);
 
   // Close expandable delivery section when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isDeliverySectionExpanded) {
         const target = event.target as Node;
-        const isMobile = locationRefMobile.current && locationRefMobile.current.contains(target);
-        const isDesktop = locationRefDesktop.current && locationRefDesktop.current.contains(target);
+        const isMobile =
+          locationRefMobile.current &&
+          locationRefMobile.current.contains(target);
+        const isDesktop =
+          locationRefDesktop.current &&
+          locationRefDesktop.current.contains(target);
 
         // Close if clicked outside both (on mobile or desktop)
         if (!isMobile && !isDesktop) {
@@ -555,26 +476,29 @@ export default function GlobalHeader() {
     };
 
     if (isDeliverySectionExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showLocationModal]);
 
   // Close expandable delivery section when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (deliverySectionRef.current && !deliverySectionRef.current.contains(event.target as Node)) {
+      if (
+        deliverySectionRef.current &&
+        !deliverySectionRef.current.contains(event.target as Node)
+      ) {
         setIsDeliverySectionExpanded(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDeliverySectionExpanded]);
 
@@ -587,14 +511,16 @@ export default function GlobalHeader() {
     };
   }, []);
 
-
   return (
     <div className="w-full font-inter">
       {/* Top Promotional Banner - Dynamic */}
       <TopBanner />
 
       {/* Search Bar Section */}
-      <div className="border-b" style={{ backgroundColor: '#EB6426', borderColor: '#d65a1f' }}>
+      <div
+        className="border-b"
+        style={{ backgroundColor: "#EB6426", borderColor: "#d65a1f" }}
+      >
         <div className="max-w-8xl mx-auto px-0 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-2 sm:py-3 md:py-4">
           {/* Mobile: Logo and top actions */}
           <div className="flex lg:hidden items-center justify-between gap-2 mb-3 px-4">
@@ -606,9 +532,11 @@ export default function GlobalHeader() {
                   className="h-10 w-auto object-contain"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.style.display = "none";
                     if (e.currentTarget.nextElementSibling) {
-                      e.currentTarget.nextElementSibling.classList.remove('hidden');
+                      e.currentTarget.nextElementSibling.classList.remove(
+                        "hidden",
+                      );
                     }
                   }}
                 />
@@ -631,19 +559,26 @@ export default function GlobalHeader() {
               {/* Deliver to - Hidden on mobile, shown on desktop */}
               <div className="hidden lg:flex relative" ref={locationRefDesktop}>
                 <button
-                  onClick={() => setIsDeliverySectionExpanded(!isDeliverySectionExpanded)}
+                  onClick={() =>
+                    setIsDeliverySectionExpanded(!isDeliverySectionExpanded)
+                  }
                   className="flex items-start gap-2 text-white hover:bg-orange-700 rounded-lg p-2 transition-colors"
                 >
                   <MapPin className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
                   <div className="flex flex-col items-start gap-0.5 flex-1">
-                    <span className="text-xs font-extrabold text-white">Deliver to</span>
+                    <span className="text-xs font-extrabold text-white">
+                      Deliver to
+                    </span>
                     {!isLocationLoadingState ? (
                       savedAddress ? (
                         <span className="text-xs font-medium text-white truncate max-w-[100px]">
-                          {savedAddress.streetAddress}, {savedAddress.state || savedAddress.country}
+                          {savedAddress.streetAddress},{" "}
+                          {savedAddress.state || savedAddress.country}
                         </span>
                       ) : (
-                        <span className="text-xs font-bold text-white whitespace-nowrap truncate max-w-[80px]">{selectedCountry}</span>
+                        <span className="text-xs font-bold text-white whitespace-nowrap truncate max-w-[80px]">
+                          {selectedCountry}
+                        </span>
                       )
                     ) : (
                       <div className="flex items-center gap-1">
@@ -664,9 +599,13 @@ export default function GlobalHeader() {
                   {isDeliverySectionExpanded && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
                       className="absolute top-full right-0 mt-2 w-80 overflow-hidden z-[250]"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -677,43 +616,56 @@ export default function GlobalHeader() {
                             <MapPin className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900 mb-1">
-                                {savedAddress ? 'Delivery Address' : 'Add an address for shipping and delivery'}
+                                {savedAddress
+                                  ? "Delivery Address"
+                                  : "Add an address for shipping and delivery"}
                               </p>
                               {savedAddress ? (
                                 <div className="text-xs text-gray-600 mb-3 space-y-1">
-                                  <p>{savedAddress.streetAddress}{savedAddress.apartment ? `, ${savedAddress.apartment}` : ''}</p>
-                                  <p>{savedAddress.state}{savedAddress.postalCode ? ` ${savedAddress.postalCode}` : ''}, {savedAddress.country}</p>
+                                  <p>
+                                    {savedAddress.streetAddress}
+                                    {savedAddress.apartment
+                                      ? `, ${savedAddress.apartment}`
+                                      : ""}
+                                  </p>
+                                  <p>
+                                    {savedAddress.state}
+                                    {savedAddress.postalCode
+                                      ? ` ${savedAddress.postalCode}`
+                                      : ""}
+                                    , {savedAddress.country}
+                                  </p>
                                   <p>Phone: {savedAddress.phoneNumber}</p>
                                 </div>
+                              ) : !isLocationLoadingState ? (
+                                <p className="text-xs text-gray-600 mb-3">
+                                  {selectedCity}, {selectedCountry}
+                                </p>
                               ) : (
-                                !isLocationLoadingState ? (
-                                  <p className="text-xs text-gray-600 mb-3">
-                                    {selectedCity}, {selectedCountry}
-                                  </p>
-                                ) : (
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-xs text-gray-600">Detecting...</span>
-                                  </div>
-                                )
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="text-xs text-gray-600">
+                                    Detecting...
+                                  </span>
+                                </div>
                               )}
                               <button
                                 onClick={() => {
                                   setShowAddressModal(true);
                                   setAddressFormData(
                                     savedAddress || {
-                                      country: selectedCountry || '',
-                                      state: '',
-                                      postalCode: '',
-                                      streetAddress: '',
-                                      apartment: '',
-                                      phoneNumber: ''
-                                    }
+                                      country: selectedCountry || "",
+                                      state: "",
+                                      postalCode: "",
+                                      streetAddress: "",
+                                      apartment: "",
+                                      phoneNumber: "",
+                                    },
                                   );
                                 }}
                                 className="w-full bg-[#252C6A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-[#1a2052] transition-colors"
                               >
-                                {savedAddress ? 'Edit Address' : 'Add address'}
+                                {savedAddress ? "Edit Address" : "Add address"}
                               </button>
                             </div>
                           </div>
@@ -728,10 +680,14 @@ export default function GlobalHeader() {
                             <Home className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                             <div className="flex-1 text-left">
                               <p className="text-sm font-medium text-gray-900 mb-1">
-                                {savedAddress ? `${savedAddress.state || savedAddress.country} Store` : `${selectedCity} Store`}
+                                {savedAddress
+                                  ? `${savedAddress.state || savedAddress.country} Store`
+                                  : `${selectedCity} Store`}
                               </p>
                               <p className="text-xs text-gray-600">
-                                {savedAddress ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}` : `${selectedCity}, ${selectedCountry}`}
+                                {savedAddress
+                                  ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}`
+                                  : `${selectedCity}, ${selectedCountry}`}
                               </p>
                             </div>
                             <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -768,13 +724,13 @@ export default function GlobalHeader() {
                   onChange={(e) => handleSearchInputChange(e.target.value)}
                   onFocus={() => searchQuery && setShowSearchResults(true)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       if (searchQuery.trim()) {
                         handleSearch(searchQuery);
                       }
                     }
-                    if (e.key === 'Escape') {
+                    if (e.key === "Escape") {
                       setShowSearchResults(false);
                     }
                   }}
@@ -791,7 +747,9 @@ export default function GlobalHeader() {
             <div ref={locationRefMobile} className="lg:hidden mx-2 mt-2 w-full">
               {/* Header - Pickup or delivery? */}
               <button
-                onClick={() => setIsDeliverySectionExpanded(!isDeliverySectionExpanded)}
+                onClick={() =>
+                  setIsDeliverySectionExpanded(!isDeliverySectionExpanded)
+                }
                 className="w-full flex items-center gap-1 text-white py-2 pl-2 pr-3 rounded-lg hover:bg-orange-700 transition-colors"
               >
                 {/* Circular Icon */}
@@ -801,14 +759,21 @@ export default function GlobalHeader() {
 
                 {/* Text Section */}
                 <div className="flex items-center justify-between gap-2 flex-1 w-full">
-                  <span className="text-lg font-extrabold text-white">Deliver to</span>
+                  <span className="text-lg font-extrabold text-white">
+                    Deliver to
+                  </span>
                   {!isLocationLoadingState ? (
                     savedAddress ? (
                       <span className="text-sm font-medium text-white truncate max-w-[200px]">
-                        {savedAddress.streetAddress}, {savedAddress.state || savedAddress.postalCode || savedAddress.country}
+                        {savedAddress.streetAddress},{" "}
+                        {savedAddress.state ||
+                          savedAddress.postalCode ||
+                          savedAddress.country}
                       </span>
                     ) : (
-                      <span className="text-sm font-medium text-white">{selectedCity}, {selectedCountry}</span>
+                      <span className="text-sm font-medium text-white">
+                        {selectedCity}, {selectedCountry}
+                      </span>
                     )
                   ) : (
                     <div className="flex items-center gap-2">
@@ -831,9 +796,9 @@ export default function GlobalHeader() {
                 {isDeliverySectionExpanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     className="overflow-hidden"
                   >
                     <div className="bg-white rounded-lg mt-2 shadow-lg">
@@ -843,43 +808,56 @@ export default function GlobalHeader() {
                           <MapPin className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900 mb-1">
-                              {savedAddress ? 'Delivery Address' : 'Add an address for shipping and delivery'}
+                              {savedAddress
+                                ? "Delivery Address"
+                                : "Add an address for shipping and delivery"}
                             </p>
                             {savedAddress ? (
                               <div className="text-xs text-gray-600 mb-3 space-y-1">
-                                <p>{savedAddress.streetAddress}{savedAddress.apartment ? `, ${savedAddress.apartment}` : ''}</p>
-                                <p>{savedAddress.state}{savedAddress.postalCode ? ` ${savedAddress.postalCode}` : ''}, {savedAddress.country}</p>
+                                <p>
+                                  {savedAddress.streetAddress}
+                                  {savedAddress.apartment
+                                    ? `, ${savedAddress.apartment}`
+                                    : ""}
+                                </p>
+                                <p>
+                                  {savedAddress.state}
+                                  {savedAddress.postalCode
+                                    ? ` ${savedAddress.postalCode}`
+                                    : ""}
+                                  , {savedAddress.country}
+                                </p>
                                 <p>Phone: {savedAddress.phoneNumber}</p>
                               </div>
+                            ) : !isLocationLoadingState ? (
+                              <p className="text-xs text-gray-600 mb-3">
+                                {selectedCity}, {selectedCountry}
+                              </p>
                             ) : (
-                              !isLocationLoadingState ? (
-                                <p className="text-xs text-gray-600 mb-3">
-                                  {selectedCity}, {selectedCountry}
-                                </p>
-                              ) : (
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                  <span className="text-xs text-gray-600">Detecting...</span>
-                                </div>
-                              )
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-xs text-gray-600">
+                                  Detecting...
+                                </span>
+                              </div>
                             )}
                             <button
                               onClick={() => {
                                 setShowAddressModal(true);
                                 setAddressFormData(
                                   savedAddress || {
-                                    country: selectedCountry || '',
-                                    state: '',
-                                    postalCode: '',
-                                    streetAddress: '',
-                                    apartment: '',
-                                    phoneNumber: ''
-                                  }
+                                    country: selectedCountry || "",
+                                    state: "",
+                                    postalCode: "",
+                                    streetAddress: "",
+                                    apartment: "",
+                                    phoneNumber: "",
+                                  },
                                 );
                               }}
                               className="w-full bg-[#252C6A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-[#1a2052] transition-colors"
                             >
-                              {savedAddress ? 'Edit Address' : 'Add address'}
+                              {savedAddress ? "Edit Address" : "Add address"}
                             </button>
                           </div>
                         </div>
@@ -894,10 +872,14 @@ export default function GlobalHeader() {
                           <Home className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                           <div className="flex-1 text-left">
                             <p className="text-sm font-medium text-gray-900 mb-1">
-                              {savedAddress ? `${savedAddress.state || savedAddress.country} Store` : `${selectedCity} Store`}
+                              {savedAddress
+                                ? `${savedAddress.state || savedAddress.country} Store`
+                                : `${selectedCity} Store`}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {savedAddress ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}` : `${selectedCity}, ${selectedCountry}`}
+                              {savedAddress
+                                ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}`
+                                : `${selectedCity}, ${selectedCountry}`}
                             </p>
                           </div>
                           <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -927,16 +909,20 @@ export default function GlobalHeader() {
                   {/* Menu Panel */}
                   <motion.div
                     className="fixed left-0 top-0 bottom-0 w-full max-w-sm bg-gradient-to-b from-white to-gray-50 shadow-2xl z-50 overflow-y-auto"
-                    initial={{ x: '-100%' }}
+                    initial={{ x: "-100%" }}
                     animate={{ x: 0 }}
-                    exit={{ x: '-100%' }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    exit={{ x: "-100%" }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
                   >
                     {/* Header */}
                     <div className="sticky top-0 bg-gradient-to-r from-[#EB6426] to-[#4a1f18]">
                       {/* Top Section - Logo, Track Order, Deliver to */}
                       <div className="px-4 py-3 flex items-center justify-between border-b border-white/20">
-                        <Link href="/" className="flex items-center flex-shrink-0" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link
+                          href="/"
+                          className="flex items-center flex-shrink-0"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
                           {siteSettings.siteLogo ? (
                             <img
                               src={siteSettings.siteLogo}
@@ -944,9 +930,11 @@ export default function GlobalHeader() {
                               className="h-10 w-auto object-contain"
                               crossOrigin="anonymous"
                               onError={(e) => {
-                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.style.display = "none";
                                 if (e.currentTarget.nextElementSibling) {
-                                  e.currentTarget.nextElementSibling.classList.remove('hidden');
+                                  e.currentTarget.nextElementSibling.classList.remove(
+                                    "hidden",
+                                  );
                                 }
                               }}
                             />
@@ -979,7 +967,9 @@ export default function GlobalHeader() {
                           >
                             <MapPin className="w-4 h-4" />
                             <div className="flex flex-col items-start">
-                              <span className="text-xs text-white/80">Deliver to</span>
+                              <span className="text-xs text-white/80">
+                                Deliver to
+                              </span>
                               <span className="text-sm font-semibold whitespace-nowrap truncate max-w-[100px]">
                                 {selectedCity}
                               </span>
@@ -991,8 +981,10 @@ export default function GlobalHeader() {
                       <div className="px-4 py-3 flex items-center justify-between">
                         <h2 className="text-white text-lg font-bold">
                           {activeDropdown
-                            ? navigationItems.find(item => item.id === activeDropdown)?.label
-                            : 'Menu'}
+                            ? navigationItems.find(
+                                (item) => item.id === activeDropdown,
+                              )?.label
+                            : "Menu"}
                         </h2>
                         <div className="flex items-center gap-2">
                           {activeDropdown && (
@@ -1026,10 +1018,14 @@ export default function GlobalHeader() {
                             <motion.div
                               key={item.id}
                               initial={{ x: -20, opacity: 0 }}
-                              animate={isMounted ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+                              animate={
+                                isMounted
+                                  ? { x: 0, opacity: 1 }
+                                  : { x: 0, opacity: 1 }
+                              }
                               transition={{ delay: 0.1 + index * 0.05 }}
                             >
-                              {item.type === 'dropdown' ? (
+                              {item.type === "dropdown" ? (
                                 <button
                                   onClick={() => setActiveDropdown(item.id)}
                                   className="transition-colors block py-3 px-6 hover:bg-gray-50 border-b border-gray-100 text-sm w-full text-left flex items-center justify-between"
@@ -1050,49 +1046,77 @@ export default function GlobalHeader() {
                           ))}
                         </motion.nav>
                       ) : (
-                        navigationItems.filter(i => i.id === activeDropdown).map(item => (
-                          <motion.nav
-                            key={item.id}
-                            className="flex flex-col"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <div className="bg-gray-100 px-4 py-2 flex items-center">
-                              <button onClick={() => setActiveDropdown(null)} className="flex items-center text-sm font-bold text-gray-700">
-                                <ChevronLeft className="w-4 h-4 mr-1" /> Back
-                              </button>
-                            </div>
-                            {item.columns?.map((column, idx) => (
-                              <div key={idx} className="px-4 py-3 border-b border-gray-200">
-                                <div className="font-semibold text-gray-800 text-lg mb-1">{column.title}</div>
-                                {column.groups ? (
-                                  column.groups.map((group, grpIdx) => (
-                                    <div key={grpIdx} className="mb-3">
-                                      <div className="text-gray-600 text-sm mb-2 font-medium">{group.title}</div>
-                                      <div className="space-y-2 ml-2">
-                                        {group.items.map((subItem, subIdx) => (
-                                          <Link key={subIdx} href={subItem.href} className="block py-2 px-4 bg-gray-50 hover:bg-blue-50 text-gray-800 rounded-lg" onClick={() => setIsMobileMenuOpen(false)}>
-                                            {subItem.label}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="space-y-2">
-                                    {column.items?.map((subItem, subIdx) => (
-                                      <Link key={subIdx} href={subItem.href} className="block py-2 px-4 bg-gray-50 hover:bg-blue-50 text-gray-800 rounded-lg" onClick={() => setIsMobileMenuOpen(false)}>
-                                        {subItem.label}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                )}
+                        navigationItems
+                          .filter((i) => i.id === activeDropdown)
+                          .map((item) => (
+                            <motion.nav
+                              key={item.id}
+                              className="flex flex-col"
+                              initial={{ opacity: 0, x: 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="bg-gray-100 px-4 py-2 flex items-center">
+                                <button
+                                  onClick={() => setActiveDropdown(null)}
+                                  className="flex items-center text-sm font-bold text-gray-700"
+                                >
+                                  <ChevronLeft className="w-4 h-4 mr-1" /> Back
+                                </button>
                               </div>
-                            ))}
-                          </motion.nav>
-                        ))
+                              {item.columns?.map((column, idx) => (
+                                <div
+                                  key={idx}
+                                  className="px-4 py-3 border-b border-gray-200"
+                                >
+                                  <div className="font-semibold text-gray-800 text-lg mb-1">
+                                    {column.title}
+                                  </div>
+                                  {column.groups ? (
+                                    column.groups.map((group, grpIdx) => (
+                                      <div key={grpIdx} className="mb-3">
+                                        <div className="text-gray-600 text-sm mb-2 font-medium">
+                                          {group.title}
+                                        </div>
+                                        <div className="space-y-2 ml-2">
+                                          {group.items.map(
+                                            (subItem, subIdx) => (
+                                              <Link
+                                                key={subIdx}
+                                                href={subItem.href}
+                                                className="block py-2 px-4 bg-gray-50 hover:bg-blue-50 text-gray-800 rounded-lg"
+                                                onClick={() =>
+                                                  setIsMobileMenuOpen(false)
+                                                }
+                                              >
+                                                {subItem.label}
+                                              </Link>
+                                            ),
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {column.items?.map((subItem, subIdx) => (
+                                        <Link
+                                          key={subIdx}
+                                          href={subItem.href}
+                                          className="block py-2 px-4 bg-gray-50 hover:bg-blue-50 text-gray-800 rounded-lg"
+                                          onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                          }
+                                        >
+                                          {subItem.label}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </motion.nav>
+                          ))
                       )}
                     </AnimatePresence>
                   </motion.div>
@@ -1104,22 +1128,22 @@ export default function GlobalHeader() {
           <div className="hidden lg:flex items-center justify-between w-full">
             {/* Logo */}
             <Link href="/" className="flex items-center flex-shrink-0">
-              {
-                siteSettings.siteLogo ? (
-                  <img
-                    src={siteSettings.siteLogo}
-                    alt={siteSettings.siteName}
-                    className="h-12 lg:h-14 xl:h-16 w-auto object-contain"
-                    crossOrigin="anonymous"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      if (e.currentTarget.nextElementSibling) {
-                        e.currentTarget.nextElementSibling.classList.remove('hidden');
-                      }
-                    }}
-                  />
-                ) : null
-              }
+              {siteSettings.siteLogo ? (
+                <img
+                  src={siteSettings.siteLogo}
+                  alt={siteSettings.siteName}
+                  className="h-12 lg:h-14 xl:h-16 w-auto object-contain"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    if (e.currentTarget.nextElementSibling) {
+                      e.currentTarget.nextElementSibling.classList.remove(
+                        "hidden",
+                      );
+                    }
+                  }}
+                />
+              ) : null}
               <img
                 src="/main.png"
                 alt="GharSamma Logo"
@@ -1138,13 +1162,13 @@ export default function GlobalHeader() {
                     onChange={(e) => handleSearchInputChange(e.target.value)}
                     onFocus={() => searchQuery && setShowSearchResults(true)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         e.preventDefault();
                         if (searchQuery.trim()) {
                           handleSearch(searchQuery);
                         }
                       }
-                      if (e.key === 'Escape') {
+                      if (e.key === "Escape") {
                         setShowSearchResults(false);
                       }
                     }}
@@ -1175,16 +1199,22 @@ export default function GlobalHeader() {
                               className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
                               onClick={() => {
                                 setShowSearchResults(false);
-                                setSearchQuery('');
+                                setSearchQuery("");
                               }}
                             >
                               <img
-                                src={product.images?.[0] || product.image || '/image.png'}
+                                src={
+                                  product.images?.[0] ||
+                                  product.image ||
+                                  "/image.png"
+                                }
                                 alt={product.name}
                                 className="w-12 h-12 object-cover rounded-lg mr-3"
                               />
                               <div className="flex-1">
-                                <h4 className="text-sm font-medium text-gray-900">{product.name}</h4>
+                                <h4 className="text-sm font-medium text-gray-900">
+                                  {product.name}
+                                </h4>
                                 <p className="text-xs text-gray-500">
                                   {formatPrice(product.price)}
                                 </p>
@@ -1196,13 +1226,14 @@ export default function GlobalHeader() {
                         <div className="p-8 text-center">
                           <Search className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                           <p className="text-gray-500">No products found</p>
-                          <p className="text-sm text-gray-400 mt-1">Try different keywords</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Try different keywords
+                          </p>
                         </div>
                       )}
                     </div>
                   )}
                 </div>
-
               </div>
             </div>
 
@@ -1211,24 +1242,35 @@ export default function GlobalHeader() {
               {/* Deliver to Section - Desktop */}
               <div className="relative" ref={locationRefDesktop}>
                 <button
-                  onClick={() => setIsDeliverySectionExpanded(!isDeliverySectionExpanded)}
+                  onClick={() =>
+                    setIsDeliverySectionExpanded(!isDeliverySectionExpanded)
+                  }
                   className="flex items-start gap-2 text-white hover:bg-orange-700 rounded-lg p-2 transition-colors"
                 >
                   <MapPin className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
                   <div className="flex flex-col items-start gap-0.5 flex-1">
-                    <span className="text-xs font-extrabold text-white">Deliver to</span>
+                    <span className="text-xs font-extrabold text-white">
+                      Deliver to
+                    </span>
                     {!isLocationLoadingState ? (
                       savedAddress ? (
                         <span className="text-sm font-medium text-white truncate max-w-[150px]">
-                          {savedAddress.streetAddress}, {savedAddress.state || savedAddress.postalCode || savedAddress.country}
+                          {savedAddress.streetAddress},{" "}
+                          {savedAddress.state ||
+                            savedAddress.postalCode ||
+                            savedAddress.country}
                         </span>
                       ) : (
-                        <span className="text-sm font-medium text-white">{selectedCity}, {selectedCountry}</span>
+                        <span className="text-sm font-medium text-white">
+                          {selectedCity}, {selectedCountry}
+                        </span>
                       )
                     ) : (
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-sm font-medium">Detecting...</span>
+                        <span className="text-sm font-medium">
+                          Detecting...
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1244,9 +1286,13 @@ export default function GlobalHeader() {
                   {isDeliverySectionExpanded && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
                       className="absolute top-full right-0 mt-2 w-80 overflow-hidden z-[250]"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -1257,43 +1303,56 @@ export default function GlobalHeader() {
                             <MapPin className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-900 mb-1">
-                                {savedAddress ? 'Delivery Address' : 'Add an address for shipping and delivery'}
+                                {savedAddress
+                                  ? "Delivery Address"
+                                  : "Add an address for shipping and delivery"}
                               </p>
                               {savedAddress ? (
                                 <div className="text-xs text-gray-600 mb-3 space-y-1">
-                                  <p>{savedAddress.streetAddress}{savedAddress.apartment ? `, ${savedAddress.apartment}` : ''}</p>
-                                  <p>{savedAddress.state}{savedAddress.postalCode ? ` ${savedAddress.postalCode}` : ''}, {savedAddress.country}</p>
+                                  <p>
+                                    {savedAddress.streetAddress}
+                                    {savedAddress.apartment
+                                      ? `, ${savedAddress.apartment}`
+                                      : ""}
+                                  </p>
+                                  <p>
+                                    {savedAddress.state}
+                                    {savedAddress.postalCode
+                                      ? ` ${savedAddress.postalCode}`
+                                      : ""}
+                                    , {savedAddress.country}
+                                  </p>
                                   <p>Phone: {savedAddress.phoneNumber}</p>
                                 </div>
+                              ) : !isLocationLoadingState ? (
+                                <p className="text-xs text-gray-600 mb-3">
+                                  {selectedCity}, {selectedCountry}
+                                </p>
                               ) : (
-                                !isLocationLoadingState ? (
-                                  <p className="text-xs text-gray-600 mb-3">
-                                    {selectedCity}, {selectedCountry}
-                                  </p>
-                                ) : (
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-xs text-gray-600">Detecting...</span>
-                                  </div>
-                                )
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="text-xs text-gray-600">
+                                    Detecting...
+                                  </span>
+                                </div>
                               )}
                               <button
                                 onClick={() => {
                                   setShowAddressModal(true);
                                   setAddressFormData(
                                     savedAddress || {
-                                      country: selectedCountry || '',
-                                      state: '',
-                                      postalCode: '',
-                                      streetAddress: '',
-                                      apartment: '',
-                                      phoneNumber: ''
-                                    }
+                                      country: selectedCountry || "",
+                                      state: "",
+                                      postalCode: "",
+                                      streetAddress: "",
+                                      apartment: "",
+                                      phoneNumber: "",
+                                    },
                                   );
                                 }}
                                 className="w-full bg-[#252C6A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-[#1a2052] transition-colors"
                               >
-                                {savedAddress ? 'Edit Address' : 'Add address'}
+                                {savedAddress ? "Edit Address" : "Add address"}
                               </button>
                             </div>
                           </div>
@@ -1308,10 +1367,14 @@ export default function GlobalHeader() {
                             <Home className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
                             <div className="flex-1 text-left">
                               <p className="text-sm font-medium text-gray-900 mb-1">
-                                {savedAddress ? `${savedAddress.state || savedAddress.country} Store` : `${selectedCity} Store`}
+                                {savedAddress
+                                  ? `${savedAddress.state || savedAddress.country} Store`
+                                  : `${selectedCity} Store`}
                               </p>
                               <p className="text-xs text-gray-600">
-                                {savedAddress ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}` : `${selectedCity}, ${selectedCountry}`}
+                                {savedAddress
+                                  ? `${savedAddress.state || savedAddress.country}, ${savedAddress.country}`
+                                  : `${selectedCity}, ${selectedCountry}`}
                               </p>
                             </div>
                             <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -1325,10 +1388,9 @@ export default function GlobalHeader() {
 
               {/* Track Order Icon */}
               <button
-                onClick={() => setShowTrackOrderModal(true)
-                }
+                onClick={() => setShowTrackOrderModal(true)}
                 className="flex items-center space-x-2 p-2 text-white rounded-lg transition-colors group hover:bg-orange-700"
-                style={{ color: 'white' }}
+                style={{ color: "white" }}
               >
                 <PackageSearch className="w-6 h-6" />
                 <span className="text-sm font-bold">Track Order</span>
@@ -1340,7 +1402,8 @@ export default function GlobalHeader() {
                 {/* Account Icon with Sign in text */}
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 p-2 text-white rounded-lg transition-colors hover:bg-orange-700" style={{ color: 'white' }}
+                  className="flex items-center gap-2 p-2 text-white rounded-lg transition-colors hover:bg-orange-700"
+                  style={{ color: "white" }}
                 >
                   <User className="w-6 h-6" />
                   <span className="text-sm font-bold">Sign in</span>
@@ -1349,7 +1412,7 @@ export default function GlobalHeader() {
                 <Link
                   href="/cart"
                   className="relative flex flex-col items-center p-2 text-white rounded-lg transition-colors hover:bg-orange-700"
-                  style={{ color: 'white' }}
+                  style={{ color: "white" }}
                 >
                   <div className="relative">
                     <ShoppingCart className="w-6 h-6" />
@@ -1361,7 +1424,7 @@ export default function GlobalHeader() {
                   </div>
                   <span className="text-sm text-white font-bold mt-1">
                     <sup className="text-[0.7em]">$</sup>
-                    {new Intl.NumberFormat('en-US', {
+                    {new Intl.NumberFormat("en-US", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 2,
                     }).format(cartTotal)}
@@ -1370,14 +1433,15 @@ export default function GlobalHeader() {
               </div>
             </div>
           </div>
-
-
-
         </div>
       </div>
 
       {/* Category Navigation Bar - Responsive */}
-      <div className="hidden md:block relative z-[200]" ref={categoryRef} style={{ backgroundColor: '#622A1F' }}>
+      <div
+        className="hidden md:block relative z-[200]"
+        ref={categoryRef}
+        style={{ backgroundColor: "#622A1F" }}
+      >
         <div className="w-full px-6 py-2">
           <nav className="flex items-center justify-center overflow-x-auto">
             <div className="flex space-x-4 md:space-x-5 relative z-[200] text-sm font-extrabold text-white">
@@ -1385,61 +1449,99 @@ export default function GlobalHeader() {
                 <div
                   key={item.id}
                   className="relative group"
-                  onMouseEnter={() => item.type === 'dropdown' && setActiveDropdown(item.id)}
-                  onMouseLeave={() => item.type === 'dropdown' && setActiveDropdown(null)}
+                  onMouseEnter={() =>
+                    item.type === "dropdown" && setActiveDropdown(item.id)
+                  }
+                  onMouseLeave={() =>
+                    item.type === "dropdown" && setActiveDropdown(null)
+                  }
                 >
                   <Link
                     href={item.href}
-                    className={`transition-colors whitespace-nowrap block py-2 px-4 relative ${pathname?.startsWith(item.href) ? 'active-link' : ''}`}
+                    className={`transition-colors whitespace-nowrap block py-2 px-4 relative ${pathname?.startsWith(item.href) ? "active-link" : ""}`}
                   >
-                    <span className={pathname?.startsWith(item.href) ? 'text-white' : ''}>{item.label}</span>
+                    <span
+                      className={
+                        pathname?.startsWith(item.href) ? "text-white" : ""
+                      }
+                    >
+                      {item.label}
+                    </span>
                     <motion.span
                       className="absolute bottom-0 left-0 w-full h-0.5 bg-white block"
-                      initial={{ scaleX: pathname?.startsWith(item.href) ? 1 : 0 }}
-                      animate={{ scaleX: pathname?.startsWith(item.href) ? 1 : 0 }}
+                      initial={{
+                        scaleX: pathname?.startsWith(item.href) ? 1 : 0,
+                      }}
+                      animate={{
+                        scaleX: pathname?.startsWith(item.href) ? 1 : 0,
+                      }}
                       whileHover={{ scaleX: 1 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       style={{ transformOrigin: "left" }}
                     />
                   </Link>
 
-                  {item.type === 'dropdown' && (
+                  {item.type === "dropdown" && (
                     <AnimatePresence>
                       {activeDropdown === item.id && (
                         <motion.div
                           initial={{ opacity: 0, y: -10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                          }}
                           className="font-inter absolute top-full left-0 mt-2 bg-white rounded-sm shadow-2xl border border-gray-200 z-[9999] text-black font-normal"
-                          style={{ width: 'max-content', maxWidth: '90vw', minWidth: '600px' }}
+                          style={{
+                            width: "max-content",
+                            maxWidth: "90vw",
+                            minWidth: "600px",
+                          }}
                         >
                           <div className="p-6">
                             <div className="flex gap-10">
                               {item.columns?.map((column, idx) => (
                                 <div key={idx} className="flex-1 min-w-[200px]">
-                                  <h3 className="text-gray-900 mb-4 text-base font-semibold border-b pb-2">{column.title}</h3>
+                                  <h3 className="text-gray-900 mb-4 text-base font-semibold border-b pb-2">
+                                    {column.title}
+                                  </h3>
                                   <div className="space-y-3">
                                     {column.groups ? (
                                       column.groups.map((group, grpIdx) => (
                                         <div key={grpIdx}>
-                                          <h4 className="text-gray-700 text-sm mb-2 font-medium">{group.title}</h4>
+                                          <h4 className="text-gray-700 text-sm mb-2 font-medium">
+                                            {group.title}
+                                          </h4>
                                           <div className="space-y-1 ml-2">
-                                            {group.items.map((subItem, subIdx) => (
-                                              <Link key={subIdx} href={subItem.href} className="block text-sm text-black hover:text-blue-600 py-1 transition-colors">
-                                                {subItem.label}
-                                              </Link>
-                                            ))}
+                                            {group.items.map(
+                                              (subItem, subIdx) => (
+                                                <Link
+                                                  key={subIdx}
+                                                  href={subItem.href}
+                                                  className="block text-sm text-black hover:text-blue-600 py-1 transition-colors"
+                                                >
+                                                  {subItem.label}
+                                                </Link>
+                                              ),
+                                            )}
                                           </div>
                                         </div>
                                       ))
                                     ) : (
                                       <div className="space-y-1">
-                                        {column.items?.map((subItem, subIdx) => (
-                                          <Link key={subIdx} href={subItem.href} className="block text-sm text-black hover:text-blue-600 py-1 transition-colors">
-                                            {subItem.label}
-                                          </Link>
-                                        ))}
+                                        {column.items?.map(
+                                          (subItem, subIdx) => (
+                                            <Link
+                                              key={subIdx}
+                                              href={subItem.href}
+                                              className="block text-sm text-black hover:text-blue-600 py-1 transition-colors"
+                                            >
+                                              {subItem.label}
+                                            </Link>
+                                          ),
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -1457,7 +1559,6 @@ export default function GlobalHeader() {
           </nav>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
-

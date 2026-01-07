@@ -60,6 +60,11 @@ const ProductImageSlider: React.FC<ProductImageSliderProps> = ({ images }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Mobile touch support
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const goToPrevious = () => {
     const isFirstSlide = currentIndex === 0;
@@ -248,10 +253,6 @@ const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
       setLoading(false);
     }
   };
-
-
-     
-    
 
   useEffect(() => {
     fetchForYouProducts();

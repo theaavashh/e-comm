@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Star, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useCart } from '@/contexts/CartContext';
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ShoppingCart,
+  Star,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -49,204 +55,57 @@ const Foods = () => {
   const router = useRouter();
   const { addToCart: addToGlobalCart } = useCart();
 
-  // Hardcoded food product data
-  const hardcodedFoodProducts: Product[] = [
-    {
-      id: '1',
-      name: 'ZipZip Buff Snacks',
-      slug: 'zipzip-buff-snacks',
-      description: 'Crispy and delicious buff snacks with traditional Nepali spices.',
-      shortDescription: 'Crispy buff snacks',
-      price: 4.99,
-      sku: 'SNK-001',
-      quantity: 25,
-      image: 'buff-snacks.png',
-      images: ['buff-snacks.png', 'buff-snack-back.png'],
-      category: {
-        id: '1',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.5,
-      reviewCount: 12,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'buff', 'crispy']
-    },
-    {
-      id: '2',
-      name: 'ZipZip Fish Snacks',
-      slug: 'zipzip-fish-snacks',
-      description: 'Fresh and crispy fish snacks with authentic Nepali spices.',
-      shortDescription: 'Crispy fish snacks',
-      price: 8.99,
-      comparePrice: 12.99,
-      sku: 'SNK-002',
-      quantity: 30,
-      image: 'fish-snack.png',
-      images: ['fish-snack.png', 'fish-back-snack.png'],
-      category: {
-        id: '2',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.8,
-      reviewCount: 18,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'fish', 'crispy']
-    },
-    {
-      id: '3',
-      name: 'Chicken Snacks',
-      slug: 'chicken-snacks',
-      description: 'Savory and flavorful chicken snacks perfect for any time of the day.',
-      shortDescription: 'Flavorful chicken snacks',
-      price: 5.99,
-      comparePrice: 7.99,
-      sku: 'SNK-003',
-      quantity: 20,
-      image: 'chicken-snack.png',
-      images: ['chicken-snack.png', 'chicken-back.png'],
-      category: {
-        id: '3',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.6,
-      reviewCount: 15,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'chicken', 'savory']
-    },
-    {
-      id: '4',
-      name: 'Pork Snacks',
-      slug: 'pork-snacks',
-      description: 'Delicious and well-seasoned pork snacks with traditional Nepali flavors.',
-      shortDescription: 'Traditional pork snacks',
-      price: 12.99,
-      comparePrice: 15.99,
-      sku: 'SNK-004',
-      quantity: 15,
-      image: 'pork-snack.png',
-      images: ['pork-snack.png', 'pork-back.png'],
-      category: {
-        id: '4',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.9,
-      reviewCount: 22,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'pork', 'seasoned']
-    },
-    {
-      id: '5',
-      name: 'Mutton Snacks',
-      slug: 'mutton-snacks',
-      description: 'Rich and flavorful mutton snacks with authentic Nepali spices.',
-      shortDescription: 'Authentic mutton snacks',
-      price: 3.99,
-      comparePrice: 5.99,
-      sku: 'SNK-005',
-      quantity: 40,
-      image: 'mutton-snack.png',
-      images: ['mutton-snack.png', 'mutton-back.png'],
-      category: {
-        id: '5',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.7,
-      reviewCount: 14,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'mutton', 'spicy']
-    },
-    {
-      id: '6',
-      name: 'Mixed Snack Combo',
-      slug: 'mixed-snack-combo',
-      description: 'Combo pack with variety of delicious snacks including buff, chicken and fish.',
-      shortDescription: 'Variety snack combo',
-      price: 9.99,
-      comparePrice: 13.99,
-      sku: 'SNK-006',
-      quantity: 28,
-      image: 'buff-snacks.png',
-      images: ['buff-snacks.png', 'chicken-snack.png'],
-      category: {
-        id: '6',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.6,
-      reviewCount: 16,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'combo', 'variety']
-    },
-    {
-      id: '7',
-      name: 'Spicy Snack Mix',
-      slug: 'spicy-snack-mix',
-      description: 'Assorted spicy snack mix with perfect blend of flavors.',
-      shortDescription: 'Spicy snack mix',
-      price: 6.99,
-      comparePrice: 8.99,
-      sku: 'SNK-007',
-      quantity: 18,
-      image: 'fish-snack.png',
-      images: ['fish-snack.png', 'mutton-snack.png'],
-      category: {
-        id: '7',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.4,
-      reviewCount: 10,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'spicy', 'mix']
-    },
-    {
-      id: '8',
-      name: 'Premium Snack Collection',
-      slug: 'premium-snack-collection',
-      description: 'Premium collection of all our best snacks including buff, chicken, fish, pork and mutton.',
-      shortDescription: 'Premium snack collection',
-      price: 14.99,
-      comparePrice: 19.99,
-      sku: 'SNK-008',
-      quantity: 12,
-      image: 'pork-snack.png',
-      images: ['pork-snack.png', 'buff-snacks.png'],
-      category: {
-        id: '8',
-        name: 'Snacks',
-        slug: 'snacks'
-      },
-      averageRating: 4.8,
-      reviewCount: 19,
-      variants: [],
-      attributes: [],
-      tags: ['snacks', 'collection', 'premium']
-    }
-  ];
-
   useEffect(() => {
-    // Use hardcoded data directly
-    setProducts(hardcodedFoodProducts);
-    setLoading(false);
+    // Fetch food products from API using the new category filtering
+    const fetchFoodProducts = async () => {
+      try {
+        setLoading(true);
+        const API_BASE_URL =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4444";
+
+        // Try to get products by 'foods' category name
+        let fetchedProducts = [];
+        const productsResponse = await fetch(
+          `${API_BASE_URL}/api/v1/products?categories=foods&limit=8&isActive=true`,
+        );
+
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          if (productsData.success && productsData.data?.products) {
+            fetchedProducts = productsData.data.products;
+          }
+        }
+
+        // If no products found in the foods category, try to get products with 'food' in the name or description
+        if (fetchedProducts.length === 0) {
+          const searchResponse = await fetch(
+            `${API_BASE_URL}/api/v1/products?search=food&limit=8&isActive=true`,
+          );
+
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            if (searchData.success && searchData.data?.products) {
+              fetchedProducts = searchData.data.products;
+            }
+          }
+        }
+
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error("Error fetching food products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFoodProducts();
   }, []);
 
   // Format price
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 2,
     }).format(price);
   };
@@ -254,19 +113,22 @@ const Foods = () => {
   // Add to cart
   const addToCart = (product: Product, quantity: number = 1) => {
     // Add to global cart context
-    addToGlobalCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images?.[0] || product.image || ''
-    }, quantity);
+    addToGlobalCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || product.image || "",
+      },
+      quantity,
+    );
   };
 
   // Update quantity
   const updateQuantity = (productId: string, quantity: number) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [productId]: quantity
+      [productId]: quantity,
     }));
   };
 
@@ -295,22 +157,28 @@ const Foods = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="mb-4 sm:mb-0 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl md:text-4xl font-medium text-gray-900 font-mono">Foods2</h2>
+              <h2 className="text-2xl md:text-4xl font-medium text-gray-900 font-mono">
+                Foods
+              </h2>
               <button
-                onClick={() => router.push('/products/foods')}
+                onClick={() => router.push("/products/foods")}
                 className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
               >
                 View More
               </button>
             </div>
-            <p className="text-lg text-gray-600">Discover delicious and fresh food products (using hardcoded data)</p>
+            <p className="text-lg text-gray-600">
+              Discover delicious and fresh food products
+            </p>
           </div>
         </div>
 
         {/* Products Grid */}
         {products.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No food products available at the moment.</p>
+            <p className="text-gray-500 text-lg">
+              No food products available at the moment.
+            </p>
           </div>
         ) : (
           <motion.div
@@ -333,12 +201,23 @@ const Foods = () => {
                   {/* Image Container with ProductImageSlider */}
                   <div className="relative h-48 md:h-64 bg-white overflow-hidden">
                     {product.images && product.images.length > 0 ? (
-                      <ProductImageSlider images={product.images} productName={product.name} />
+                      <ProductImageSlider
+                        images={product.images}
+                        productName={product.name}
+                      />
+                    ) : product.image ? (
+                      // Fallback to single image if images array is empty but image exists
+                      <ProductImageSlider
+                        images={[product.image]}
+                        productName={product.name}
+                      />
                     ) : (
                       // Fallback when no image or image fails to load
                       <div className="w-full h-full bg-gray-50 flex items-center justify-center">
                         <div className="text-center">
-                          <p className="text-sm text-gray-500">No Image Available</p>
+                          <p className="text-sm text-gray-500">
+                            No Image Available
+                          </p>
                         </div>
                       </div>
                     )}
@@ -350,25 +229,37 @@ const Foods = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-xl font-extrabold text-[#EB6426]">
-                          ${new Intl.NumberFormat('en-US', {
+                          $
+                          {new Intl.NumberFormat("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           }).format(product.price)}
                         </span>
-                        {product.comparePrice && Number(product.comparePrice) > Number(product.price) && (
-                          <span className="text-sm text-gray-500 line-through">
-                            ${new Intl.NumberFormat('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(Number(product.comparePrice))}
+                        {product.comparePrice &&
+                          Number(product.comparePrice) >
+                            Number(product.price) && (
+                            <span className="text-sm text-gray-500 line-through">
+                              $
+                              {new Intl.NumberFormat("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(Number(product.comparePrice))}
+                            </span>
+                          )}
+                      </div>
+                      {product.comparePrice &&
+                        Number(product.comparePrice) >
+                          Number(product.price) && (
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                            {Math.round(
+                              ((Number(product.comparePrice) -
+                                Number(product.price)) /
+                                Number(product.comparePrice)) *
+                                100,
+                            )}
+                            % OFF
                           </span>
                         )}
-                      </div>
-                      {product.comparePrice && Number(product.comparePrice) > Number(product.price) && (
-                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
-                          {Math.round(((Number(product.comparePrice) - Number(product.price)) / Number(product.comparePrice)) * 100)}% OFF
-                        </span>
-                      )}
                     </div>
 
                     {/* Product Name */}
@@ -387,7 +278,7 @@ const Foods = () => {
                         className="bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-300 text-white py-2.5 px-12 rounded-full text-sm font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         {product.quantity === 0 ? (
-                          'Out of Stock'
+                          "Out of Stock"
                         ) : (
                           <>
                             <ShoppingCart className="h-4 w-4" />
@@ -403,11 +294,13 @@ const Foods = () => {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? 'fill-current' : 'text-gray-300'}`}
+                            className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? "fill-current" : "text-gray-300"}`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-500">({product.reviewCount || 0})</span>
+                      <span className="text-sm text-gray-500">
+                        ({product.reviewCount || 0})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -415,18 +308,36 @@ const Foods = () => {
             ))}
           </motion.div>
         )}
-
-
       </div>
     </div>
   );
 };
 
 // Product Image Slider Component with seamless transitions
-function ProductImageSlider({ images, productName }: { images: string[]; productName: string }) {
+function ProductImageSlider({
+  images,
+  productName,
+}: {
+  images: string[];
+  productName: string;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  // Process images to handle both relative and absolute URLs
+  const processedImages = images.map((img) => {
+    if (img.startsWith("http")) {
+      return img; // Already a full URL
+    } else {
+      // Prepend API base URL for relative paths
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4444";
+      return img.startsWith("/")
+        ? `${API_BASE_URL}${img}`
+        : `${API_BASE_URL}/${img}`;
+    }
+  });
 
   const goToPrevious = () => {
     const isFirstSlide = currentIndex === 0;
@@ -451,10 +362,10 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     return () => {
-      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
 
@@ -465,7 +376,8 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
     // Auto-rotate if:
     // - On small screens and not hovered, OR
     // - On large screens (auto-rotate even when hovered)
-    const shouldAutoRotate = (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
+    const shouldAutoRotate =
+      (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
 
     if (shouldAutoRotate && images.length > 1) {
       // Set up a continuous rotation without waiting
@@ -502,7 +414,7 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
         <AnimatePresence initial={false} mode="wait">
           <motion.img
             key={currentIndex}
-            src={images[currentIndex]}
+            src={processedImages[currentIndex]}
             alt={`${productName} image ${currentIndex + 1}`}
             className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 ease-out"
             initial={{ opacity: 0, x: 100 }}
@@ -512,7 +424,7 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
             whileHover={{ scale: 1.02 }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/foods.png'; // fallback image
+              target.src = "/foods.png"; // fallback image
             }}
           />
         </AnimatePresence>
@@ -550,7 +462,7 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
           {images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-white/50'}`}
+              className={`w-2 h-2 rounded-full ${index === currentIndex ? "bg-white" : "bg-white/50"}`}
               onClick={(e) => {
                 e.stopPropagation();
                 goToSlide(index);

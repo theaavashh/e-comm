@@ -21,9 +21,9 @@ export default function OngoingSales() {
       try {
         setOngoingSalesLoading(true);
         const API_BASE_URL =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444";
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4444";
         const response = await fetch(
-          `${API_BASE_URL}/products?limit=4&isActive=true&isOnSale=true`,
+          `${API_BASE_URL}/api/v1/products?limit=4&isActive=true&isOnSale=true`,
         );
 
         if (response.ok) {

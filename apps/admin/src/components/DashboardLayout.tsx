@@ -39,9 +39,9 @@ import {
   ChevronRight,
   ChevronDown,
   Database,
-  Utensils,
   CreditCard,
-  Lock
+  Lock,
+  Info
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -96,7 +96,10 @@ const NAVIGATION_ITEMS: NavItem[] = [
     id: "categories",
     label: "Categories",
     icon: FolderOpen,
-    children: []
+    children: [
+      { id: "manage-categories", label: "Manage Categories", icon: FolderOpen },
+      { id: "additional-details", label: "Additional Details", icon: Info }
+    ]
   },
   {
     id: "products",
@@ -107,16 +110,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
       { id: "inventory", label: "Inventory Management", icon: Layers }
     ]
   },
-  {
-    id: "foods",
-    label: "Foods",
-    icon: Utensils,
-    children: [
-      { id: "all-foods", label: "All Foods", icon: Utensils },
-      { id: "food-categories", label: "Food Categories", icon: FolderOpen },
-      { id: "food-orders", label: "Food Orders", icon: ShoppingCart }
-    ]
-  },
+
   {
     id: "customers",
     label: "Customers",
@@ -279,6 +273,12 @@ export default function DashboardLayout({
         case 'categories':
           router.push('/dashboard/category');
           break;
+        case 'manage-categories':
+          router.push('/dashboard/category');
+          break;
+        case 'additional-details':
+          router.push('/dashboard/category/additional-details');
+          break;
         case 'all-products':
           router.push('/dashboard/products');
           break;
@@ -345,11 +345,7 @@ export default function DashboardLayout({
         case 'cancellations':
           router.push('/dashboard/orders/cancellations');
           break;
-        case 'all-foods':
-        case 'food-categories':
-        case 'food-orders':
-          router.push('/foods');
-          break;
+
         default:
           console.log('Navigate to child:', itemId);
       }

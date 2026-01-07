@@ -191,6 +191,46 @@ export default function ProductsPage() {
           productData.currencyPrices && productData.currencyPrices.length > 0
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
+                currency:
+                  cp.currency ||
+                  (() => {
+                    // Auto-detect currency based on country
+                    const countryCurrencyMap: Record<string, string> = {
+                      "United States": "USD",
+                      USA: "USD",
+                      UK: "GBP",
+                      "United Kingdom": "GBP",
+                      Australia: "AUD",
+                      Canada: "CAD",
+                      India: "INR",
+                      China: "CNY",
+                      Japan: "JPY",
+                      Singapore: "SGD",
+                      UAE: "AED",
+                      Nepal: "NPR",
+                    };
+                    return countryCurrencyMap[cp.country] || "USD";
+                  })(),
+                symbol:
+                  cp.symbol ||
+                  (() => {
+                    // Auto-detect symbol based on country
+                    const countrySymbolMap: Record<string, string> = {
+                      "United States": "$",
+                      USA: "$",
+                      UK: "£",
+                      "United Kingdom": "£",
+                      Australia: "$",
+                      Canada: "$",
+                      India: "₹",
+                      China: "¥",
+                      Japan: "¥",
+                      Singapore: "$",
+                      UAE: "د.إ",
+                      Nepal: "NPR",
+                    };
+                    return countrySymbolMap[cp.country] || "$";
+                  })(),
                 price: cp.price,
                 comparePrice:
                   cp.comparePrice !== undefined &&
@@ -205,6 +245,8 @@ export default function ProductsPage() {
             : [
                 {
                   country: "USA",
+                  currency: "USD",
+                  symbol: "$",
                   price:
                     productData.price && productData.price > 0
                       ? productData.price
@@ -338,6 +380,46 @@ export default function ProductsPage() {
           productData.currencyPrices && productData.currencyPrices.length > 0
             ? productData.currencyPrices.map((cp: any) => ({
                 country: cp.country,
+                currency:
+                  cp.currency ||
+                  (() => {
+                    // Auto-detect currency based on country
+                    const countryCurrencyMap: Record<string, string> = {
+                      "United States": "USD",
+                      USA: "USD",
+                      UK: "GBP",
+                      "United Kingdom": "GBP",
+                      Australia: "AUD",
+                      Canada: "CAD",
+                      India: "INR",
+                      China: "CNY",
+                      Japan: "JPY",
+                      Singapore: "SGD",
+                      UAE: "AED",
+                      Nepal: "NPR",
+                    };
+                    return countryCurrencyMap[cp.country] || "USD";
+                  })(),
+                symbol:
+                  cp.symbol ||
+                  (() => {
+                    // Auto-detect symbol based on country
+                    const countrySymbolMap: Record<string, string> = {
+                      "United States": "$",
+                      USA: "$",
+                      UK: "£",
+                      "United Kingdom": "£",
+                      Australia: "$",
+                      Canada: "$",
+                      India: "₹",
+                      China: "¥",
+                      Japan: "¥",
+                      Singapore: "$",
+                      UAE: "د.إ",
+                      Nepal: "NPR",
+                    };
+                    return countrySymbolMap[cp.country] || "$";
+                  })(),
                 price: cp.price,
                 comparePrice:
                   cp.comparePrice !== undefined &&
@@ -352,6 +434,8 @@ export default function ProductsPage() {
             : [
                 {
                   country: "USA",
+                  currency: "USD",
+                  symbol: "$",
                   price:
                     productData.price && productData.price > 0
                       ? productData.price
@@ -723,8 +807,102 @@ export default function ProductsPage() {
     [],
   );
 
-  const handleEditProduct = useCallback((product: Product) => {
-    setEditingProduct(product);
+  const handleEditProduct = useCallback(async (product: Product) => {
+    // Fetch complete product data for editing
+    try {
+      const API_BASE_URL = getApiBaseUrl();
+      const response = await fetch(`${API_BASE_URL}/api/v1/products/${product.id}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          // Ensure the product data has all required fields for the form
+          const completeProductData = {
+            // Copy all the fetched data
+            ...result.data,
+            // Ensure required fields exist with defaults if not present
+            shortDescription: result.data.shortDescription || "",
+            disclaimer: result.data.disclaimer || "",
+            ingredients: result.data.ingredients || "",
+            additionalDetails: result.data.additionalDetails || "",
+            materialCare: result.data.materialCare || "",
+            showIngredients: result.data.showIngredients || false,
+            showDisclaimer: result.data.showDisclaimer || false,
+            showAdditionalDetails: result.data.showAdditionalDetails || false,
+            showMaterialCare: result.data.showMaterialCare || false,
+            barcode: result.data.barcode || "",
+            upc: result.data.upc || "",
+            ean: result.data.ean || "",
+            isbn: result.data.isbn || "",
+            trackQuantity: result.data.trackQuantity !== undefined ? result.data.trackQuantity : true,
+            lowStockThreshold: result.data.lowStockThreshold || 5,
+            allowBackorder: result.data.allowBackorder || false,
+            manageStock: result.data.manageStock !== undefined ? result.data.manageStock : true,
+            weight: result.data.weight || 0,
+            weightUnit: result.data.weightUnit || "kg",
+            dimensions: result.data.dimensions || {
+              length: 0,
+              width: 0,
+              height: 0,
+              unit: "cm",
+            },
+            images: result.data.images || [],
+            videos: result.data.videos || [],
+            thumbnail: result.data.thumbnail || "",
+            seoTitle: result.data.seoTitle || "",
+            seoDescription: result.data.seoDescription || "",
+            seoKeywords: result.data.seoKeywords || [],
+            metaTags: result.data.metaTags || {},
+            isActive: result.data.isActive !== undefined ? result.data.isActive : true,
+            isDigital: result.data.isDigital || false,
+            isFeatured: result.data.isFeatured || false,
+            isNew: result.data.isNew || false,
+            isOnSale: result.data.isOnSale || false,
+            isBestSeller: result.data.isBestSeller || false,
+            isSales: result.data.isSales || false,
+            isNewSeller: result.data.isNewSeller || false,
+            isFestivalOffer: result.data.isFestivalOffer || false,
+            visibility: result.data.visibility || "VISIBLE",
+            publishedAt: result.data.publishedAt || "",
+            requiresShipping: result.data.requiresShipping !== undefined ? result.data.requiresShipping : true,
+            shippingClass: result.data.shippingClass || "",
+            freeShipping: result.data.freeShipping || false,
+            taxable: result.data.taxable !== undefined ? result.data.taxable : true,
+            taxClass: result.data.taxClass || "",
+            customFields: result.data.customFields || [],
+            notes: result.data.notes || "",
+            variantAttributes: result.data.variantAttributes || [],
+            // Make sure slug is mapped properly
+            slug: result.data.slug || result.data.productCode || "",
+            // Ensure category and subcategory are set
+            categoryId: result.data.categoryId || "",
+            subCategoryId: result.data.subCategoryId || "",
+            // Ensure pricing tiers and other complex fields exist
+            pricingTiers: result.data.pricingTiers || [],
+            currencyPrices: result.data.currencyPrices || [],
+            attributes: result.data.attributes || [],
+          };
+          setEditingProduct(completeProductData);
+        } else {
+          // Fallback to the original product data if detailed fetch fails
+          setEditingProduct(product);
+        }
+      } else {
+        // Fallback to the original product data if detailed fetch fails
+        setEditingProduct(product);
+      }
+    } catch (error) {
+      console.error('Error fetching complete product data:', error);
+      // Fallback to the original product data if detailed fetch fails
+      setEditingProduct(product);
+    }
+    
     setShowAddModal(true);
   }, []);
 
@@ -934,7 +1112,7 @@ export default function ProductsPage() {
                       Product
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SKU
+                      Tags
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Category
@@ -992,7 +1170,7 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {product.sku}
+                          {product.slug}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

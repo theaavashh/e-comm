@@ -40,6 +40,25 @@ export const categorySchema = z
     isSubCategory: z.boolean(),
 
     parentId: z.string().optional(),
+    
+    disclaimer: z
+      .string()
+      .max(2000, "Disclaimer must be less than 2000 characters")
+      .optional(),
+
+    additionalDetails: z
+      .string()
+      .max(5000, "Additional details must be less than 5000 characters")
+      .optional(),
+
+    faqs: z
+      .array(
+        z.object({
+          question: z.string().min(1, "Question is required").max(500, "Question must be less than 500 characters"),
+          answer: z.string().min(1, "Answer is required").max(2000, "Answer must be less than 2000 characters"),
+        })
+      )
+      .optional(),
   })
   .superRefine((data, ctx) => {
     // If isSubCategory is true, parentId is required

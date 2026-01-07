@@ -24,6 +24,7 @@ import axios from "axios";
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
 
+// Type definitions
 interface Category {
   id: string;
   name: string;
@@ -311,6 +312,8 @@ export default function CategoryPage() {
           err.message ||
           "Failed to fetch categories",
       );
+      // Still set empty categories to avoid infinite loading
+      setCategories([]);
     } finally {
       setIsLoadingCategories(false);
     }
@@ -322,85 +325,35 @@ export default function CategoryPage() {
 
       const payload = {
         name: categoryData.name,
-        image: categoryData.image,
+        image: categoryData.image || null,
         internalLink: categoryData.internalLink || null,
         parentId: categoryData.parentId || null,
+        // Include new fields if they exist
+        disclaimer: categoryData.disclaimer || null,
+        additionalDetails: categoryData.additionalDetails || null,
+        faqs: categoryData.faqs || null,
       };
+
+      console.log("API payload:", payload);
 
       const response = await axios.post<CreateCategoryResponse>(
         `${API_BASE_URL}/api/v1/categories`,
         payload,
       );
 
+      console.log("API response:", {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        success: response.data.success
+      });
+
       if (response.data.success) {
         // Store the created category ID
         setLastCreatedCategoryId(response.data.data.category.id);
 
-        // Optimistic update - add the new category to the existing state
-        const newCategory = response.data.data.category;
-        const transformedCategory: Category = {
-          id: newCategory.id,
-          name: newCategory.name,
-          image: newCategory.image || "/image.png",
-          internalLink: newCategory.internalLink || undefined,
-          createdAt: new Date(newCategory.createdAt)
-            .toISOString()
-            .split("T")[0],
-          status: newCategory.isActive ? "active" : "inactive",
-          parentId: newCategory.parentId || undefined,
-          level: newCategory.parentId ? 1 : 0,
-          hasChildren: false,
-          subCategories: [],
-          totalQuantity: 0,
-          availableUnits: 0,
-        };
-
-        if (newCategory.parentId) {
-          // This is a subcategory - find the parent and add it
-          setCategories((prevCategories) =>
-            prevCategories.map((category) => {
-              if (category.id === newCategory.parentId) {
-                return {
-                  ...category,
-                  subCategories: [
-                    ...(category.subCategories || []),
-                    transformedCategory,
-                  ],
-                  hasChildren: true,
-                };
-              }
-              // Check if it's a nested subcategory
-              if (category.subCategories) {
-                const updatedSubCategories = category.subCategories.map(
-                  (subCategory) => {
-                    if (subCategory.id === newCategory.parentId) {
-                      return {
-                        ...subCategory,
-                        subCategories: [
-                          ...(subCategory.subCategories || []),
-                          transformedCategory,
-                        ],
-                        hasChildren: true,
-                      };
-                    }
-                    return subCategory;
-                  },
-                );
-                return {
-                  ...category,
-                  subCategories: updatedSubCategories,
-                };
-              }
-              return category;
-            }),
-          );
-        } else {
-          // This is a main category - add it to the top level
-          setCategories((prevCategories) => [
-            ...prevCategories,
-            transformedCategory,
-          ]);
-        }
+        // Refetch categories to get updated data from database
+        await fetchCategories();
 
         toast.success("Category created successfully!");
         return { success: true, categoryId: response.data.data.category.id };
@@ -408,10 +361,22 @@ export default function CategoryPage() {
         throw new Error(response.data.message || "Failed to create category");
       }
     } catch (err: any) {
+      // Log the full error response for debugging
+      console.error('=== CATEGORY CREATION ERROR ===');
+      console.error('Full error object:', err);
+      console.error('Error response:', err.response);
+      console.error('Error status:', err.response?.status);
+      console.error('Error statusText:', err.response?.statusText);
+      console.error('Error data:', err.response?.data);
+      console.error('Error config:', err.config);
+      console.error('=== END ERROR DETAILS ===');
+      
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
         "Failed to create category";
+      
+      console.error('Final error message to show:', errorMessage);
       toast.error(errorMessage);
       return { success: false };
     } finally {
@@ -428,10 +393,14 @@ export default function CategoryPage() {
 
       const payload = {
         name: categoryData.name,
-        image: categoryData.image,
+        image: categoryData.image || null,
         internalLink: categoryData.internalLink || null,
         isActive: categoryData.status === "active",
         parentId: categoryData.parentId || null,
+        // Include new fields only if they have actual values
+        ...(categoryData.disclaimer && { disclaimer: categoryData.disclaimer }),
+        ...(categoryData.additionalDetails && { additionalDetails: categoryData.additionalDetails }),
+        ...(categoryData.faqs && { faqs: categoryData.faqs }),
       };
 
       const response = await axios.put<UpdateCategoryResponse>(
@@ -440,73 +409,8 @@ export default function CategoryPage() {
       );
 
       if (response.data.success) {
-        // Optimistic update - update the category in the state
-        const updatedCategory = response.data.data.category;
-        const transformedCategory: Category = {
-          id: updatedCategory.id,
-          name: updatedCategory.name,
-          image: updatedCategory.image || "/image.png",
-          internalLink: updatedCategory.internalLink || undefined,
-          createdAt: new Date(updatedCategory.createdAt)
-            .toISOString()
-            .split("T")[0],
-          status: updatedCategory.isActive ? "active" : "inactive",
-          parentId: updatedCategory.parentId || undefined,
-          level: updatedCategory.parentId ? 1 : 0,
-          hasChildren: false,
-          subCategories: [],
-          totalQuantity: 0,
-          availableUnits: 0,
-        };
-
-        setCategories((prevCategories) =>
-          prevCategories.map((category) => {
-            // Check if this is the main category being updated
-            if (category.id === categoryId) {
-              return { ...category, ...transformedCategory };
-            }
-
-            // Check subcategories
-            if (category.subCategories) {
-              const updatedSubCategories = category.subCategories.map(
-                (subCategory) => {
-                  if (subCategory.id === categoryId) {
-                    return { ...subCategory, ...transformedCategory };
-                  }
-
-                  // Check nested subcategories
-                  if (subCategory.subCategories) {
-                    const updatedNestedSubCategories =
-                      subCategory.subCategories.map((nestedSubCategory) => {
-                        if (nestedSubCategory.id === categoryId) {
-                          return {
-                            ...nestedSubCategory,
-                            ...transformedCategory,
-                          };
-                        }
-                        return nestedSubCategory;
-                      });
-
-                    return {
-                      ...subCategory,
-                      subCategories: updatedNestedSubCategories,
-                    };
-                  }
-
-                  return subCategory;
-                },
-              );
-
-              return {
-                ...category,
-                subCategories: updatedSubCategories,
-              };
-            }
-
-            return category;
-          }),
-        );
-
+        // Refetch categories to get updated data from database
+        await fetchCategories();
         toast.success("Category updated successfully!");
         return true;
       } else {
@@ -712,6 +616,10 @@ export default function CategoryPage() {
   };
 
   const onSubmit = async (data: CategoryFormData) => {
+    console.log("Form submission data:", data);
+    console.log("Creation step:", creationStep);
+    console.log("Editing category:", editingCategory);
+
     // Validate required fields
     if (!data.name) {
       toast.error("Name is required");
@@ -752,6 +660,10 @@ export default function CategoryPage() {
       status: data.status,
       isSubCategory: isSubCategory,
       parentId: data.parentId || undefined,
+      // Include new fields if they exist
+      disclaimer: data.disclaimer || undefined,
+      additionalDetails: data.additionalDetails || undefined,
+      faqs: data.faqs || undefined,
       // Internal link is only required for main categories
       ...(isSubCategory
         ? {}
@@ -810,12 +722,21 @@ export default function CategoryPage() {
           if (createdSubCategory) {
             setSelectedParentCategory(createdSubCategory);
           }
-          setCreationStep("nested");
-          setValue("name", "");
-          setValue("image", "");
-          toast.success(
-            "Sub-category created! Now you can add sub-subcategories.",
-          );
+          // Close the modal after subcategory is created
+          setShowAddModal(false);
+          reset({
+            name: "",
+            image: "",
+            internalLink: "",
+            status: "active",
+            parentId: "",
+            isSubCategory: false,
+          });
+          setSelectedMainCategory("");
+          setAvailableSubCategories([]);
+          setSelectedParentCategory(null);
+          setCreationStep("main");
+          toast.success("Sub-category created successfully!");
         } else {
           setShowAddModal(false);
           reset({
@@ -1047,29 +968,6 @@ export default function CategoryPage() {
                   ? "No categories match your search."
                   : "Get started by creating your first category."}
               </p>
-              {!searchTerm && (
-                <button
-                  onClick={() => {
-                    reset({
-                      name: "",
-                      image: "",
-                      internalLink: "",
-                      status: "active",
-                      parentId: "",
-                      isSubCategory: false,
-                    });
-                    setSelectedMainCategory("");
-                    setAvailableSubCategories([]);
-                    setSelectedParentCategory(null);
-                    setCreationStep("main");
-                    setLastCreatedCategoryId(null);
-                    setShowAddModal(true);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Add Category
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -1713,62 +1611,62 @@ export default function CategoryPage() {
             ))}
           </motion.div>
         )}
-
-        {/* Main Pagination - Always at bottom */}
-        {filteredCategories.length > itemsPerPage && (
-          <motion.div
-            className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-sm text-gray-700">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredCategories.length)} of{" "}
-              {filteredCategories.length} categories
-            </div>
-
-            <div className="flex items-center space-x-2">
-              {/* Previous Button */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </motion.div>
-        )}
       </motion.div>
+
+      {/* Main Pagination - Always at bottom */}
+      {filteredCategories.length > itemsPerPage && (
+        <motion.div
+          className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="text-sm text-gray-700">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, filteredCategories.length)} of{" "}
+            {filteredCategories.length} categories
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Add Category Modal */}
       <AnimatePresence>
@@ -1993,89 +1891,89 @@ export default function CategoryPage() {
                   )}
                 </div>
 
-                {/* Image Upload - Only for main categories */}
-                {creationStep === "main" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-black">
-                      Category Image <span className="text-red-500">*</span>
-                    </label>
-                    <Controller
-                      name="image"
-                      control={control}
-                      render={({ field }) => (
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                          {field.value ? (
-                            <div className="space-y-2">
-                              <Image
-                                src={field.value}
-                                alt="Preview"
-                                width={200}
-                                height={200}
-                                className="mx-auto rounded-lg object-cover"
-                              />
-                              <div className="text-xs text-gray-500 text-center">
-                                {field.value.startsWith(
-                                  "https://res.cloudinary.com",
-                                )
-                                  ? "Cloudinary Image"
-                                  : "Local Image"}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => field.onChange("")}
-                                className="text-red-600 hover:text-red-700 p-1 rounded transition-colors"
-                                title="Remove Image"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                {/* Image Upload - For all categories */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-black">
+                    {creationStep === "main"
+                      ? "Category Image"
+                      : creationStep === "sub"
+                        ? "Sub-category Image"
+                        : "Sub-subcategory Image"}{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Controller
+                    name="image"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        {field.value ? (
+                          <div className="space-y-2">
+                            <Image
+                              src={field.value}
+                              alt="Preview"
+                              width={200}
+                              height={200}
+                              className="mx-auto rounded-lg object-cover"
+                            />
+                            <div className="text-xs text-gray-500 text-center">
+                              {field.value.startsWith(
+                                "https://res.cloudinary.com",
+                              )
+                                ? "Cloudinary Image"
+                                : "Local Image"}
                             </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                              <p className="text-sm text-gray-500">
-                                Click to upload or drag and drop
-                              </p>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                id="image-upload"
-                                disabled={isUploadingImage}
-                              />
-                              <label
-                                htmlFor="image-upload"
-                                className={`px-4 py-2 rounded-md cursor-pointer inline-block ${
-                                  isUploadingImage
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-blue-600 hover:bg-blue-700"
-                                } text-white`}
-                              >
-                                {isUploadingImage
-                                  ? "Uploading..."
-                                  : "Choose Image"}
-                              </label>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    />
-                    {errors.image && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {String(errors.image.message)}
-                      </p>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange("")}
+                              className="text-red-600 hover:text-red-700 p-1 rounded transition-colors"
+                              title="Remove Image"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Upload className="w-8 h-8 text-gray-400 mx-auto" />
+                            <p className="text-sm text-gray-500">
+                              Click to upload or drag and drop
+                            </p>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                              id="image-upload"
+                              disabled={isUploadingImage}
+                            />
+                            <label
+                              htmlFor="image-upload"
+                              className={`px-4 py-2 rounded-md cursor-pointer inline-block ${
+                                isUploadingImage
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-blue-600 hover:bg-blue-700"
+                              } text-white`}
+                            >
+                              {isUploadingImage
+                                ? "Uploading..."
+                                : "Choose Image"}
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
+                  />
+                  {errors.image && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {String(errors.image.message)}
+                    </p>
+                  )}
+                </div>
 
-                {/* Internal Link - For main categories and sub-categories */}
-                {(creationStep === "main" || creationStep === "sub") && (
+                {/* Internal Link - Only for main categories */}
+                {!editingCategory?.parentId && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 text-black custom-font">
-                      Internal Link{" "}
-                      {creationStep === "main" && (
-                        <span className="text-red-500">*</span>
-                      )}
+                      Internal Link <span className="text-red-500">*</span>
                     </label>
                     <Controller
                       name="internalLink"
@@ -2095,9 +1993,8 @@ export default function CategoryPage() {
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      {creationStep === "main"
-                        ? "Required. Enter a relative path (e.g., /foods) or full URL for internal navigation."
-                        : "Optional. Enter a relative path (e.g., /foods) or full URL for internal navigation."}
+                      Required. Enter a relative path (e.g., /foods) or full URL
+                      for internal navigation.
                     </p>
                   </div>
                 )}
@@ -2355,8 +2252,8 @@ export default function CategoryPage() {
                         </p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
-                        Required. Enter a relative path (e.g., /foods) or full
-                        URL for internal navigation.
+                        Required. Enter a relative path (e.g., /foods) or full URL
+                        for internal navigation.
                       </p>
                     </div>
                   )}
@@ -2403,6 +2300,7 @@ export default function CategoryPage() {
                       {isSubmitting ? "Updating..." : "Update Category"}
                     </button>
                   </div>
+
                 </form>
               </div>
             </motion.div>

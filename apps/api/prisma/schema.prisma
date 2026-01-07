@@ -50,20 +50,24 @@ model Address {
 }
 
 model Category {
-  id           String     @id @default(cuid())
-  name         String
-  slug         String     @unique
-  description  String?
-  image        String?
-  isActive     Boolean    @default(true)
-  parentId     String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  internalLink String?
-  parent       Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     Category[] @relation("CategoryHierarchy")
-  products     Product[]
-  subProducts  Product[]  @relation("ProductSubCategory")
+  id                String     @id @default(cuid())
+  name              String
+  slug              String     @unique
+  description       String?
+  image             String?
+  isActive          Boolean    @default(true)
+  parentId          String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  internalLink      String?
+  additionalDetails String?
+  disclaimer        String?
+  howToCare         String?
+  faqs              Json?
+  parent            Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children          Category[] @relation("CategoryHierarchy")
+  products          Product[]
+  subProducts       Product[]  @relation("ProductSubCategory")
 
   @@map("categories")
 }
@@ -152,8 +156,6 @@ model ProductCurrencyPrice {
   id              String   @id @default(cuid())
   productId       String
   country         String
-  currency        String   @default("NPR")
-  symbol          String   @default("NPR")
   price           Decimal  @db.Decimal(10, 2)
   comparePrice    Decimal? @db.Decimal(10, 2)
   minDeliveryDays Int
@@ -161,6 +163,8 @@ model ProductCurrencyPrice {
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  currency        String   @default("NPR")
+  symbol          String   @default("NPR")
   product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, country, currency])

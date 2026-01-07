@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Star, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useCart } from '@/contexts/CartContext';
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ShoppingCart,
+  Star,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -43,7 +49,13 @@ interface CartItem {
 }
 
 // Product Image Slider Component with seamless transitions
-function ProductImageSlider({ images, productName }: { images: string[]; productName: string }) {
+function ProductImageSlider({
+  images,
+  productName,
+}: {
+  images: string[];
+  productName: string;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -71,10 +83,10 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     return () => {
-      window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener("resize", checkScreenSize);
     };
   }, []);
 
@@ -85,7 +97,8 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
     // Auto-rotate if:
     // - On small screens and not hovered, OR
     // - On large screens (auto-rotate even when hovered)
-    const shouldAutoRotate = (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
+    const shouldAutoRotate =
+      (!isLargeScreen && !isHovered) || (isLargeScreen && isHovered);
 
     if (shouldAutoRotate && images.length > 1) {
       // Set up a continuous rotation without waiting
@@ -132,7 +145,7 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
             whileHover={{ scale: 1.02 }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/carpet-layout.webp'; // fallback image
+              target.src = "/carpet-layout.webp"; // fallback image
             }}
           />
         </AnimatePresence>
@@ -170,7 +183,7 @@ function ProductImageSlider({ images, productName }: { images: string[]; product
           {images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-white/50'}`}
+              className={`w-2 h-2 rounded-full ${index === currentIndex ? "bg-white" : "bg-white/50"}`}
               onClick={(e) => {
                 e.stopPropagation();
                 goToSlide(index);
@@ -195,73 +208,90 @@ const Carpet = () => {
     const fetchCarpetProducts = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/api/v1/products?category=carpet&limit=8`
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/api/v1/products?subcategory=carpet&limit=8`,
         );
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch carpet products');
+          throw new Error("Failed to fetch carpet products");
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.data && data.data.products) {
           // Map API response to Product interface
-          const apiProducts: Product[] = data.data.products.map((apiProduct: any) => {
-            // Get price from currencyPrices array based on pricingCountry
-            const currencyPrice = apiProduct.currencyPrices?.find(
-              (cp: any) => cp.country === apiProduct.pricingCountry
-            );
-            
-            return {
-              id: apiProduct.id,
-              name: apiProduct.name,
-              slug: apiProduct.slug,
-              description: apiProduct.description || '',
-              shortDescription: apiProduct.shortDescription || apiProduct.description || '',
-              price: currencyPrice ? Number(currencyPrice.price) : Number(apiProduct.price) || 0,
-              comparePrice: currencyPrice && currencyPrice.comparePrice ? Number(currencyPrice.comparePrice) : apiProduct.comparePrice ? Number(apiProduct.comparePrice) : undefined,
-              sku: apiProduct.sku || 'N/A',
-              quantity: apiProduct.quantity || 0,
-              image: apiProduct.image || apiProduct.images?.[0] || '/placeholder-image.jpg',
-              images: apiProduct.images || [apiProduct.image || '/placeholder-image.jpg'],
-              category: {
-                id: apiProduct.category?.id || '1',
-                name: apiProduct.category?.name || 'Carpet',
-                slug: apiProduct.category?.slug || 'carpet'
-              },
-              averageRating: apiProduct.averageRating || 0,
-              reviewCount: apiProduct.reviewCount || 0,
-              variants: apiProduct.variants || [],
-              brand: apiProduct.brand ? {
-                id: apiProduct.brand.id,
-                name: apiProduct.brand.name
-              } : undefined,
-              attributes: apiProduct.attributes || [],
-              tags: apiProduct.tags || []
-            };
-          });
-          
+          const apiProducts: Product[] = data.data.products.map(
+            (apiProduct: any) => {
+              // Get price from currencyPrices array based on pricingCountry
+              const currencyPrice = apiProduct.currencyPrices?.find(
+                (cp: any) => cp.country === apiProduct.pricingCountry,
+              );
+
+              return {
+                id: apiProduct.id,
+                name: apiProduct.name,
+                slug: apiProduct.slug,
+                description: apiProduct.description || "",
+                shortDescription:
+                  apiProduct.shortDescription || apiProduct.description || "",
+                price: currencyPrice
+                  ? Number(currencyPrice.price)
+                  : Number(apiProduct.price) || 0,
+                comparePrice:
+                  currencyPrice && currencyPrice.comparePrice
+                    ? Number(currencyPrice.comparePrice)
+                    : apiProduct.comparePrice
+                      ? Number(apiProduct.comparePrice)
+                      : undefined,
+                sku: apiProduct.sku || "N/A",
+                quantity: apiProduct.quantity || 0,
+                image:
+                  apiProduct.image ||
+                  apiProduct.images?.[0] ||
+                  "/placeholder-image.jpg",
+                images: apiProduct.images || [
+                  apiProduct.image || "/placeholder-image.jpg",
+                ],
+                category: {
+                  id: apiProduct.category?.id || "1",
+                  name: apiProduct.category?.name || "Carpet",
+                  slug: apiProduct.category?.slug || "carpet",
+                },
+                averageRating: apiProduct.averageRating || 0,
+                reviewCount: apiProduct.reviewCount || 0,
+                variants: apiProduct.variants || [],
+                brand: apiProduct.brand
+                  ? {
+                      id: apiProduct.brand.id,
+                      name: apiProduct.brand.name,
+                    }
+                  : undefined,
+                attributes: apiProduct.attributes || [],
+                tags: apiProduct.tags || [],
+              };
+            },
+          );
+
           setProducts(apiProducts);
         } else {
           setProducts([]);
         }
       } catch (error) {
-        console.error('Error fetching carpet products:', error);
+        console.error("Error fetching carpet products:", error);
         // Set empty array on error to avoid showing old data
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchCarpetProducts();
   }, []);
 
   // Format price
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 2,
     }).format(price);
   };
@@ -269,19 +299,22 @@ const Carpet = () => {
   // Add to cart
   const addToCart = (product: Product, quantity: number = 1) => {
     // Add to global cart context
-    addToGlobalCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images?.[0] || product.image || ''
-    }, quantity);
+    addToGlobalCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || product.image || "",
+      },
+      quantity,
+    );
   };
 
   // Update quantity
   const updateQuantity = (productId: string, quantity: number) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [productId]: quantity
+      [productId]: quantity,
     }));
   };
 
@@ -310,22 +343,28 @@ const Carpet = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="mb-4 sm:mb-0 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 custom-font">Carpet</h2>
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 custom-font">
+                Carpet
+              </h2>
               <button
-                onClick={() => router.push('/products/carpet')}
+                onClick={() => router.push("/products/carpet")}
                 className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
               >
                 View More
               </button>
             </div>
-            <p className="text-lg text-gray-600">Discover beautiful and high-quality carpets</p>
+            <p className="text-lg text-gray-600">
+              Discover beautiful and high-quality carpets
+            </p>
           </div>
         </div>
 
         {/* Products Grid */}
         {products.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No carpet products available at the moment.</p>
+            <p className="text-gray-500 text-lg">
+              No carpet products available at the moment.
+            </p>
           </div>
         ) : (
           <motion.div
@@ -348,12 +387,17 @@ const Carpet = () => {
                   {/* Image Container with ProductImageSlider */}
                   <div className="relative h-48 md:h-64 bg-white overflow-hidden">
                     {product.images && product.images.length > 0 ? (
-                      <ProductImageSlider images={product.images} productName={product.name} />
+                      <ProductImageSlider
+                        images={product.images}
+                        productName={product.name}
+                      />
                     ) : (
                       // Fallback when no image or image fails to load
                       <div className="w-full h-full bg-gray-50 flex items-center justify-center">
                         <div className="text-center">
-                          <p className="text-sm text-gray-500">No Image Available</p>
+                          <p className="text-sm text-gray-500">
+                            No Image Available
+                          </p>
                         </div>
                       </div>
                     )}
@@ -365,25 +409,37 @@ const Carpet = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-xl font-semibold text-gray-900">
-                          ${new Intl.NumberFormat('en-US', {
+                          $
+                          {new Intl.NumberFormat("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           }).format(product.price)}
                         </span>
-                        {product.comparePrice && Number(product.comparePrice) > Number(product.price) && (
-                          <span className="text-sm text-gray-500 line-through">
-                            ${new Intl.NumberFormat('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(Number(product.comparePrice))}
+                        {product.comparePrice &&
+                          Number(product.comparePrice) >
+                            Number(product.price) && (
+                            <span className="text-sm text-gray-500 line-through">
+                              $
+                              {new Intl.NumberFormat("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(Number(product.comparePrice))}
+                            </span>
+                          )}
+                      </div>
+                      {product.comparePrice &&
+                        Number(product.comparePrice) >
+                          Number(product.price) && (
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                            {Math.round(
+                              ((Number(product.comparePrice) -
+                                Number(product.price)) /
+                                Number(product.comparePrice)) *
+                                100,
+                            )}
+                            % OFF
                           </span>
                         )}
-                      </div>
-                      {product.comparePrice && Number(product.comparePrice) > Number(product.price) && (
-                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
-                          {Math.round(((Number(product.comparePrice) - Number(product.price)) / Number(product.comparePrice)) * 100)}% OFF
-                        </span>
-                      )}
                     </div>
 
                     {/* Product Name */}
@@ -402,7 +458,7 @@ const Carpet = () => {
                         className="bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-300 text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors flex items-center justify-center space-x-2"
                       >
                         {product.quantity === 0 ? (
-                          'Out of Stock'
+                          "Out of Stock"
                         ) : (
                           <>
                             <ShoppingCart className="h-4 w-4" />
@@ -418,11 +474,13 @@ const Carpet = () => {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? 'fill-current' : 'text-gray-300'}`}
+                            className={`h-4 w-4 ${i < Math.floor(product.averageRating || 0) ? "fill-current" : "text-gray-300"}`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-500">({product.reviewCount || 0})</span>
+                      <span className="text-sm text-gray-500">
+                        ({product.reviewCount || 0})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -430,8 +488,6 @@ const Carpet = () => {
             ))}
           </motion.div>
         )}
-
-
       </div>
     </div>
   );

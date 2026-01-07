@@ -29,7 +29,7 @@ const categoryData: CategorySection[] = [
       { id: "4", name: "Masala", image: "/masala-layout.webp", link: "/foods/masala" }
     ],
     linkText: "Discover more",
-    linkHref: "/foods"
+    linkHref: "/products/foods"
   },
   {
     title: "Dress",
@@ -71,7 +71,7 @@ const categoryData: CategorySection[] = [
 
 export default function CategoryShowcase() {
   return (
-    <div className="bg-[#F0F2F5] w-full max-w-8xl mx-4 sm:mx-6 md:mx-12">
+    <div className="bg-[#F0F2F5] w-full max-w-8xl mx-4 sm:mx-6 md:mx-12 my-12">
       <div className="w-full">
         {/* Title Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">

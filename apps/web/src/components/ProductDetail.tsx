@@ -158,6 +158,9 @@ export default function ProductDetail({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'details' | 'custom'>('description');
   const [customFields, setCustomFields] = useState<any[]>([]);
+  const [categoryDetails, setCategoryDetails] = useState<any>(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Fetch product data from API
   useEffect(() => {
@@ -180,7 +183,7 @@ export default function ProductDetail({
           const productData = data.data.product;
 
           // Transform API data to match our interface
-          setProduct({
+          const transformedProduct = {
             id: productData.id,
             name: productData.name,
             slug: productData.slug,
@@ -203,7 +206,9 @@ export default function ProductDetail({
             dimensions: productData.dimensions,
             weight: productData.weight,
             weightUnit: productData.weightUnit,
-          });
+          };
+          
+          setProduct(transformedProduct);
 
           // Extract reviews from API response
           if (productData.reviews && Array.isArray(productData.reviews)) {
@@ -246,6 +251,12 @@ export default function ProductDetail({
             );
             setQuestions([]);
           }
+          
+          // Fetch category details for disclaimer and FAQs
+          // First try to find subcategory details from the full category tree
+          if (transformedProduct.category?.id) {
+            await fetchAllCategoriesForSubcategoryDetails();
+          }
         } else {
           throw new Error("Product not found");
         }
@@ -261,6 +272,88 @@ export default function ProductDetail({
       fetchProduct();
     }
   }, [productId, category, selectedCountry]);
+  
+  // Fetch category details
+  const fetchCategoryDetails = async (categoryId: string) => {
+    try {
+      setCategoryLoading(true);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/categories/${categoryId}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch category details");
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.data?.category) {
+        setCategoryDetails(data.data.category);
+      }
+    } catch (error) {
+      console.error("Error fetching category details:", error);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+  
+  // Function to find subcategory with details in the category tree
+  const findSubcategoryWithDetails = (categories: any[], targetId: string): any => {
+    for (const category of categories) {
+      if (category.id === targetId && 
+          (category.disclaimer || (category.faqs && category.faqs.length > 0))) {
+        return category;
+      }
+      
+      if (category.children && category.children.length > 0) {
+        const found: any = findSubcategoryWithDetails(category.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  
+  // Fetch all categories to find subcategory details
+  const fetchAllCategoriesForSubcategoryDetails = async () => {
+    try {
+      setCategoryLoading(true);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/categories`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch all categories");
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.data?.categories) {
+        // Look for the current product's category in the full category tree
+        // to find if it has specific disclaimer/faq details
+        if (product?.category?.id) {
+          const subcategoryWithDetails = findSubcategoryWithDetails(
+            data.data.categories, 
+            product.category.id
+          );
+          
+          if (subcategoryWithDetails) {
+            setCategoryDetails(subcategoryWithDetails);
+          } else {
+            // If no specific subcategory details found, fetch the main category
+            await fetchCategoryDetails(product.category.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching all categories for subcategory details:", error);
+      // Fallback to fetching the main category details
+      if (product?.category?.id) {
+        await fetchCategoryDetails(product.category.id);
+      }
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
 
   // Fetch featured products for "You May Also Like" section
   useEffect(() => {
@@ -890,9 +983,9 @@ export default function ProductDetail({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 mb-12 items-start">
-        {/* Thumbnail Images - Column 1 */}
-        <div className="lg:col-span-1 pr-2">
-          <div className="flex flex-col gap-2">
+        {/* All Thumbnails - First shown first on mobile */}
+        <div className="lg:col-span-1 pr-2 mb-4 lg:mb-0 ">
+          <div className="flex flex-row md:flex-col gap-2">
             {product.images.map((image, index) => (
               <button
                 key={index}
@@ -915,8 +1008,8 @@ export default function ProductDetail({
           </div>
         </div>
 
-        {/* Main Image - Column 2 */}
-        <div className="lg:col-span-4">
+        {/* Main Image - shown after thumbnails on mobile */}
+        <div className="lg:col-span-4 relative ">
           <div
             className="w-96 h-96 rounded-sm overflow-hidden shadow-lg group cursor-zoom-in relative"
             onMouseMove={handleMouseMove}
@@ -933,38 +1026,38 @@ export default function ProductDetail({
               className="w-full h-full object-cover"
             />
           </div>
+          
+          {/* Zoomed Image Overlay - Fixed Position */}
+          {isZoomed && (
+            <div 
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-[800px] h-[800px] rounded-xl overflow-hidden shadow-2xl border-2 border-gray-300 bg-white"
+              onMouseLeave={handleMouseLeave}
+            >
+              <div
+                className="w-full h-full relative"
+                style={{
+                  backgroundImage: `url(${product.images[hoveredImage !== null ? hoveredImage : selectedImage]})`,
+                  backgroundSize: "250%",
+                  backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              {/* Close button */}
+              <button 
+                onClick={handleMouseLeave}
+                className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 z-10"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Zoomed Image Preview (Spans columns 2-4) */}
-        {isZoomed && (
-          <div
-            className="hidden lg:block lg:col-span-10 rounded-xl overflow-hidden shadow-lg border border-gray-200 w-full h-full"
-            style={{
-              minHeight: "calc(100vh - 200px)",
-              height: "100%",
-            }}
-          >
-            <div
-              className="w-full h-full relative"
-              style={{
-                backgroundImage: `url(${product.images[hoveredImage !== null ? hoveredImage : selectedImage]})`,
-                backgroundSize: "200%",
-                backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
-                backgroundRepeat: "no-repeat",
-                width: "100%",
-                height: "100%",
-                minHeight: "calc(100vh - 200px)",
-              }}
-            />
-          </div>
-        )}
-
         {/* Product Info - Column 3 */}
-        {!isZoomed && (
-          <div className="lg:col-span-4 px-6 space-y-3">
+          <div className="lg:col-span-4 px-6 space-y-3 mt-5">
             {/* Brand & Name */}
             <div>
-               <h3 className="text-lg text-gray-500 underline">{product.sku}</h3>
+               <h3 className="text-lg text-[#EB6426] underline">{product.slug}</h3>
               <div className="flex items-center justify-between my-2">
                
                 <h1 className="text-2xl font-semibold font-poppins text-gray-900">
@@ -981,11 +1074,11 @@ export default function ProductDetail({
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-5 h-5 ${i < Math.floor(product.averageRating) ? "fill-current" : ""}`}
+                          className={`w-3 h-3 ${i < Math.floor(product.averageRating) ? "fill-current" : ""}`}
                         />
                       ))}
                     </div>
-                    <span className="text-gray-600">
+                    <span className="text-sm text-gray-600">
                      ({product.averageRating}) | {product.reviewCount} reviews
                     </span>
                   </div>
@@ -996,7 +1089,7 @@ export default function ProductDetail({
                 {/* Left Side - Price and Tax */}
                 <div>
                   <div className="flex items-center space-x-3">
-                    <span className="text-4xl font-bold text-[#1D4ED8]">
+                    <span className="text-4xl font-bold text-[#EB6426]">
                       {formatPrice(product.price)}
                     </span>
                     {product.comparePrice && (
@@ -1223,7 +1316,7 @@ export default function ProductDetail({
                 <div className="flex space-x-3">
                   <button
                     onClick={handleAddToCart}
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    className="flex-1 bg-[#EB6426] text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <ShoppingCart className="w-5 h-5" />
                     <span>
@@ -1253,54 +1346,61 @@ export default function ProductDetail({
               </div>
             </div>
 
-         
+          
           </div>
-        )}
 
         {/* Delivery Options - Column 4 */}
-        {!isZoomed && (
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 mt-4 md:mt-0">
             {/* Delivery Options */}
             <div className=" border border-gray-200 p-6 ">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-gray-900 text-sm leading-relaxed">
-                      {selectedCity}, {selectedCountry}
-                    </p>
-                    <button
-                      onClick={() => setShowDeliveryModal(true)}
-                      className="mt-2 bg-[#7c3aed] text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-[#6d28d9] transition-colors"
-                    >
-                      CHANGE
-                    </button>
+              <div className="space-y-6">
+                {/* First Row - Address and Change Button */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-gray-900 text-sm leading-relaxed">
+                        {selectedCity}, {selectedCountry}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setShowDeliveryModal(true)}
+                    className="text-black underline px-4 py-1.5 rounded-lg text-sm font-medium hover:text-[#EB6426] transition-colors"
+                  >
+                    CHANGE
+                  </button>
+                </div>
+
+                {/* Second Row - Delivery Options */}
+                <div>
                   <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delivery Options
-                </h3>
-                <Info className="w-4 h-4 text-gray-400" />
-              </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                  <div>
-                    <p className="text-gray-900 font-medium text-sm capitalize">
-                      {deliveryMethod} Delivery
-                    </p>
-                    <p className="text-gray-500 text-xs">
-                      Guaranteed by {etaDate}
-                    </p>
+                    <Info className="w-4 h-4 text-gray-400" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Delivery Options
+                    </h3>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                  <p className="text-gray-900 text-sm">
-                    Cash on Delivery Available
-                  </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Package className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-gray-900 font-medium text-sm capitalize">
+                          {deliveryMethod} Delivery
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          Guaranteed by {etaDate}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                      <p className="text-gray-900 text-sm">
+                        Cash on Delivery Available
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1314,10 +1414,7 @@ export default function ProductDetail({
                 <Info className="w-4 h-4 text-gray-400" />
               </div>
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <RotateCcw className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                  <p className="text-gray-900 text-sm">14 Days Free Returns</p>
-                </div>
+                
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-gray-600 flex-shrink-0" />
                   <p className="text-gray-900 text-sm">
@@ -1327,7 +1424,6 @@ export default function ProductDetail({
               </div>
             </div>
           </div>
-        )}
       </div>
 
       {/* Description Section with Tabs */}
@@ -1359,10 +1455,37 @@ export default function ProductDetail({
         
         <div className="mt-6">
           {activeTab === 'description' && (
-            <div
-              className="prose max-w-none text-gray-700 leading-relaxed text-lg"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+            <div className="prose max-w-none text-gray-700 leading-relaxed text-lg">
+              {isDescriptionExpanded ? (
+                <div dangerouslySetInnerHTML={{ __html: product.description }} />
+              ) : (
+                <div>
+                  <div 
+                    dangerouslySetInnerHTML={{ 
+                      __html: product.description.length > 300 
+                        ? product.description.substring(0, 300) + '...' 
+                        : product.description 
+                    }} 
+                  />
+                  {product.description.length > 300 && (
+                    <button 
+                      onClick={() => setIsDescriptionExpanded(true)}
+                      className="text-blue-600 hover:text-blue-800 font-medium mt-2"
+                    >
+                      Read More
+                    </button>
+                  )}
+                </div>
+              )}
+              {isDescriptionExpanded && product.description.length > 300 && (
+                <button 
+                  onClick={() => setIsDescriptionExpanded(false)}
+                  className="text-blue-600 hover:text-blue-800 font-medium mt-2"
+                >
+                  Show Less
+                </button>
+              )}
+            </div>
           )}
           
           {activeTab === 'details' && (
@@ -1422,6 +1545,157 @@ export default function ProductDetail({
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Disclaimer Section */}
+      <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Disclaimer</h2>
+        <div className="prose max-w-none text-gray-700 leading-relaxed">
+          {categoryLoading ? (
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ) : categoryDetails?.disclaimer ? (
+            <div dangerouslySetInnerHTML={{ __html: categoryDetails.disclaimer }} />
+          ) : (
+            <p>No disclaimer available for this category.</p>
+          )}
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+        <div className="space-y-6">
+          {categoryLoading ? (
+            <div className="animate-pulse space-y-6">
+              <div className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+              </div>
+              <div className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+              </div>
+              <div className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+              </div>
+            </div>
+          ) : categoryDetails?.faqs && categoryDetails.faqs.length > 0 ? (
+            categoryDetails.faqs.map((faq: any, index: number) => (
+              <div key={index} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                <p className="text-gray-700">{faq.answer}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-500 text-center py-8">
+              <p>No FAQs available for this category.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* How to Care Section */}
+      <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Care</h2>
+        <div className="prose max-w-none text-gray-700 leading-relaxed">
+          <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">General Care Instructions:</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Keep the product in a cool, dry place away from direct sunlight</li>
+            <li>Clean regularly with a soft, dry cloth to prevent dust accumulation</li>
+            <li>Avoid using harsh chemicals or abrasive cleaners</li>
+            <li>Handle with clean hands to prevent stains and damage</li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Specific Care by Material:</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Wood products:</strong> Apply wood polish occasionally to maintain shine</li>
+            <li><strong>Textile items:</strong> Follow washing instructions on the label</li>
+            <li><strong>Metal items:</strong> Wipe with damp cloth and dry immediately to prevent rust</li>
+            <li><strong>Electronic items:</strong> Turn off before cleaning, use slightly damp cloth</li>
+          </ul>
+          
+          <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">Storage Tips:</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Store in original packaging if possible</li>
+            <li>Use protective covers for delicate items</li>
+            <li>Ensure items are completely dry before storage</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Additional Details Section */}
+      <div className="bg-white rounded-xl shadow-lg p-8 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Additional Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Product Specifications</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Brand</span>
+                <span className="text-gray-900">{product.brand?.name || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Category</span>
+                <span className="text-gray-900">{product.category?.name || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">SKU</span>
+                <span className="text-gray-900">{product.sku || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Available Colors</span>
+                <span className="text-gray-900">
+                  {product.variants && product.variants.some((v: any) => v.name === 'Color')
+                    ? Array.from(new Set(product.variants.filter((v: any) => v.name === 'Color').map((v: any) => v.value))).join(', ')
+                    : 'N/A'
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Available Sizes</span>
+                <span className="text-gray-900">
+                  {product.variants && product.variants.some((v: any) => v.name === 'Size')
+                    ? Array.from(new Set(product.variants.filter((v: any) => v.name === 'Size').map((v: any) => v.value))).join(', ')
+                    : 'N/A'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Shipping & Returns</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Shipping Time</span>
+                <span className="text-gray-900">5-7 Business Days</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Return Policy</span>
+                <span className="text-gray-900">14 Days Free Return</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Warranty</span>
+                <span className="text-gray-900">Not Available</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Origin</span>
+                <span className="text-gray-900">Made in Nepal</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Condition</span>
+                <span className="text-gray-900">New</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

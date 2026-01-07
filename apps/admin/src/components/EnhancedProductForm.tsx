@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -60,6 +60,8 @@ interface CurrencyPrice {
   symbol: string;
   price: number;
   comparePrice?: number;
+  minDeliveryDays?: number;
+  maxDeliveryDays?: number;
   isActive?: boolean;
 }
 
@@ -166,6 +168,7 @@ interface ProductFormData {
   seoTitle: string;
   seoDescription: string;
   seoKeywords: string[];
+  slug: string;
   metaTags: any;
 
   // Status
@@ -281,6 +284,7 @@ export default function EnhancedProductForm({
     seoTitle: initialData?.seoTitle || "",
     seoDescription: initialData?.seoDescription || "",
     seoKeywords: initialData?.seoKeywords || [],
+    slug: initialData?.slug || "", // Use API slug field directly
     metaTags: initialData?.metaTags || {},
 
     // Status
@@ -362,6 +366,131 @@ export default function EnhancedProductForm({
     GeneratedVariant[]
   >([]);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // State to track if slug has been manually edited
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialData?.slug && !!initialData?.slug.trim()); // Set to true if editing existing product with a non-empty slug
+
+  // Effect to reset form when initialData changes (for edit mode)
+  const prevInitialDataRef = useRef();
+  
+  useEffect(() => {
+    // Only update if initialData has actually changed (not on initial mount)
+    if (initialData && initialData !== prevInitialDataRef.current) {
+      // Reset form with new initial data
+      setFormData({
+        // Product Identity
+        name: initialData?.name || "",
+        productCode: initialData?.productCode || "",
+        categoryId: initialData?.categoryId || "",
+        subCategoryId: initialData?.subCategoryId || "",
+        brand: initialData?.brand || "",
+        tags: initialData?.tags || [],
+        isVariant: initialData?.isVariant ?? false,
+
+        // Basic Information
+        description: initialData?.description || "",
+        shortDescription: initialData?.shortDescription || "",
+        disclaimer: initialData?.disclaimer || "",
+        ingredients: initialData?.ingredients || "",
+        additionalDetails: initialData?.additionalDetails || "",
+        materialCare: initialData?.materialCare || "",
+        showIngredients: initialData?.showIngredients ?? false,
+        showDisclaimer: initialData?.showDisclaimer ?? false,
+        showAdditionalDetails: initialData?.showAdditionalDetails ?? false,
+        showMaterialCare: initialData?.showMaterialCare ?? false,
+
+        // Product Identification
+        sku: initialData?.sku || "",
+        barcode: initialData?.barcode || "",
+        upc: initialData?.upc || "",
+        ean: initialData?.ean || "",
+        isbn: initialData?.isbn || "",
+
+        // Inventory
+        trackQuantity: initialData?.trackQuantity ?? true,
+        quantity: initialData?.quantity || 0,
+        lowStockThreshold: initialData?.lowStockThreshold || 5,
+        allowBackorder: initialData?.allowBackorder ?? false,
+        manageStock: initialData?.manageStock ?? true,
+
+        // Physical Properties
+        weight: initialData?.weight || 0,
+        weightUnit: initialData?.weightUnit || "kg",
+        dimensions: initialData?.dimensions || {
+          length: 0,
+          width: 0,
+          height: 0,
+          unit: "cm",
+        },
+
+        // Media
+        images: initialData?.images || [],
+        videos: initialData?.videos || [],
+        thumbnail: initialData?.thumbnail || "",
+
+        // SEO
+        seoTitle: initialData?.seoTitle || "",
+        seoDescription: initialData?.seoDescription || "",
+        seoKeywords: initialData?.seoKeywords || [],
+        slug: initialData?.slug || "",
+        metaTags: initialData?.metaTags || {},
+
+        // Status
+        isActive: initialData?.isActive ?? true,
+        isDigital: initialData?.isDigital ?? false,
+        isFeatured: initialData?.isFeatured ?? false,
+        isNew: initialData?.isNew ?? false,
+        isOnSale: initialData?.isOnSale ?? false,
+        isBestSeller: initialData?.isBestSeller ?? false,
+        isSales: initialData?.isSales ?? false,
+        isNewSeller: initialData?.isNewSeller ?? false,
+        isFestivalOffer: initialData?.isFestivalOffer ?? false,
+        visibility: initialData?.visibility || "VISIBLE",
+        publishedAt: initialData?.publishedAt || "",
+
+        // Shipping
+        requiresShipping: initialData?.requiresShipping ?? true,
+        shippingClass: initialData?.shippingClass || "",
+        freeShipping: initialData?.freeShipping ?? false,
+
+        // Tax
+        taxable: initialData?.taxable ?? true,
+        taxClass: initialData?.taxClass || "",
+
+        // Additional
+        customFields: initialData?.customFields || [],
+        notes: initialData?.notes || "",
+
+        // Variant attributes
+        variantAttributes: initialData?.variantAttributes || [],
+      });
+      
+      // Reset additional states
+      setPricingTiers(initialData?.pricingTiers || []);
+      setCurrencyPrices(initialData?.currencyPrices || []);
+      setAttributes(initialData?.attributes || []);
+      setCustomFields(initialData?.customFields || []);
+      
+      // Update slug tracking
+      setSlugManuallyEdited(!!initialData?.slug && !!initialData?.slug.trim());
+    }
+    
+    // Update previous reference
+    prevInitialDataRef.current = initialData;
+  }, [initialData]);
+
+  // Effect to update slug when product name changes (only if slug hasn't been manually edited)
+  useEffect(() => {
+    // Only auto-update if slug hasn't been manually edited
+    if (!slugManuallyEdited) {
+      const autoGeneratedSlug = formData.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "-");
+      
+      handleInputChange("slug", autoGeneratedSlug);
+    }
+  }, [formData.name, slugManuallyEdited]);
 
   // API Base URL
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -476,30 +605,52 @@ export default function EnhancedProductForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If no currency prices are added, create a default one
+    const finalCurrencyPrices = currencyPrices.length > 0 ? currencyPrices : [
+      {
+        country: "USA",
+        currency: "USD",
+        symbol: "$",
+        price: 0, // formData doesn't have price field, use 0 as default
+        comparePrice: 0, // formData doesn't have comparePrice field, use 0 as default
+        minDeliveryDays: 1,
+        maxDeliveryDays: 7,
+        isActive: true,
+      }
+    ];
+    
     // Set default price from first currency price if exists (for backward compatibility)
     const defaultPrice =
-      currencyPrices.length > 0 ? currencyPrices[0].price : 0;
+      finalCurrencyPrices.length > 0 ? finalCurrencyPrices[0].price : 0;
 
+    // Create submission data without the sku field
+    const {
+      sku, // Remove this field
+      ...formDataWithoutSku
+    } = formData;
+    
     const submissionData = {
-      ...formData,
+      ...formDataWithoutSku,
+      productCode: formData.slug || formData.productCode, // Use the slug field for product code if available
+      isOnSale: formData.isSales, // Map isSales to isOnSale for API compatibility
       customFields,
       price: defaultPrice,
       comparePrice:
-        currencyPrices.length > 0 ? currencyPrices[0].comparePrice : 0,
+        finalCurrencyPrices.length > 0 ? finalCurrencyPrices[0].comparePrice : 0,
       pricingTiers,
       attributes,
-      currencyPrices: currencyPrices.map((cp) => ({
+      currencyPrices: finalCurrencyPrices.map((cp) => ({
         country: cp.country,
         currency: cp.currency,
         symbol: cp.symbol,
         price: cp.price,
         comparePrice: cp.comparePrice,
+        minDeliveryDays: cp.minDeliveryDays ?? 1,
+        maxDeliveryDays: cp.maxDeliveryDays ?? 7,
         isActive: cp.isActive ?? true,
       })),
     };
-
-    // Show success state briefly
-    setShowSuccess(true);
 
     // Show success state briefly
     setShowSuccess(true);
@@ -584,6 +735,7 @@ export default function EnhancedProductForm({
       seoTitle: "",
       seoDescription: "",
       seoKeywords: [],
+      slug: "",
       metaTags: {},
 
       // Status
@@ -765,9 +917,11 @@ export default function EnhancedProductForm({
                     </label>
                     <select
                       value={formData.categoryId}
-                      onChange={(e) =>
-                        handleInputChange("categoryId", e.target.value)
-                      }
+                      onChange={(e) => {
+                        handleInputChange("categoryId", e.target.value);
+                        // Reset sub-category when category changes
+                        handleInputChange("subCategoryId", "");
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                     >
                       <option value="">Select Category</option>
@@ -801,16 +955,16 @@ export default function EnhancedProductForm({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                     >
                       <option value="">Select Sub-Category</option>
-                      {categories
-                        .filter(
-                          (cat) => cat.children && cat.children.length > 0,
-                        )
-                        .flatMap((cat) => cat.children || [])
-                        .map((subcategory) => (
-                          <option key={subcategory.id} value={subcategory.id}>
-                            {subcategory.name}
-                          </option>
-                        ))}
+                      {formData.categoryId && 
+                        categories
+                          .find(cat => cat.id === formData.categoryId)
+                          ?.children
+                          ?.map((subcategory) => (
+                            <option key={subcategory.id} value={subcategory.id}>
+                              {subcategory.name}
+                            </option>
+                          ))
+                      }
                     </select>
                   </div>
                 </div>
@@ -1785,6 +1939,24 @@ export default function EnhancedProductForm({
                         Festival Offer
                       </label>
                     </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isFeatured"
+                        checked={formData.isFeatured}
+                        onChange={(e) =>
+                          handleInputChange("isFeatured", e.target.checked)
+                        }
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="isFeatured"
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        Featured
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1920,16 +2092,24 @@ export default function EnhancedProductForm({
                       </label>
                       <input
                         type="text"
-                        value={
-                          formData.productCode
-                            ?.toLowerCase()
-                            .replace(/\s+/g, "-") || ""
-                        }
+                        value={formData.slug}
                         onChange={(e) => {
                           const slug = e.target.value
                             .toLowerCase()
                             .replace(/[^a-z0-9-]/g, "-");
-                          handleInputChange("productCode", slug);
+                          handleInputChange("slug", slug);
+                          setSlugManuallyEdited(true); // Mark that the slug has been manually edited
+                        }}
+                        onBlur={() => {
+                          // Auto-generate slug from product name if slug is empty
+                          if (!formData.slug) {
+                            const autoSlug = formData.name
+                              .toLowerCase()
+                              .replace(/\s+/g, "-")
+                              .replace(/[^a-z0-9-]/g, "-");
+                            handleInputChange("slug", autoSlug);
+                            setSlugManuallyEdited(false); // Reset the manual edit flag if auto-generated
+                          }
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                         placeholder="product-url-slug"
@@ -2206,7 +2386,7 @@ export default function EnhancedProductForm({
                           const files = Array.from(e.target.files);
                           // Limit to 8 images total
                           const currentImagesCount = formData.images.length;
-                          const remainingSlots = 8 - currentImagesCount;
+                          const remainingSlots = 12 - currentImagesCount;
                           const filesToAdd = files.slice(0, remainingSlots);
 
                           if (filesToAdd.length > 0) {
@@ -2261,11 +2441,11 @@ export default function EnhancedProductForm({
                         Supports JPG, PNG, WEBP (Max 5MB each)
                       </p>
                       <p className="text-xs text-gray-400 mt-2">
-                        Maximum 8 images allowed
+                        Maximum 12 images allowed
                       </p>
                     </label>
                     <p className="text-xs text-gray-500 mt-2">
-                      {formData.images.length}/8 images uploaded
+                      {formData.images.length}/12 images uploaded
                     </p>
                   </div>
 

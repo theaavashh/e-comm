@@ -37,6 +37,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import DashboardLayout from '@/components/DashboardLayout';
 
 // --- Types ---
 interface NavigationItem {
@@ -642,6 +643,12 @@ export default function NavigationPage() {
                 { withCredentials: true }
             );
             toast.success('Navigation saved successfully');
+            
+            // Refresh the navigation data to ensure it's updated
+            const navRes = await axios.get(`${getApiBaseUrl()}/api/v1/configuration/public/navigation`);
+            if (navRes.data.success) {
+                setItems(navRes.data.data || []);
+            }
         } catch (err) {
             toast.error('Failed to save navigation');
             console.error(err);
@@ -651,21 +658,22 @@ export default function NavigationPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 custom-font">Navigation Management</h1>
-                    <p className="text-gray-600 mt-1 custom-font">Drag to reorder, click edit to manage dropdown content</p>
+        <DashboardLayout title="Navigation Management">
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 custom-font">Navigation Management</h1>
+                        <p className="text-gray-600 mt-1 custom-font">Drag to reorder, click edit to manage dropdown content</p>
+                    </div>
+                    <button
+                        onClick={handleSaveAll}
+                        disabled={isSaving}
+                        className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold disabled:opacity-50"
+                    >
+                        {isSaving ? <RotateCcw className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />}
+                        Save Changes
+                    </button>
                 </div>
-                <button
-                    onClick={handleSaveAll}
-                    disabled={isSaving}
-                    className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold disabled:opacity-50"
-                >
-                    {isSaving ? <RotateCcw className="animate-spin mr-2" /> : <Save className="mr-2 w-4 h-4" />}
-                    Save Changes
-                </button>
-            </div>
 
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                 <DndContext
@@ -800,5 +808,5 @@ export default function NavigationPage() {
                 </div>
             )}
         </div>
-    );
-}
+    </DashboardLayout>
+);}

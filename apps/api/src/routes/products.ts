@@ -31,6 +31,7 @@ import {
   createProductSchema,
   updateProductSchema,
   paginationSchema,
+  productQuerySchema,
   createPricingTierSchema,
   updatePricingTierSchema,
   createProductAttributeSchema,
@@ -43,7 +44,7 @@ const router = Router();
 // Public routes
 router.get(
   "/",
-  validateQuery(paginationSchema),
+  validateQuery(productQuerySchema),
   validatePagination,
   asyncHandler(getProducts),
 );

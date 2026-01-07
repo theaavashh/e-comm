@@ -66,11 +66,17 @@ router.post('/test', async (req, res) => {
       });
     }
 
-    // Allow relative paths like "/banner.jpg" by prefixing the web origin
+    // Store only the relative path in the database
+    // If it's already a full URL, keep it as is
+    // If it's a relative path, store it as is
+    let storedImageUrl = imageUrl;
     const isAbsolute = /^https?:\/\//i.test(imageUrl);
-    if (!isAbsolute && imageUrl.startsWith('/')) {
-      const webOrigin = process.env.WEB_ORIGIN || 'http://localhost:3000';
-      imageUrl = `${webOrigin}${imageUrl}`;
+    if (isAbsolute) {
+      // For absolute URLs (like Cloudinary), store as is
+      storedImageUrl = imageUrl;
+    } else {
+      // For relative paths, ensure they start with a slash and store as is
+      storedImageUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
     }
 
     // Normalize optional fields
@@ -80,11 +86,11 @@ router.post('/test', async (req, res) => {
 
     const slider = (prisma as any).slider?.create
       ? await (prisma as any).slider.create({
-          data: { imageUrl, internalLink, isActive, order },
+          data: { imageUrl: storedImageUrl, internalLink, isActive, order },
         })
       : (await prisma.$queryRawUnsafe<any[]>(
           'INSERT INTO "sliders" (id, "imageUrl", "internalLink", "isActive", "order", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW(), NOW()) RETURNING *',
-          imageUrl,
+          storedImageUrl,
           internalLink,
           isActive,
           order
@@ -109,7 +115,7 @@ router.post('/test', async (req, res) => {
 router.post('/', adminAuth, async (req, res) => {
   try {
     console.log('Creating slider with data:', req.body);
-    const { imageUrl, internalLink, isActive, order } = req.body;
+    let { imageUrl, internalLink, isActive, order } = req.body;
 
     if (!imageUrl) {
       console.log('Missing imageUrl in request');
@@ -117,6 +123,19 @@ router.post('/', adminAuth, async (req, res) => {
         success: false,
         message: 'Image URL is required'
       });
+    }
+
+    // Store only the relative path in the database
+    // If it's already a full URL, keep it as is
+    // If it's a relative path, store it as is
+    let storedImageUrl = imageUrl;
+    const isAbsolute = /^https?:\/\//i.test(imageUrl);
+    if (isAbsolute) {
+      // For absolute URLs (like Cloudinary), store as is
+      storedImageUrl = imageUrl;
+    } else {
+      // For relative paths, ensure they start with a slash and store as is
+      storedImageUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
     }
 
     // Get the next order number if not provided
@@ -127,11 +146,11 @@ router.post('/', adminAuth, async (req, res) => {
       : (await prisma.$queryRawUnsafe<any[]>('SELECT * FROM "sliders" ORDER BY "order" DESC LIMIT 1'))?.[0];
       sliderOrder = lastSlider ? lastSlider.order + 1 : 1;
     }
-
+    
     const slider = (prisma as any).slider?.create
       ? await (prisma as any).slider.create({
           data: {
-            imageUrl,
+            imageUrl: storedImageUrl,
             internalLink: internalLink || '',
             isActive: isActive !== undefined ? isActive : true,
             order: sliderOrder,
@@ -139,7 +158,7 @@ router.post('/', adminAuth, async (req, res) => {
         })
       : (await prisma.$queryRawUnsafe<any[]>(
           'INSERT INTO "sliders" (id, "imageUrl", "internalLink", "isActive", "order", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW(), NOW()) RETURNING *',
-          imageUrl,
+          storedImageUrl,
           internalLink || '',
           isActive !== undefined ? isActive : true,
           sliderOrder
@@ -164,12 +183,11 @@ router.post('/', adminAuth, async (req, res) => {
 router.put('/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { imageUrl, internalLink, isActive, order } = req.body;
+    let { imageUrl, internalLink, isActive, order } = req.body;
 
     const existingSlider = (prisma as any).slider?.findUnique
       ? await (prisma as any).slider.findUnique({ where: { id } })
       : (await prisma.$queryRawUnsafe<any[]>('SELECT * FROM "sliders" WHERE id = $1 LIMIT 1', id))?.[0];
-
     if (!existingSlider) {
       return res.status(404).json({
         success: false,
@@ -178,7 +196,21 @@ router.put('/:id', adminAuth, async (req, res) => {
     }
 
     const updateData: any = {};
-    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    
+    if (imageUrl !== undefined) {
+      // Store only the relative path in the database
+      // If it's already a full URL, keep it as is
+      // If it's a relative path, store it as is
+      const isAbsolute = /^https?:\/\//i.test(imageUrl);
+      if (isAbsolute) {
+        // For absolute URLs (like Cloudinary), store as is
+        updateData.imageUrl = imageUrl;
+      } else {
+        // For relative paths, ensure they start with a slash and store as is
+        updateData.imageUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+      }
+    }
+    
     if (internalLink !== undefined) updateData.internalLink = internalLink;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (order !== undefined) updateData.order = order;

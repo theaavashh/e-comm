@@ -479,6 +479,22 @@ export const paginationSchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
+// Product query schema with filtering support
+export const productQuerySchema = z.object({
+  page: z.string().transform(Number).default("1"),
+  limit: z.string().transform(Number).default("10"),
+  sortBy: z.string().default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  rawCategory: z.string().optional(),
+  categories: z.string().optional(), // Support 'categories' alias
+  subcategory: z.string().optional(),
+  minPrice: z.string().transform(Number).optional(),
+  maxPrice: z.string().transform(Number).optional(),
+  search: z.string().optional(),
+  isActive: z.string().default("true"),
+  country: z.string().optional(),
+});
+
 export const searchSchema = z.object({
   q: z.string().min(1, "Search query is required"),
   category: z.string().optional(),

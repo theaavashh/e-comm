@@ -184,7 +184,9 @@ export const getProducts = async (req: Request, res: Response) => {
     limit = 10,
     sortBy = "createdAt",
     sortOrder = "desc",
-    category,
+    rawCategory: rawCategoryParam,
+    categories: categoriesParam, // Support 'categories' parameter
+    subcategory: rawSubcategory,
     minPrice,
     maxPrice,
     search,
@@ -192,42 +194,156 @@ export const getProducts = async (req: Request, res: Response) => {
     country, // User's country for pricing
   } = req.query;
 
+  // Support both 'rawCategory' and 'categories' parameter names
+  const finalCategoryParam = rawCategoryParam || categoriesParam;
+
   try {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
+
+    // Convert rawCategory to string
+    const rawCategory = Array.isArray(finalCategoryParam)
+      ? finalCategoryParam[0]
+      : finalCategoryParam;
+
+    // Track if main category was not found
+    let mainCategoryNotFound = false;
+
+    console.log(`DEBUG: Processing rawCategory: ${rawCategory}`);
+    logger.info(`Processing rawCategory: ${rawCategory}`);
 
     // Build where clause
     const where: any = {
       isActive: isActive === "true",
     };
 
-    if (category) {
+    if (rawCategory) {
       // Check if category is an ID (UUID format) or name/slug
       const isUUID =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          category as string,
+          rawCategory as string,
         );
 
       if (isUUID) {
-        // If it's a UUID, use it as categoryId
-        where.categoryId = category;
+        // If it's a UUID, find the category and include its subcategories
+        const mainCategory = await prisma.category.findUnique({
+          where: { id: rawCategory as string },
+        });
+
+        if (mainCategory) {
+          // Include both main category products and subcategory products
+          where.OR = [
+            { categoryId: rawCategory },
+            { subCategoryId: rawCategory },
+          ];
+
+          // Also include products from subcategories of this main category
+          const subcategories = await prisma.category.findMany({
+            where: { parentId: rawCategory, isActive: true },
+            select: { id: true },
+          });
+
+          if (subcategories.length > 0) {
+            const subcategoryIds = subcategories.map((sc) => sc.id);
+            where.OR.push({ categoryId: { in: subcategoryIds } });
+            where.OR.push({ subCategoryId: { in: subcategoryIds } });
+          }
+        } else {
+          // If category not found, return empty results
+          // Set a condition that will never match any real product
+          where.id = "00000000-0000-0000-0000-000000000000"; // Valid UUID format that will never match
+          mainCategoryNotFound = true;
+        }
       } else {
         // If it's a name or slug, find the category first
         const categoryRecord = await prisma.category.findFirst({
           where: {
             OR: [
-              { name: { equals: category as string, mode: "insensitive" } },
-              { slug: { equals: category as string, mode: "insensitive" } },
+              { name: { equals: rawCategory as string, mode: "insensitive" } },
+              { slug: { equals: rawCategory as string, mode: "insensitive" } },
             ],
             isActive: true,
           },
         });
 
         if (categoryRecord) {
-          where.categoryId = categoryRecord.id;
+          // Include both main category products and subcategory products
+          where.OR = [
+            { categoryId: categoryRecord.id },
+            { subCategoryId: categoryRecord.id },
+          ];
+
+          // Also include products from subcategories of this main category
+          const subcategories = await prisma.category.findMany({
+            where: { parentId: categoryRecord.id, isActive: true },
+            select: { id: true },
+          });
+
+          if (subcategories.length > 0) {
+            const subcategoryIds = subcategories.map((sc) => sc.id);
+            where.OR.push({ categoryId: { in: subcategoryIds } });
+            where.OR.push({ subCategoryId: { in: subcategoryIds } });
+          }
         } else {
           // If category not found, return empty results
-          where.categoryId = "non-existent-category-id";
+          // Set a condition that will never match any real product
+          logger.info(
+            `Category not found: ${rawCategory}, returning empty results`,
+          );
+          where.id = "00000000-0000-0000-0000-000000000000"; // Valid UUID format that will never match
+        }
+      }
+    }
+
+    // Handle subcategory parameter if provided
+    if (rawSubcategory) {
+      const subcategory = Array.isArray(rawSubcategory)
+        ? rawSubcategory[0]
+        : rawSubcategory;
+      if (subcategory) {
+        // Check if subcategory is an ID (UUID format) or name/slug
+        const isUUID =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            subcategory as string,
+          );
+
+        if (isUUID) {
+          // If it's a UUID, use it directly to filter by subCategoryId
+          if (where.OR) {
+            // Add subcategory filter to existing OR conditions
+            where.OR = where.OR.map((condition: any) => ({
+              AND: [condition, { subCategoryId: subcategory }],
+            }));
+          } else {
+            where.subCategoryId = subcategory;
+          }
+        } else {
+          // If it's a name or slug, find the subcategory first
+          const subcategoryRecord = await prisma.category.findFirst({
+            where: {
+              OR: [
+                {
+                  name: { equals: subcategory as string, mode: "insensitive" },
+                },
+                {
+                  slug: { equals: subcategory as string, mode: "insensitive" },
+                },
+              ],
+              isActive: true,
+            },
+          });
+
+          if (subcategoryRecord) {
+            // Update the where clause to filter by subCategoryId
+            if (where.OR) {
+              // Add subcategory filter to existing OR conditions
+              where.OR = where.OR.map((condition: any) => ({
+                AND: [condition, { subCategoryId: subcategoryRecord.id }],
+              }));
+            } else {
+              where.subCategoryId = subcategoryRecord.id;
+            }
+          }
         }
       }
     }
@@ -236,11 +352,20 @@ export const getProducts = async (req: Request, res: Response) => {
     // TODO: Implement price filtering using currencyPrices if needed
 
     if (search) {
-      where.OR = [
+      const searchConditions = [
         { name: { contains: search as string, mode: "insensitive" } },
         { description: { contains: search as string, mode: "insensitive" } },
         { sku: { contains: search as string, mode: "insensitive" } },
       ];
+
+      // If there are existing OR conditions (from category filtering), combine them
+      if (where.OR && where.OR.length > 0) {
+        // Create AND condition between category OR and search OR
+        where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+        delete where.OR;
+      } else {
+        where.OR = searchConditions;
+      }
     }
 
     // Build orderBy clause
