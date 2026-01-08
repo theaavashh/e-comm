@@ -36,7 +36,7 @@ export default function Footer() {
 
           {/* About Section */}
           <div className="space-y-1">
-            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-1 font-inter">About</h3>
+            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-1 font-bricolage">About</h3>
             <ul className="space-y-1">
               <li>
                 <Link href="/about/company" className="text-sm font-inter text-white hover:text-white transition-colors">
@@ -58,7 +58,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white font-extrabold text-xl lg:text-2xl mb-2 font-mono">Quick Links</h3>
+            <h3 className="text-white font-extrabold text-xl lg:text-2xl mb-2 font-bricolage">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/foods" className="text-sm text-white hover:text-white transition-colors">
@@ -100,7 +100,7 @@ export default function Footer() {
 
           {/* Customer Service */}
           <div>
-            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-inter">Customer Service</h3>
+            <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-bricolage">Customer Service</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/account" className="text-sm text-white hover:text-white transition-colors">
@@ -148,7 +148,7 @@ export default function Footer() {
           {/* Contact Info & Newsletter */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-mono">Get in Touch</h3>
+              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-bricolage">Get in Touch</h3>
               <ul className="space-y-3">
                 <li className="flex items-start space-x-3">
                   <MapPin className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
@@ -172,7 +172,7 @@ export default function Footer() {
             </div>
 
             <div>
-              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-inter">Social</h3>
+              <h3 className="text-white font-extrabold text-xl md:text-2xl mb-2 font-bricolage">Social</h3>
               <div className="flex space-x-4">
                 <a 
                   href="https://www.facebook.com" 
@@ -211,12 +211,12 @@ export default function Footer() {
       <div className="border-t border-[#363636] bg-[#262626] font-inter">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-sm text-white text-center md:text-left opacity-80">
-              <p>
+            <div className="text-sm md:text-xl text-white text-center md:text-left opacity-80">
+              <p className='font-bricolage'>
                 © {currentYear} GharSamma. All rights reserved.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center md:justify-end space-x-4 sm:space-x-6 text-sm">
+            <div className="flex flex-wrap justify-center md:justify-end space-x-4 sm:space-x-6 text-sm font-bricolage">
               <Link href="#" className="text-white hover:text-white transition-colors opacity-80 hover:opacity-100">
                 Privacy Policy
               </Link>

@@ -157,12 +157,12 @@ const Foods = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="mb-4 sm:mb-0 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl md:text-4xl font-medium text-gray-900 font-mono">
+              <h2 className="text-2xl md:text-4xl font-semibold text-gray-900 font-bricolage">
                 Foods
               </h2>
               <button
                 onClick={() => router.push("/products/foods")}
-                className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
+                className="text-base md:text-lg text-[#EB6426] transition-colors duration-200 font-medium"
               >
                 View More
               </button>

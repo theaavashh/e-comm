@@ -231,7 +231,7 @@ export default function TopBannerPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold font-poppins text-gray-900">
+            <h1 className="text-2xl font-bold font-bricolag text-gray-900">
               Top Banner Management
             </h1>
             <p className="text-gray-600">

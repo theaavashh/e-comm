@@ -10,6 +10,7 @@ import {
   X,
   Eye,
   AlertTriangle,
+  FileSymlink,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -567,7 +568,10 @@ export default function CategoryPage() {
     return parents;
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // State to hold the selected image file before upload
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -578,41 +582,18 @@ export default function CategoryPage() {
     }
 
     // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size must be less than 5MB");
       return;
     }
 
-    try {
-      setIsUploadingImage(true);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const response = await axios.post<UploadImageResponse>(
-        `${API_BASE_URL}/api/v1/upload/category`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-
-      if (response.data.success) {
-        setValue("image", response.data.data.url);
-        toast.success("Image uploaded successfully");
-      } else {
-        throw new Error(response.data.message || "Failed to upload image");
-      }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || err.message || "Failed to upload image";
-      toast.error(errorMessage);
-    } finally {
-      setIsUploadingImage(false);
-    }
+    // Store the file in state to be uploaded later
+    setPendingImageFile(file);
+    
+    // Create a preview URL for immediate display
+    const previewUrl = URL.createObjectURL(file);
+    setValue("image", previewUrl);
+    toast.success("Image selected. Will be uploaded when you save the category.");
   };
 
   const onSubmit = async (data: CategoryFormData) => {
@@ -625,10 +606,46 @@ export default function CategoryPage() {
       toast.error("Name is required");
       return;
     }
-    if (!data.image) {
+    
+    // Handle image upload if there's a pending image file
+    let finalImageData = data.image;
+    if (pendingImageFile) {
+      try {
+        setIsLoading(true);
+        
+        // Upload the image file
+        const formData = new FormData();
+        formData.append("image", pendingImageFile);
+        
+        const response = await axios.post<UploadImageResponse>(
+          `${API_BASE_URL}/api/v1/upload/category`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+        
+        if (response.data.success) {
+          finalImageData = response.data.data.url;
+          toast.success("Image uploaded successfully");
+        } else {
+          throw new Error(response.data.message || "Failed to upload image");
+        }
+      } catch (err: any) {
+        const errorMessage =
+          err.response?.data?.message || err.message || "Failed to upload image";
+        toast.error(`Image upload failed: ${errorMessage}`);
+        setIsLoading(false);
+        return;
+      }
+    } else if (!data.image) {
+      // If no pending file and no image URL, image is required
       toast.error("Image is required");
       return;
     }
+    
     // Internal link is only required for main categories
     // Check if this is a main category (either during creation or editing)
     const isMainCategory = editingCategory
@@ -656,7 +673,7 @@ export default function CategoryPage() {
     // Construct form data according to the schema
     const formData: CategoryFormData = {
       name: data.name,
-      image: data.image,
+      image: finalImageData, // Use the uploaded image URL
       status: data.status,
       isSubCategory: isSubCategory,
       parentId: data.parentId || undefined,
@@ -674,6 +691,10 @@ export default function CategoryPage() {
       // Update existing category
       const success = await updateCategory(editingCategory.id, formData);
       if (success) {
+        // Clean up pending image file
+        if (pendingImageFile) {
+          setPendingImageFile(null);
+        }
         setShowEditModal(false);
         setEditingCategory(null);
         reset({
@@ -693,6 +714,10 @@ export default function CategoryPage() {
       // Create new category
       const result = await createCategory(formData);
       if (result.success) {
+        // Clean up pending image file
+        if (pendingImageFile) {
+          setPendingImageFile(null);
+        }
         // After successful creation, move to next step or close modal
         if (creationStep === "main") {
           // Use the created category ID as parent for sub-category
@@ -880,7 +905,7 @@ export default function CategoryPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200 title-regular">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200 ">
           Category
         </h1>
         {/* Search and Add Button */}
@@ -912,7 +937,7 @@ export default function CategoryPage() {
               setLastCreatedCategoryId(null);
               setShowAddModal(true);
             }}
-            className="bg-[#EB2464] text-white px-6 py-2 rounded-lg hover:bg-[#d01e57] transition-colors flex items-center space-x-2"
+            className="bg-[#EB6426] text-white px-6 py-2 rounded-lg hover:bg-[#d01e57] transition-colors flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add Category</span>
@@ -993,14 +1018,15 @@ export default function CategoryPage() {
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
                   whileHover={{ y: -2, scale: 1.01 }}
                 >
-                  <div className="p-4">
+                  <div >
                     {/* Category Image Thumbnail */}
-                    <div className="mb-4 rounded-lg overflow-hidden bg-gray-50 border border-gray-200">
+                    <div className="overflow-hidden ">
+                     
                       {category.image ? (
                         <img
                           src={getFullImageUrl(category.image)}
                           alt={category.name}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-auto object-contain"
                           onError={(e) => {
                             e.currentTarget.src = "/image.png"; // Fallback to placeholder
                           }}
@@ -1014,93 +1040,35 @@ export default function CategoryPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                    <div className="flex items-center justify-between mb-2 px-4">
+                      <h3 className="text-2xl font-medium text-gray-900">
                         {category.name}
                       </h3>
-                      <div className="flex flex-col items-end space-y-2">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            category.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {category.status}
-                        </span>
+                      <div className="flex flex-col items-end ">
+                        
                         {/* Image Preview Button */}
                         <button
                           onClick={() => handleImagePreview(category.image)}
-                          className="bg-gray-50 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex items-center justify-center border border-gray-200"
+                          className="text-[#EB6426] px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex items-center justify-center"
                           title="Preview Image"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mb-3">
-                      Created: {category.createdAt}
-                    </p>
+                   
 
                     {/* Internal Link - Prominently Displayed */}
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <svg
-                          className="w-4 h-4 text-blue-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                          />
-                        </svg>
-                        <span className="text-xs font-medium text-blue-700">
-                          Internal Link
-                        </span>
-                      </div>
+                    <div className="mx-2 p-3 ">
                       <div className="flex items-center space-x-2">
-                        <code className="text-sm text-blue-600 font-mono bg-blue-100 px-2 py-1 rounded">
-                          {category.internalLink || "No link set"}
-                        </code>
-                        {category.internalLink && (
-                          <a
-                            href={category.internalLink}
-                            target={
-                              category.internalLink.startsWith("http")
-                                ? "_blank"
-                                : "_self"
-                            }
-                            rel={
-                              category.internalLink.startsWith("http")
-                                ? "noopener noreferrer"
-                                : undefined
-                            }
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Open link"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                          </a>
-                        )}
+                        <FileSymlink className="w-4 h-4 text-[#EB6426]" />
+                        <span className="text-xs font-medium text-[#EB6426]">
+                          Internal Link: {category.internalLink || "No link set"}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 m-4">
                       <button
                         onClick={() => handleEditClick(category)}
                         className="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs hover:bg-blue-100 transition-colors flex items-center space-x-1"
@@ -1175,7 +1143,7 @@ export default function CategoryPage() {
                               <div key={subCategory.id} className="space-y-2">
                                 {/* First Level Subcategory */}
                                 <motion.div
-                                  className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+                                  className=" overflow-hidden"
                                   initial={{ opacity: 0, x: -20 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{
@@ -1185,27 +1153,6 @@ export default function CategoryPage() {
                                   whileHover={{ y: -2, scale: 1.01 }}
                                 >
                                   <div className="p-3">
-                                    {/* Subcategory Image Thumbnail */}
-                                    <div className="mb-3 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                      {subCategory.image ? (
-                                        <img
-                                          src={getFullImageUrl(
-                                            subCategory.image,
-                                          )}
-                                          alt={subCategory.name}
-                                          className="w-full h-24 object-cover"
-                                          onError={(e) => {
-                                            e.currentTarget.src = "/image.png"; // Fallback to placeholder
-                                          }}
-                                        />
-                                      ) : (
-                                        <div className="w-full h-24 bg-gray-200 flex items-center justify-center">
-                                          <span className="text-gray-400 text-xs">
-                                            No Image
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
 
                                     <div className="flex items-center justify-between mb-2">
                                       <h5 className="text-sm font-semibold text-gray-900">
@@ -1238,7 +1185,7 @@ export default function CategoryPage() {
                                         onClick={() =>
                                           handleImagePreview(subCategory.image)
                                         }
-                                        className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs hover:bg-gray-200 transition-colors flex items-center justify-center border border-gray-300"
+                                        className="text-[#EB6426] px-2 py-1 rounded text-xs hover:bg-gray-200 transition-colors flex items-center justify-center "
                                         title="Preview Image"
                                       >
                                         <Eye className="w-3 h-3" />
@@ -1328,7 +1275,7 @@ export default function CategoryPage() {
                                                 ) => (
                                                   <motion.div
                                                     key={nestedSubCategory.id}
-                                                    className="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden"
+                                                    className="overflow-hidden"
                                                     initial={{
                                                       opacity: 0,
                                                       x: -20,
@@ -1349,30 +1296,6 @@ export default function CategoryPage() {
                                                     }}
                                                   >
                                                     <div className="p-3">
-                                                      {/* Nested Subcategory Image Thumbnail */}
-                                                      <div className="mb-3 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                                        {nestedSubCategory.image ? (
-                                                          <img
-                                                            src={getFullImageUrl(
-                                                              nestedSubCategory.image,
-                                                            )}
-                                                            alt={
-                                                              nestedSubCategory.name
-                                                            }
-                                                            className="w-full h-20 object-cover"
-                                                            onError={(e) => {
-                                                              e.currentTarget.src =
-                                                                "/image.png"; // Fallback to placeholder
-                                                            }}
-                                                          />
-                                                        ) : (
-                                                          <div className="w-full h-20 bg-gray-200 flex items-center justify-center">
-                                                            <span className="text-gray-400 text-xs">
-                                                              No Image
-                                                            </span>
-                                                          </div>
-                                                        )}
-                                                      </div>
 
                                                       <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center space-x-2">
@@ -2040,7 +1963,7 @@ export default function CategoryPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+                    className="flex-1 bg-[#EB6426] text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
                   >
                     {isSubmitting
                       ? "Adding..."
@@ -2242,7 +2165,7 @@ export default function CategoryPage() {
                             {...field}
                             type="text"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black custom-font"
-                            placeholder="e.g., /foods, /products/electronics, https://example.com"
+                            placeholder="e.g., /foods, /products/"
                           />
                         )}
                       />
@@ -2344,12 +2267,13 @@ export default function CategoryPage() {
               </div>
               <div className="p-4">
                 <div className="flex items-center justify-center">
-                  <Image
+                  <img
                     src={previewImage}
                     alt="Category Image Preview"
-                    width={800}
-                    height={600}
                     className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.src = "/image.png"; // Fallback to placeholder
+                    }}
                   />
                 </div>
               </div>

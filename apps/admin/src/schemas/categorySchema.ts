@@ -15,6 +15,7 @@ export const categorySchema = z
         if (!val) return true; // Optional field
         return (
           val.startsWith("data:image/") ||
+          val.startsWith("blob:") || // Allow blob URLs for local file previews
           val.startsWith("http") ||
           val.startsWith("https://res.cloudinary.com") ||
           val.startsWith("/uploads/")

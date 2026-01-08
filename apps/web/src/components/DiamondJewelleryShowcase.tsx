@@ -139,7 +139,7 @@ export default function DiamondJewelleryShowcase() {
       <div className="py-8 sm:py-10 md:py-12 bg-white">
         <div className="max-w-7xl mx-4 sm:mx-6 lg:mx-8 px-4 sm:px-6 lg:px-8">
           <div className="text-left mb-8 sm:mb-10 font-inter">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Most-Loved Diamond Picks</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-bricolage">Most-Loved Diamond Picks</h2>
             <p className="mt-2 text-gray-600 text-base sm:text-lg md:text-xl">Where elegance meets everyday luxury</p>
           </div>
           <div className="relative">
@@ -183,8 +183,8 @@ export default function DiamondJewelleryShowcase() {
     <div className="py-8 sm:py-10 bg-white">
       <div className="max-w-8xl mx-4 sm:mx-6 lg:mx-24 px-4 sm:px-6 lg:px-8">
         <div className="text-left mb-8 sm:mb-10 font-inter">
-          <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 font-mono">Most-Loved Diamond Picks</h2>
-          <p className="mt-2 text-gray-600 text-base sm:text-lg md:text-xl">Where elegance meets everyday luxury</p>
+          <h2 className="text-2xl sm:text-3xl font-medium text-gray-900 font-bricolage">Most-Loved Diamond Picks</h2>
+          <p className="text-gray-600 text-base sm:text-lg ">Where elegance meets everyday luxury</p>
         </div>
         
         {products.length > 0 ? (
@@ -246,11 +246,11 @@ export default function DiamondJewelleryShowcase() {
                        
                         <div className="text-center">
                           <Link href={`/product/${product.id}`}>
-                           <h3 className="font-extrabold text-[#EB6426] font-inter text-center text-lg sm:text-xl leading-snug line-clamp-2 transition-colors cursor-pointer">
+                           <h3 className="font-semibold text-[#EB6426] font-bricolage text-center text-lg sm:text-xl leading-snug line-clamp-2 transition-colors cursor-pointer">
                              {product.name}
                            </h3>
 
-                           <h5 className='font-semibold font-inter text-gray-800 text-base sm:text-lg pt-3 sm:pt-4 leading-snug line-clamp-2 transition-colors cursor-pointer'>{product.description}</h5>
+                           <h5 className='font-medium font-inter text-gray-800 text-base sm:text-lg pt-3 sm:pt-4 leading-snug line-clamp-2 transition-colors cursor-pointer'>{product.description}</h5>
                          </Link>
                         </div>
                       </div>

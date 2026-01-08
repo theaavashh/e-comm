@@ -1,4 +1,4 @@
-import { Inter, Poppins } from 'next/font/google'
+import { Inter, Bricolage_Grotesque } from 'next/font/google'
 
 export const inter = Inter({
   variable: '--font-inter',
@@ -7,8 +7,7 @@ export const inter = Inter({
   display: 'swap',
 });
 
-export const poppins = Poppins({
-  variable: '--font-poppins',
+export const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   display: 'swap',

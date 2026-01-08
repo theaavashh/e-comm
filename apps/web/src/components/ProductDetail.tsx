@@ -1060,7 +1060,7 @@ export default function ProductDetail({
                <h3 className="text-lg text-[#EB6426] underline">{product.slug}</h3>
               <div className="flex items-center justify-between my-2">
                
-                <h1 className="text-2xl font-semibold font-poppins text-gray-900">
+                <h1 className="text-2xl font-semibold font-bricolag text-gray-900">
                   {product.name}
                 
                 </h1>
@@ -1084,7 +1084,7 @@ export default function ProductDetail({
                   </div>
 
             {/* Price */}
-            <div className="space-y-5 py-4 font-poppins border-t border-b border-gray-300">
+            <div className="space-y-5 py-4 font-bricolag border-t border-b border-gray-300">
               <div className="flex items-start justify-between">
                 {/* Left Side - Price and Tax */}
                 <div>

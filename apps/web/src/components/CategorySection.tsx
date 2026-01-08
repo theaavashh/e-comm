@@ -210,11 +210,11 @@ export default function CategorySection() {
       <div className="mb-6 md:mb-8 mx-4 sm:mx-8 md:mx-12 lg:mx-20 mt-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 md:gap-0">
           <h2 className="custom-font">
-            <span className="text-xl sm:text-3xl text-black font-inter font-bold">
+            <span className="text-xl sm:text-4xl text-black font-bricolage font-semibold">
               Shop More By Category
             </span>
           </h2>
-          <p className="text-gray-600 font-medium text-sm md:text-lg lg:text-xl font-inter">
+          <p className="text-gray-900 font-medium text-sm md:text-lg lg:text-xl font-bricolage">
             Discover our curated collection
           </p>
         </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BottomNavWrapper from "@/components/BottomNavWrapper";
@@ -8,14 +8,14 @@ import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
 import ConditionalHeader from "@/components/ConditionalHeader";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
 const inter = Inter({
-  variable: "--font-inter",
+  variable:"--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -47,7 +47,7 @@ export default function RootLayout({
           }
         />
       </head>
-      <body className={`${inter.variable} ${poppins.variable} antialiased`}>
+      <body className={`${inter.variable} ${bricolage.variable} antialiased`}>
         <Providers>
           <ConditionalHeader />
           <div className="min-h-screen flex flex-col">

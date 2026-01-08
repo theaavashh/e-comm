@@ -337,10 +337,10 @@ const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
           transition={{ duration: 0.6 }}
           className="text-left mb-6 sm:mb-8 md:mb-12 w-full"
         >
-          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold mb-2 font-inter px-4 sm:px-0">
+          <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold  mb-2 font-bricolage px-4 sm:px-0">
             For You
           </h2>
-          <p className="text-sm sm:text-base md:text-xl text-gray-600 max-w-9xl mx-auto px-4 sm:px-0">
+          <p className="text-sm sm:text-base md:text-xl font-normal text-gray-600 max-w-9xl mx-auto px-4 sm:px-0">
             Discover personalized product recommendations just for you
           </p>
         </motion.div>
@@ -373,7 +373,7 @@ const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
                   {/* Price */}
                   <div className="space-y-1 mb-2">
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg md:text-xl font-extrabold text-[#EB6426]">
+                      <span className="text-lg md:text-2xl font-extrabold text-[#EB6426] font-bricolage">
                         $
                         {new Intl.NumberFormat("en-US", {
                           minimumFractionDigits: 2,
@@ -382,7 +382,7 @@ const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
                       </span>
                       {product.comparePrice &&
                         product.comparePrice > product.price && (
-                          <span className="text-xs md:text-sm text-gray-500 line-through">
+                          <span className="text-xs md:text-sm text-gray-500 line-through font-bricolage">
                             <sup className="text-[0.7em]">$</sup>
                             {new Intl.NumberFormat("en-US", {
                               minimumFractionDigits: 2,
@@ -407,7 +407,7 @@ const ForYou: React.FC<ForYouProps> = ({ className = "" }) => {
                   </div>
 
                   {/* Product Name */}
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                  <h3 className="text-sm sm:text-base md:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300 font-bricolage">
                     {product.name}
                   </h3>
 

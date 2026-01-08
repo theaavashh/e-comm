@@ -3,7 +3,7 @@ import "./globals.css";
 import StoreProvider from "@/store/StoreProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "react-hot-toast";
-import { inter, poppins } from './fonts';
+import { bricolage } from './fonts';
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${poppins.variable} antialiased font-inter`}
+        className={` ${bricolage.className} antialiased `}
       >
         <StoreProvider>
           <AuthProvider>

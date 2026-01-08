@@ -72,18 +72,17 @@ export default function OngoingSales() {
       <div className="max-w-8xl mx-auto pl-3 pr-3">
         <div className="flex flex-row items-center justify-between mb-5 mx-3">
           <div className="mb-4 sm:mb-0">
-            <h2 className="text-xl md:text-4xl font-bold text-gray-900 font-poppins mb-2">
-              {" "}
+            <h2 className="text-xl md:text-4xl font-bold text-gray-900 font-bricolage mb-2">
               Shop all Deals
             </h2>
-            <p className="text-md md:text-xl text-gray-900 font-inter">
+            <p className="text-md md:text-xl text-gray-900">
               Upto 30% OFF on all products
             </p>
           </div>
           <div>
             <Link
               href="/products"
-              className="inline-flex items-center underline text-sm md:text-md text-[#622A1F] hover:text-[#EB6426] transition-colors font-inter font-semibold group"
+              className="inline-flex items-center underline text-sm md:text-md text-[#EB6426] transition-colors font-inter font-semibold group"
             >
               <span>View More</span>
             </Link>
@@ -195,7 +194,7 @@ export default function OngoingSales() {
                     onClick={() => handleProductClick(product)}
                   >
                     {/* Image Container */}
-                    <div className="relative h-48 bg-white overflow-hidden">
+                    <div className="relative h-64 bg-white overflow-hidden">
                       <img
                         src={productImage}
                         alt={product.name}
@@ -222,7 +221,7 @@ export default function OngoingSales() {
                       {/* Price and Save */}
                       <div className="mt-1 pt-1">
                         <div className="flex items-baseline">
-                          <span className="text-xl font-bold text-[#EB6426]">
+                          <span className="text-2xl font-extrabold text-[#EB6426] font-bricolage">
                             Now $
                             {new Intl.NumberFormat("en-US", {
                               minimumFractionDigits: 2,
@@ -242,14 +241,14 @@ export default function OngoingSales() {
                       </div>
 
                       {/* Product Name */}
-                      <h3 className="text-lg font-inter pt-3 text-gray-900 mb-1 line-clamp-2  transition-colors duration-300">
+                      <h3 className="text-xl font-inter pt-3 text-gray-900 mb-1 line-clamp-2  transition-colors duration-300 font-bricolage">
                         {product.name}
                       </h3>
 
                       {/* Add to Cart Button - Rounded */}
                       <div className="mt-3 ">
                         <button
-                          className="w-full bg-[#EB6426] hover:bg-[#d65a1f] text-white py-2.5 px-4 rounded-full text-sm font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
+                          className="w-full bg-[#EB6426] hover:bg-[#d65a1f] text-white py-2.5 px-4 rounded-full text-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg font-bricolage"
                           onClick={(e) => handleAddToCart(product, e)}
                         >
                           <ShoppingCart className="h-4 w-4" />
@@ -259,7 +258,7 @@ export default function OngoingSales() {
 
                       <div className="flex justify-center mb-1 mt-3">
                         <Truck className="h-3.5 w-3.5 text-[#EB6426] mr-1" />
-                        <span className="text-xs font-medium text-[#EB6426]">
+                        <span className="text-xs font-medium text-[#EB6426] font-bricolage">
                           WorldWide Free Delivery
                         </span>
                       </div>

@@ -601,7 +601,7 @@ function DashboardContent() {
           <div className="space-y-6 mt-4">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-3xl font-medium font-poppins text-gray-900">
+                <h2 className="text-3xl font-medium font-bricolag text-gray-900">
                   Top Banner Management
                 </h2>
                 <h3 className="text-xl font-normal font-inter text-gray-600 mt-1">

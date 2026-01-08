@@ -75,18 +75,9 @@ export default function CategoryShowcase() {
       <div className="w-full">
         {/* Title Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <h2 className="text-xl md:text-2xl font-semibold font-mono text-gray-900">
-            Top Categories <span className="font-bold font-inter not-italic">We Serve</span>
+          <h2 className="text-xl md:text-3xl font-semibold font-bricolage text-gray-900">
+            Top Categories <span className="font-bold font-bricolage not-italic">We Serve</span>
           </h2>
-          <Link 
-            href="/categories" 
-            className="flex items-center text-sm md:text-base font-medium text-[#0077b6] hover:text-[#005f8f] transition-colors custom-font"
-          >
-            See More
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
         </div>
         
         {/* Horizontal Scrollable Container */}
@@ -95,7 +86,7 @@ export default function CategoryShowcase() {
             <div key={sectionIndex} className="flex-shrink-0 w-80 bg-white p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               {/* Section Header */}
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900 custom-font mb-1">
+                <h3 className="text-2xl font-bold text-gray-900 font-bricolage mb-1">
                   {section.title}
                 </h3>
                 {section.subtitle && (
@@ -136,7 +127,7 @@ export default function CategoryShowcase() {
               <div className="text-center">
                 <Link
                   href={section.linkHref}
-                  className="inline-flex items-center text-sm font-medium text-[#0077b6] hover:text-[#005f8f] transition-colors custom-font"
+                  className="inline-flex items-center text-sm font-medium text-[#EB6426] hover:text-[#005f8f] transition-colors custom-font"
                 >
                   {section.linkText}
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

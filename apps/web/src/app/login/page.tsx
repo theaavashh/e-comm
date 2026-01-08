@@ -501,7 +501,7 @@ const callbackUrl = searchParams?.get('callbackUrl') || '/';
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F0F2F5]">
+    <div className="min-h-screen flex flex-col bg-[#F0F2F5 font-bricolage]">
       
       <main className="flex-grow flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 pt-6">
         <div className="flex justify-start w-full max-w-md">

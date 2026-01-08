@@ -131,7 +131,7 @@ export default function CategoryListingPage() {
   );
 
   return (
-    <div className="min-h-screen font-inter mx-16">
+    <div className="min-h-screen font-bricolage mx-16">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumbs */}
         <div className="text-lg text-black mt-4">

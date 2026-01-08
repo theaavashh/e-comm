@@ -48,7 +48,7 @@ export default function Statues() {
     try {
       setLoading(true);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/products?categories=statue&limit=10&country=${selectedCountry || "USA"}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4444"}/api/v1/products?categories=statue&limit=10&country=${selectedCountry || "USA"}`,
       );
 
       if (!response.ok) {
@@ -67,7 +67,6 @@ export default function Statues() {
     }
   };
 
- 
   useEffect(() => {
     fetchStatueProducts();
   }, [selectedCountry]); // Re-fetch when country changes for pricing
@@ -314,18 +313,17 @@ export default function Statues() {
         </div>
 
         {/* Header */}
-        <div className="mb-8 mx-4 sm:mx-8 md:mx-16">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-inter">
-            Religious Statues2
+        <div className="mb-8 mx-2 sm:mx-8 ">
+          <h1 className="text-2xl sm:text-4xl font-semibold text-gray-900 font-bricolage">
+            Religious Statues
           </h1>
-          <p className="text-gray-600 mt-2 font-inter text-sm sm:text-base">
+          <p className="text-gray-600 mt-2 font-inter text-sm sm:text-lg">
             Discover our collection of authentic religious statues and idols
-            (using hardcoded data)
           </p>
         </div>
 
         {/* Scrollable Product Row with Arrows */}
-        <div className="relative mx-4 sm:mx-8 md:mx-16" id="statue-products">
+        <div className="relative" id="statue-products">
           {/* Left Arrow */}
           <button
             onClick={scrollLeft}
@@ -381,21 +379,21 @@ export default function Statues() {
 
                   {/* Price */}
                   <div className="mt-3 sm:mt-5 pl-4 sm:pl-6 text-xl sm:text-2xl">
-                    <span className="text-[#EB6426] font-extrabold font-inter">
+                    <span className="text-[#EB6426] font-extrabold font-bricolage">
                       ${product.price.toFixed(2)}
                     </span>
                   </div>
 
                   {/* Product Info */}
                   <div className="mt-2 flex-grow px-4 sm:px-6">
-                    <h3 className="text-black font-medium text-sm sm:text-md mb-1 line-clamp-2 font-inter group-hover/card:text-[#EB6426] transition-colors">
+                    <h3 className="text-black font-medium text-sm sm:text-lg mb-1 line-clamp-2 font-bricolage group-hover/card:text-[#EB6426] transition-colors">
                       {product.name}
                     </h3>
                   </div>
 
                   {/* Add to Cart Button - consistent with Ongoing Sales */}
                   <button
-                    className="bg-[#EB6426] text-white py-2 px-4 rounded-full text-sm sm:text-md font-medium transition-colors mt-3 flex items-center justify-center space-x-1 sm:space-x-2 font-inter mx-6 sm:mx-8 mb-6 sm:mb-8 hover:bg-[#d65215]"
+                    className="bg-[#EB6426] text-white py-2 px-4 rounded-full text-sm sm:text-md font-semibold font-bricolage transition-colors mt-3 flex items-center justify-center space-x-1 sm:space-x-2 font-inter mx-6 sm:mx-8 mb-6 sm:mb-8 hover:bg-[#d65215]"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddToCart(product, e);
@@ -435,15 +433,15 @@ export default function Statues() {
         </div>
 
         {/* Free Delivery Banner */}
-        <div className="mt-8 sm:mt-12 bg-[#262626] rounded-sm p-4 sm:p-6 text-center mx-4 sm:mx-6 md:mx-10">
+        <div className="mt-8 sm:mt-12 bg-[#262626] rounded-sm p-4 text-center">
           <div className="flex flex-col items-center justify-center md:flex-row md:justify-between gap-3 sm:gap-4">
             <div className="flex items-center justify-center">
               <TbTruckDelivery className="text-white w-6 h-6 sm:w-8 sm:h-8 mr-2" />
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-inter">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white font-bricolage">
                 Free Delivery Worldwide
               </h2>
             </div>
-            <p className="text-white font-inter text-base sm:text-lg px-4 sm:px-0">
+            <p className="text-white font-bricolage text-base sm:text-lg px-4 sm:px-0">
               Enjoy complimentary shipping on all products, no matter where you
               are in the world
             </p>

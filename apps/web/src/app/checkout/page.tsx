@@ -14,7 +14,7 @@ function CheckoutContent() {
   const variant = searchParams?.get('variant') || '0';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-bricolage">
       <CheckoutForm 
         productId={productId} 
         quantity={parseInt(quantity)}
@@ -26,7 +26,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center font-bricolage">Loading...</div>}>
       <CheckoutContent />
     </Suspense>
   );

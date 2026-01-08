@@ -343,17 +343,17 @@ const Carpet = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="mb-4 sm:mb-0 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 custom-font">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 font-bricolage">
                 Carpet
               </h2>
               <button
                 onClick={() => router.push("/products/carpet")}
-                className="text-base md:text-lg text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
+                className="text-base md:text-lg text-[#EB6426] hover:text-[#d65215] transition-colors duration-200 font-medium font-bricolage"
               >
                 View More
               </button>
             </div>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 ">
               Discover beautiful and high-quality carpets
             </p>
           </div>
@@ -407,8 +407,8 @@ const Carpet = () => {
                   <div className="p-4 bg-white custom-font">
                     {/* Price */}
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xl font-semibold text-gray-900">
+                      <div className="flex items-center space-x-2 font-bricolage">
+                        <span className="text-2xl font-bold text-[#EB6426]">
                           $
                           {new Intl.NumberFormat("en-US", {
                             minimumFractionDigits: 2,
@@ -430,7 +430,7 @@ const Carpet = () => {
                       {product.comparePrice &&
                         Number(product.comparePrice) >
                           Number(product.price) && (
-                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium font-bricolage">
                             {Math.round(
                               ((Number(product.comparePrice) -
                                 Number(product.price)) /
@@ -443,7 +443,7 @@ const Carpet = () => {
                     </div>
 
                     {/* Product Name */}
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                    <h3 className="text-lg font-semibold font-bricolage text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
                       {product.name}
                     </h3>
 
@@ -455,7 +455,7 @@ const Carpet = () => {
                           addToCart(product, quantities[product.id] || 1);
                         }}
                         disabled={product.quantity === 0}
-                        className="bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-300 text-white py-2.5 px-6 rounded-full text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+                        className="bg-[#EB6426] hover:bg-[#d65a1f] disabled:bg-gray-300 text-white py-2.5 px-16 rounded-full text-lg font-medium transition-colors flex items-center justify-center space-x-2 font-bricolage"
                       >
                         {product.quantity === 0 ? (
                           "Out of Stock"
