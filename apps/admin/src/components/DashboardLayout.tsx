@@ -399,14 +399,14 @@ export default function DashboardLayout({
                 handleNavigation(item.id);
               }
             }}
-            className={`w-full flex items-center justify-between px-3 py-3 text-base font-semibold rounded-lg transition-colors title-regular ${typeof window !== 'undefined' && window.location.pathname.includes(item.id)
+            className={`w-full flex items-center justify-between px-3 py-3 text-base font-medium rounded-lg transition-colors title-regular ${typeof window !== 'undefined' && window.location.pathname.includes(item.id)
               ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700'
               : 'text-black hover:bg-gray-50 hover:text-black'
               }`}
           >
             <div className="flex items-center min-w-0 flex-1">
               <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-              <span className="text-xl custom-font">{item.label}</span>
+              <span className="text-xl font-normal">{item.label}</span>
             </div>
             {hasChildren && (
               <div className={`flex-shrink-0 ml-2 transition-transform title-regular ${isExpanded ? 'rotate-90' : ''}`}>
@@ -439,13 +439,13 @@ export default function DashboardLayout({
                           handleNavigation(child.id, item.id);
                         }
                       }}
-                      className={`w-full flex items-center pl-8 pr-3 py-3 text-base font-bold rounded-lg transition-colors relative ${typeof window !== 'undefined' && window.location.pathname.includes(child.id)
+                      className={`w-full flex items-center pl-8 pr-3 py-3 text-base font-normal rounded-lg transition-colors relative ${typeof window !== 'undefined' && window.location.pathname.includes(child.id)
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-black hover:bg-gray-50 hover:text-black'
                         }`}
                     >
                       <ChildIcon className="w-4 h-4 mr-3 flex-shrink-0" />
-                      <span className="truncate custom-font">{child.label}</span>
+                      <span className="truncate">{child.label}</span>
                       {hasGrandChildren && (
                         <div className={`flex-shrink-0 ml-2 transition-transform ${isChildExpanded ? 'rotate-90' : ''}`}>
                           <ChevronRight className="w-3 h-3" />
@@ -514,13 +514,13 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8">
-                <Image
+                {/* <Image
                   src="/image.png"
                   alt="Logo"
                   width={32}
                   height={32}
                   className="w-full h-full object-contain"
-                />
+                /> */}
               </div>
               <span className="text-3xl font-bold text-black title-regular">Admin CMS</span>
             </div>

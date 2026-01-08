@@ -110,13 +110,13 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         <div className="bg-[#fffefe] shadow-lg rounded-xl p-8 border border-gray-200">
           <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 mb-6">
+            <div className="mx-auto w-64 h-16 mb-6">
               <Image
-                src="/image.png"
+                src="/Colored JPEG.jpg"
                 alt="Logo"
-                width={64}
-                height={64}
-                className="w-full h-full object-contain"
+                width={300}
+                height={300}
+                className="w-full h-full object-cover"
               />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2 custom-font">
