@@ -139,11 +139,38 @@ const Foods = () => {
 
   if (loading) {
     return (
-      <div className="py-16 bg-gray-50">
+      <div className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading foods...</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+            <div className="mb-4 sm:mb-0 flex-1">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-32 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+              <div className="h-6 w-64 bg-gray-200 animate-pulse rounded"></div>
+            </div>
+          </div>
+
+          <div className="flex overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-[80%] sm:w-[50%] md:w-[40%] lg:w-[calc((100%-72px)/4)]"
+              >
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+                  <div className="h-48 md:h-64 bg-gray-200 animate-pulse"></div>
+                  <div className="p-4 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
+                      <div className="h-4 w-16 bg-gray-200 animate-pulse rounded"></div>
+                    </div>
+                    <div className="h-5 w-full bg-gray-200 animate-pulse rounded mb-2"></div>
+                    <div className="h-10 w-full bg-gray-200 animate-pulse rounded-full mb-2"></div>
+                    <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -176,7 +203,7 @@ const Foods = () => {
         {/* Products Grid */}
         {products.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
+            <p className="text-gray-500 text-lg font-">
               No food products available at the moment.
             </p>
           </div>

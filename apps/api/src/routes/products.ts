@@ -1,4 +1,75 @@
 import { Router } from "express";
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         shortDescription:
+ *           type: string
+ *         price:
+ *           type: number
+ *         comparePrice:
+ *           type: number
+ *         sku:
+ *           type: string
+ *         stock:
+ *           type: integer
+ *         categoryId:
+ *           type: string
+ *           format: uuid
+ *         brandId:
+ *           type: string
+ *           format: uuid
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE, DRAFT]
+ *         isFeatured:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     ProductList:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Product'
+ *         pagination:
+ *           $ref: '#/components/schemas/Pagination'
+ *   schemas:
+ *     Pagination:
+ *       type: object
+ *       properties:
+ *         page:
+ *           type: integer
+ *         limit:
+ *           type: integer
+ *         total:
+ *           type: integer
+ *         totalPages:
+ *           type: integer
+ */
+
 import {
   getProducts,
   getProduct,
@@ -38,23 +109,196 @@ import {
   updateProductAttributeSchema,
 } from "@/types/validation";
 import { asyncHandler } from "@/middleware/errorHandler";
+import { cacheMiddleware } from "@/middleware/cache";
 
 const router = Router();
+
+/**
+ * @swagger
+ * /api/v1/products:
+ *   get:
+ *     summary: Get all products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: brandId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [price, createdAt, name]
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductList'
+ *   post:
+ *     summary: Create a new product (Admin only)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - price
+ *               - categoryId
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               shortDescription:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               comparePrice:
+ *                 type: number
+ *               sku:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               categoryId:
+ *                 type: string
+ *               brandId:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, DRAFT]
+ *     responses:
+ *       201:
+ *         description: Product created
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *
+ * /api/v1/products/featured:
+ *   get:
+ *     summary: Get featured products
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of featured products
+ *
+ * /api/v1/products/{id}:
+ *   get:
+ *     summary: Get a product by ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Product details
+ *       404:
+ *         description: Product not found
+ *   put:
+ *     summary: Update a product (Admin only)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Product updated
+ *   delete:
+ *     summary: Delete a product (Admin only)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Product deleted
+ */
 
 // Public routes
 router.get(
   "/",
+  cacheMiddleware({ ttl: 120 }),
   validateQuery(productQuerySchema),
   validatePagination,
   asyncHandler(getProducts),
 );
-router.get("/featured", asyncHandler(getFeaturedProducts));
-router.get("/:id", asyncHandler(getProduct));
-router.get("/:id/pricing", asyncHandler(getProductPricing));
+router.get(
+  "/featured",
+  cacheMiddleware({ ttl: 300 }),
+  asyncHandler(getFeaturedProducts),
+);
+router.get("/:id", cacheMiddleware({ ttl: 60 }), asyncHandler(getProduct));
+router.get(
+  "/:id/pricing",
+  cacheMiddleware({ ttl: 60 }),
+  asyncHandler(getProductPricing),
+);
 
 // Review routes - allow both authenticated and unauthenticated users
 router.post("/:id/reviews", optionalAuth, asyncHandler(createReview));
-router.get("/:id/reviews", asyncHandler(getProductReviews));
+router.get(
+  "/:id/reviews",
+  cacheMiddleware({ ttl: 60 }),
+  asyncHandler(getProductReviews),
+);
 
 // Protected routes (Admin only)
 router.use(authenticateToken);

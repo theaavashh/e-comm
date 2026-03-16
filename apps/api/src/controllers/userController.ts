@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import prisma from '@/config/database';
-import { generateTokens } from '@/middleware/auth';
-import { AppError } from '@/middleware/errorHandler';
-import { logger } from '@/utils/logger';
-import { env } from '@/config/env';
+import { Request, Response } from "express";
+import bcrypt from "bcryptjs";
+import prisma from "@/config/database";
+import { generateTokens } from "@/middleware/auth";
+import { AppError } from "@/middleware/errorHandler";
+import { logger } from "@/utils/logger";
+import { env } from "@/config/env";
 
 // Register user
 export const register = async (req: Request, res: Response) => {
@@ -14,15 +14,15 @@ export const register = async (req: Request, res: Response) => {
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email },
-          { username },
-        ],
+        OR: [{ email }, { username }],
       },
     });
 
     if (existingUser) {
-      throw new AppError('User with this email or username already exists', 409);
+      throw new AppError(
+        "User with this email or username already exists",
+        409,
+      );
     }
 
     // Hash password
@@ -60,11 +60,14 @@ export const register = async (req: Request, res: Response) => {
       role: user.role,
     });
 
-    logger.info('User registered successfully', { userId: user.id, email: user.email });
+    logger.info("User registered successfully", {
+      userId: user.id,
+      email: user.email,
+    });
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: "User registered successfully",
       data: {
         user,
         accessToken,
@@ -75,8 +78,8 @@ export const register = async (req: Request, res: Response) => {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Registration error:', error);
-    throw new AppError('Registration failed', 500);
+    logger.error("Registration error:", error);
+    throw new AppError("Registration failed", 500);
   }
 };
 
@@ -91,13 +94,18 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user || !user.isActive) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AppError("Invalid credentials", 401);
+    }
+
+    // Check if user has password (not OAuth user)
+    if (!user.password) {
+      throw new AppError("Please login with Google", 401);
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AppError("Invalid credentials", 401);
     }
 
     // Generate tokens
@@ -114,11 +122,14 @@ export const login = async (req: Request, res: Response) => {
       data: { updatedAt: new Date() },
     });
 
-    logger.info('User logged in successfully', { userId: user.id, email: user.email });
+    logger.info("User logged in successfully", {
+      userId: user.id,
+      email: user.email,
+    });
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       data: {
         user: {
           id: user.id,
@@ -138,8 +149,8 @@ export const login = async (req: Request, res: Response) => {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Login error:', error);
-    throw new AppError('Login failed', 500);
+    logger.error("Login error:", error);
+    throw new AppError("Login failed", 500);
   }
 };
 
@@ -167,7 +178,7 @@ export const getProfile = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     res.json({
@@ -178,8 +189,8 @@ export const getProfile = async (req: Request, res: Response) => {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Get profile error:', error);
-    throw new AppError('Failed to get profile', 500);
+    logger.error("Get profile error:", error);
+    throw new AppError("Failed to get profile", 500);
   }
 };
 
@@ -211,16 +222,16 @@ export const updateProfile = async (req: Request, res: Response) => {
       },
     });
 
-    logger.info('User profile updated', { userId });
+    logger.info("User profile updated", { userId });
 
     res.json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: { user },
     });
   } catch (error) {
-    logger.error('Update profile error:', error);
-    throw new AppError('Failed to update profile', 500);
+    logger.error("Update profile error:", error);
+    throw new AppError("Failed to update profile", 500);
   }
 };
 
@@ -237,13 +248,20 @@ export const changePassword = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
+    }
+
+    if (!user.password) {
+      throw new AppError("Cannot change password for OAuth users", 400);
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
     if (!isCurrentPasswordValid) {
-      throw new AppError('Current password is incorrect', 400);
+      throw new AppError("Current password is incorrect", 400);
     }
 
     // Hash new password
@@ -255,18 +273,18 @@ export const changePassword = async (req: Request, res: Response) => {
       data: { password: hashedNewPassword },
     });
 
-    logger.info('User password changed', { userId });
+    logger.info("User password changed", { userId });
 
     res.json({
       success: true,
-      message: 'Password changed successfully',
+      message: "Password changed successfully",
     });
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Change password error:', error);
-    throw new AppError('Failed to change password', 500);
+    logger.error("Change password error:", error);
+    throw new AppError("Failed to change password", 500);
   }
 };
 
@@ -275,11 +293,11 @@ export const refreshToken = async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    throw new AppError('Refresh token is required', 400);
+    throw new AppError("Refresh token is required", 400);
   }
 
   try {
-    const { verifyRefreshToken } = await import('@/middleware/auth');
+    const { verifyRefreshToken } = await import("@/middleware/auth");
     const { id } = verifyRefreshToken(refreshToken);
 
     // Find user
@@ -295,7 +313,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     });
 
     if (!user || !user.isActive) {
-      throw new AppError('Invalid refresh token', 401);
+      throw new AppError("Invalid refresh token", 401);
     }
 
     // Generate new tokens
@@ -317,8 +335,8 @@ export const refreshToken = async (req: Request, res: Response) => {
     if (error instanceof AppError) {
       throw error;
     }
-    logger.error('Refresh token error:', error);
-    throw new AppError('Invalid refresh token', 401);
+    logger.error("Refresh token error:", error);
+    throw new AppError("Invalid refresh token", 401);
   }
 };
 
@@ -326,10 +344,98 @@ export const refreshToken = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   // In a real application, you might want to blacklist the token
   // For now, we'll just return a success message
-  logger.info('User logged out', { userId: req.user?.id });
+  logger.info("User logged out", { userId: req.user?.id });
 
   res.json({
     success: true,
-    message: 'Logged out successfully',
+    message: "Logged out successfully",
   });
+};
+
+// Google OAuth - Register or Login with Google
+export const googleAuth = async (req: Request, res: Response) => {
+  const { email, name, googleId, avatar } = req.body;
+
+  if (!email || !googleId) {
+    throw new AppError("Email and Google ID are required", 400);
+  }
+
+  try {
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Create new user
+      const nameParts = (name || "").split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          username: email.split("@")[0],
+          googleId,
+          firstName,
+          lastName,
+          avatar,
+          password: "", // No password for OAuth users
+          isActive: true,
+        },
+      });
+
+      logger.info("New user created via Google OAuth", {
+        userId: user.id,
+        email,
+      });
+    } else if (!user.googleId) {
+      // Link Google account to existing user
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId,
+          avatar: avatar || user.avatar,
+        },
+      });
+
+      logger.info("Google account linked to existing user", {
+        userId: user.id,
+        email,
+      });
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+    });
+
+    res.json({
+      success: true,
+      message: "Google authentication successful",
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+          avatar: user.avatar,
+          role: user.role,
+        },
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    logger.error("Google auth error:", error);
+    throw new AppError("Google authentication failed", 500);
+  }
 };

@@ -22,6 +22,7 @@ import {
 } from "@/middleware/security";
 import { errorHandler, notFoundHandler } from "@/middleware/errorHandler";
 import { morganStream } from "@/utils/logger";
+import { requestLogger } from "@/middleware/requestLogger";
 
 // Import routes
 import authRoutes from "@/routes/auth";
@@ -39,8 +40,12 @@ import testRoutes from "@/routes/test";
 import orderRoutes from "@/routes/orders";
 import activityRoutes from "@/routes/activities";
 import contactRoutes from "@/routes/contacts";
+import wishlistRoutes from "@/routes/wishlist";
+import customizationRoutes from "@/routes/customization";
+import { swaggerRouter } from "@/config/swagger";
 // Import environment config
 import { env } from "@/config/env";
+import { initRedis, closeRedis } from "@/config/redis";
 
 const app = express();
 
@@ -91,19 +96,36 @@ app.use(compression());
 
 // Logging middleware
 app.use(morgan("combined", { stream: morganStream }));
+app.use(requestLogger);
 
 // Health check endpoints
-const healthCheckHandler = (req: express.Request, res: express.Response) => {
+const healthCheckHandler = async (
+  req: express.Request,
+  res: express.Response,
+) => {
+  const redisClient = await import("@/config/redis").then((m) =>
+    m.getRedisClient(),
+  );
+  let redisStatus = "disconnected";
+
+  if (redisClient?.isOpen) {
+    redisStatus = "connected";
+  }
+
   res.status(200).json({
     success: true,
     message: "API is running",
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
+    redis: redisStatus,
   });
 };
 
 app.get("/health", healthCheckHandler);
 app.get("/api/health", healthCheckHandler);
+
+// Swagger documentation
+app.use("/api-docs", swaggerRouter);
 
 // API routes
 app.use("/api/v1/auth", asRouter(authRoutes));
@@ -119,6 +141,8 @@ app.use("/api/v1/sliders", asRouter(sliderRoutes));
 app.use("/api/v1/currency", asRouter(currencyRoutes));
 // app.use('/api/v1/test', asRouter(testRoutes));
 app.use("/api/v1/orders", asRouter(orderRoutes));
+app.use("/api/v1/wishlist", asRouter(wishlistRoutes));
+app.use("/api/v1/customization", asRouter(customizationRoutes));
 app.use("/api/v1/activities", asRouter(activityRoutes));
 app.use("/api/v1/contacts", asRouter(contactRoutes));
 
@@ -131,20 +155,28 @@ app.use(errorHandler);
 // Start server
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${env.NODE_ENV}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-});
+const startServer = async () => {
+  await initRedis();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Environment: ${env.NODE_ENV}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  });
+};
+
+startServer();
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("SIGTERM received. Shutting down gracefully...");
+  await closeRedis();
   process.exit(0);
 });
 
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   console.log("SIGINT received. Shutting down gracefully...");
+  await closeRedis();
   process.exit(0);
 });
 

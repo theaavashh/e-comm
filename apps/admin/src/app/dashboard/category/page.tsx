@@ -583,7 +583,7 @@ export default function CategoryPage() {
 
     // Validate file size (5MB limit)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB");
+      toast.error("Image size must be less than 10MB");
       return;
     }
 

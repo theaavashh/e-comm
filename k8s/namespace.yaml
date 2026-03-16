@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gharsamma
+  labels:
+    app.kubernetes.io/name: gharsamma
+    app.kubernetes.io/component: namespace

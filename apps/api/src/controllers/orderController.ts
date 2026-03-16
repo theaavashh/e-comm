@@ -360,3 +360,114 @@ export const getOrderStats = async (req: Request, res: Response) => {
     throw new AppError("Failed to fetch order statistics", 500);
   }
 };
+
+// Get current user's orders
+export const getMyOrders = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { page = "1", limit = "10", status } = req.query;
+
+  try {
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+
+    const where: any = { userId };
+    if (status) {
+      where.status = status;
+    }
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  images: true,
+                  thumbnail: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: orders,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (error) {
+    logger.error("Get my orders error:", error);
+    throw new AppError("Failed to fetch orders", 500);
+  }
+};
+
+// Get current user's single order
+export const getMyOrder = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: {
+        id,
+        userId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
+        shippingAddress: true,
+        billingAddress: true,
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                images: true,
+                thumbnail: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    logger.error("Get my order error:", error);
+    throw new AppError("Failed to fetch order", 500);
+  }
+};

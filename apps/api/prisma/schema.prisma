@@ -11,7 +11,8 @@ model User {
   id            String         @id @default(cuid())
   email         String         @unique
   username      String         @unique
-  password      String
+  password      String?
+  googleId      String?        @unique
   firstName     String?
   lastName      String?
   phone         String?
@@ -394,6 +395,26 @@ model Slider {
   updatedAt    DateTime @updatedAt
 
   @@map("sliders")
+}
+
+model CustomizationRequest {
+  id                 String   @id @default(cuid())
+  userId             String?
+  userEmail          String?
+  category           String
+  customizationType  String
+  productName        String
+  description        String
+  budget             String?
+  deadline           DateTime?
+  contactMethod      String
+  phone              String?
+  status             String   @default("PENDING")
+  adminNotes         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("customization_requests")
 }
 
 model ActivityLog {
